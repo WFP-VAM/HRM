@@ -1,2 +1,7 @@
 Data/
 Code/deep-learning-models/
+Bibliography/
+
+Code/config.py
+
+*.pyc
