@@ -12,14 +12,14 @@ The first step consists in replicating Neal Jean research published Science *Com
   The code is following closely the one shared on Neal Jean's Guthub repo: https://github.com/nealjean/predicting-poverty
   
  The next steps are (work in progress):
- + Applying the same methods in WFP assessments
++ Applying the same methods in WFP assessments
   + Uganda Karamoja 2016 Assessment to begin with
   + Try Food Security indicators and Wealth indicators
- + Trying with different sources of imageries
++ Trying with different sources of imageries
   + Use less images per cluster (as for WFP assessments we know precisely the location of clusters)
   + Landsat/Sentinel data : lower resolution but more frequent and consistency of collection period 
   + Other sources of very high resolution imageries
- + Trying with different Neural Networks 
++ Trying with different Neural Networks 
   + Comparing scores With/Whithout the transfer learning step
   + Trying with Networks available on Keras
   + Extract features from previous layers in the network
