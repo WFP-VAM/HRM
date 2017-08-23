@@ -2,7 +2,11 @@
 
 High Resolution Mapping of Food Security
 
-The first step consists in replicating Neal Jean research published Science *Combining satellite imagery and machine learning to predict poverty* in Uganda with LSMS 2011 data. This is done through the following Notebooks:
+The first step consists in replicating the Science paper *Combining satellite imagery and machine learning to predict poverty* in Uganda with LSMS 2011 data. 
+
+Jean, N., Burke, M., Xie, M., Davis, W. M., Lobell, D. B., & Ermon, S. (2016). Combining satellite imagery and machine learning to predict poverty. Science, 353(6301), 790-794.
+
+This is done through the following Notebooks:
 
   1. Extracting Indicators from LSMS 2011-12 Uganda
   2. Download Images from Google Static API
