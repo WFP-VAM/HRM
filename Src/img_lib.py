@@ -76,7 +76,7 @@ class RasterGrid:
 
         return x_size, top_left_x_coords, top_left_y_coords, centroid_x_coords, centroid_y_coords, bands_data
 
-    def download_images(self, list_i, list_j, config, steps_per_tile=0):
+    def download_images(self, list_i, list_j, config, api="google",steps_per_tile=0):
         """
         Function
         --------
