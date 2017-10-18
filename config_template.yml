@@ -1,0 +1,4 @@
+api_token: 
+output_image_dir: '../Data/googleimage/'
+model: ResNet50
+steps_per_tile: 2
