@@ -7,6 +7,7 @@ Caffe_Model/
 Notebooks/.ipynb_checkpoints/
 
 Code/config.py
+config.yml
 
 .local/
 
@@ -15,11 +16,6 @@ Code/config.py
 .cache/
 
 *.pyc
-
-
-Notebooks/2 (bis-. Download Images from Bing API.ipynb
-
-Notebooks/1 (bis). Extracting Indicators from VAM Uganda.ipynb
 
 Notebooks/3 (bis). Generating naive basic features.ipynb
 
