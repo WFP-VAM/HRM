@@ -10,6 +10,7 @@ class NNExtractor:
         :param config: the config file
         """
         self.config = config
+        output_image_dir=self.config['output_image_dir']
 
         if config['model'] == 'ResNet50':
             from keras.applications.resnet50 import ResNet50
@@ -61,10 +62,10 @@ class NNExtractor:
         import os
 
         Final = DataFrame([])
-        for name in os.listdir(self.config['output_image_dir']):
+        for name in os.listdir(self.output_image_dir):
             if len(name) == 10:
                 print('scoring images for tile (i,j): {}'.format(name))
-                Final[name] = self.__average_features_dir(os.path.join(self.config['output_image_dir'], name))
+                Final[name] = self.__average_features_dir(os.path.join(self.output_image_dir, name))
 
         return Final
 

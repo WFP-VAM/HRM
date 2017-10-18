@@ -9,7 +9,8 @@ class RasterGrid:
     """
 
     def __init__(self, raster_file='../Data/Satellite/NightLight/F182013.v4c_web.stable_lights.avg_vis.tif',
-    output_image_dir='../Data/googleimage/'):
+                output_image_dir='../Data/googleimage/'):
+
           self.x_size, \
           self.top_left_x_coords, \
           self.top_left_y_coords, \
@@ -78,7 +79,7 @@ class RasterGrid:
 
         return x_size, top_left_x_coords, top_left_y_coords, centroid_x_coords, centroid_y_coords, bands_data
 
-    def download_images(self, list_i, list_j, config, steps_per_tile=0,provider='Google'):
+    def download_images(self, list_i, list_j, config, steps_per_tile=0, provider='Google'):
         """
         Function
         --------
@@ -108,10 +109,10 @@ class RasterGrid:
                     if provider=='Google':
                         self.url = 'https://maps.googleapis.com/maps/api/staticmap?center=' + str(lat) + ',' + \
                               str(lon) + '&zoom=16&size=400x500&maptype=satellite&key=' + config['google_api_token']
-                    elif provider=='Bing':
-                        imagerySet="Aerial"
-                        centerPoint="47.610,-122.107"
-                        BingMapsKey="AmzJBkuslQlPtUYv0sYdZ7HXcu3jhtTVqUpAhRr_uSrEO1Zeoci5RTOlkYRfE_tn"
+                    elif provider == 'Bing':
+                        imagerySet = "Aerial"
+                        centerPoint = "47.610,-122.107"
+                        BingMapsKey = "AmzJBkuslQlPtUYv0sYdZ7HXcu3jhtTVqUpAhRr_uSrEO1Zeoci5RTOlkYRfE_tn"
                         zoomLevel="16"
                         mapSize="400,500"
                         centerPoint=str(lat)+","+str(lon)
@@ -137,21 +138,38 @@ class RasterGrid:
         import urllib
         from scipy import misc
         from scipy.misc.pilutil import imread
-        # this lib is different between Python 3x and Python 2x
-        try:
-            from StringIO import StringIO
-        except ImportError:
-            from io import BytesIO
+        from io import BytesIO
 
+        # try to pull the image
         try:
-            uropen = urllib.request.urlopen(self.url)
-            a = uropen.read()
-        except urllib.error.HTTPError as e:
-            a = e.read()
+            ur = urllib.request.urlopen(self.url).read()
+            buffer = BytesIO(ur)
 
-        b = BytesIO(a)
-        image = imread(b, mode='RGB')
-        if np.array_equal(image[:, :10, :], image[:, 10:20, :]):
-            print("bad image")
-        else:
-            misc.imsave(file_path + file_name, image[50:450, :, :])
+            image = imread(buffer, mode='RGB')
+            if np.array_equal(image[:, :10, :], image[:, 10:20, :]):
+                print("bad image")
+            else:
+                misc.imsave(file_path + file_name, image[50:450, :, :])
+
+        except urllib.error.HTTPError as err:
+
+            # try a second time!!!
+            try:
+                print('second try for url {}'.format(self.url))
+                ur = urllib.request.urlopen(self.url).read()
+                buffer = BytesIO(ur)
+
+                image = imread(buffer, mode='RGB')
+                if np.array_equal(image[:, :10, :], image[:, 10:20, :]):
+                    print("bad image")
+                else:
+                    misc.imsave(file_path + file_name, image[50:450, :, :])
+
+            except urllib.error.HTTPError as err:
+
+                print('error code: \n', err.code)
+                print('error message: \n', err.read())
+                import sys
+                sys.exit("Error message")
+
+
