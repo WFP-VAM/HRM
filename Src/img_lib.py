@@ -8,7 +8,8 @@ class RasterGrid:
     from Google Static API.
     """
 
-    def __init__(self, raster_file='../Data/Satellite/NightLight/F182013.v4c_web.stable_lights.avg_vis.tif'):
+    def __init__(self, raster_file='../Data/Satellite/NightLight/F182013.v4c_web.stable_lights.avg_vis.tif',
+    output_image_dir='../Data/googleimage/'):
           self.x_size, \
           self.top_left_x_coords, \
           self.top_left_y_coords, \
@@ -16,6 +17,7 @@ class RasterGrid:
           self.centroid_y_coords, \
           self.bands_data = self.__read_raster(raster_file)
           self.url = None
+          self.output_image_dir=output_image_dir
 
     def __read_raster(self, raster_file):
         """
@@ -76,7 +78,7 @@ class RasterGrid:
 
         return x_size, top_left_x_coords, top_left_y_coords, centroid_x_coords, centroid_y_coords, bands_data
 
-    def download_images(self, list_i, list_j, config, api="google",steps_per_tile=0):
+    def download_images(self, list_i, list_j, config, steps_per_tile=0,provider='Google'):
         """
         Function
         --------
@@ -87,22 +89,36 @@ class RasterGrid:
         list_i, list_j: the list of tiles that need an image.
         config: the config file.
         steps_per_tile=0: the number of +\- steps in the x and y to pull the image for. Default 0 so only one image per tile.
+        povider: the api source (Google or Bing at the moment)
 
         """
 
         m = 1
         for i, j in zip(list_i, list_j):
 
-            file_path = config['output_image_dir'] + str(i) + '_' + str(j) + '/'
+            file_path = self.output_image_dir + str(i) + '_' + str(j) + '/'
             if not os.path.isdir(file_path):
                 os.makedirs(file_path)
 
+            print(file_path)
             for a in range(-steps_per_tile, steps_per_tile):
                 for b in range(-steps_per_tile, steps_per_tile):
                     lon = self.centroid_x_coords[i + a]
                     lat = self.centroid_y_coords[j + b]
-                    self.url = 'https://maps.googleapis.com/maps/api/staticmap?center=' + str(lat) + ',' + \
-                          str(lon) + '&zoom=16&size=400x500&maptype=satellite&key=' + config['api_token']
+                    if provider=='Google':
+                        self.url = 'https://maps.googleapis.com/maps/api/staticmap?center=' + str(lat) + ',' + \
+                              str(lon) + '&zoom=16&size=400x500&maptype=satellite&key=' + config['google_api_token']
+                    elif provider=='Bing':
+                        imagerySet="Aerial"
+                        centerPoint="47.610,-122.107"
+                        BingMapsKey="AmzJBkuslQlPtUYv0sYdZ7HXcu3jhtTVqUpAhRr_uSrEO1Zeoci5RTOlkYRfE_tn"
+                        zoomLevel="16"
+                        mapSize="400,500"
+                        centerPoint=str(lat)+","+str(lon)
+                        self.url ="http://dev.virtualearth.net/REST/v1/Imagery/Map/"+imagerySet+"/"+centerPoint+ \
+                        "/"+zoomLevel+"?mapSize="+mapSize+"&key="+config['bing_api_token']
+                    else:
+                        return("Wrong API")
                     file_name = str(i + a) + '_' + str(j + b) + '.jpg'
                     self.__save_img(file_path, file_name)
                     if m % 20 == 0:
