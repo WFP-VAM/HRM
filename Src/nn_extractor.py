@@ -7,18 +7,25 @@ class NNExtractor:
     """
     def __init__(self, config):
         """
+        Initializes the NNExtractor object where the model to be used is defined.
         :param config: the config file
         """
         self.config = config
-        output_image_dir=self.config['output_image_dir']
+        self.output_image_dir=self.config['output_image_dir']
 
         if config['model'] == 'ResNet50':
+            print('INFO: loading ResNet50 ...')
             from keras.applications.resnet50 import ResNet50
-            from keras.applications.resnet50 import preprocess_input
-
             self.net = ResNet50(weights='imagenet', include_top=False)
+
+        elif config['model'] == 'VGG16':
+            print('INFO: loading VGG16 ...')
+            from keras.applications.vgg16 import VGG16
+            from keras.applications.vgg16 import preprocess_input
+            self.net = VGG16(weights='imagenet', include_top=False)
+
         else:
-            print("Only ResNet50 implemented so far")
+            print("ERROR: Only ResNet50 and VGG16 implemented so far")
 
     def __average_features_dir(self, image_dir):
         """
@@ -32,6 +39,10 @@ class NNExtractor:
         import numpy as np
         if self.config['model'] == 'ResNet50':
             from keras.applications.resnet50 import preprocess_input
+        elif self.config['model'] == 'VGG16':
+            from keras.applications.vgg16 import preprocess_input
+        else:
+            print('ERROR: only ResNet50 and VGG16 implemented so far')
 
         i = 0
         features_df = DataFrame([])
