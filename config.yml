@@ -1,5 +1,0 @@
-google_api_token: 'AIzaSyDF0VPNf_bZG_eP48PeLa8FI6BBgDl9jTM'
-bing_api_token: 'AmzJBkuslQlPtUYv0sYdZ7HXcu3jhtTVqUpAhRr_uSrEO1Zeoci5RTOlkYRfE_tn'
-output_image_dir: '../Data/googleimage/'
-model: ResNet50
-steps_per_tile: 1
