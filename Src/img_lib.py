@@ -1,5 +1,6 @@
 import os
 
+
 class RasterGrid:
     """
     Class
@@ -93,8 +94,9 @@ class RasterGrid:
         povider: the api source (Google or Bing at the moment)
 
         """
+        from joblib import Parallel, delayed
+        import multiprocessing
 
-        m = 1
         for i, j in zip(list_i, list_j):
 
             file_path = self.output_image_dir + str(i) + '_' + str(j) + '/'
@@ -103,29 +105,44 @@ class RasterGrid:
 
             print(file_path)
             for a in range(-steps_per_tile, steps_per_tile):
-                for b in range(-steps_per_tile, steps_per_tile):
-                    lon = self.centroid_x_coords[i + a]
-                    lat = self.centroid_y_coords[j + b]
-                    if provider=='Google':
-                        self.url = 'https://maps.googleapis.com/maps/api/staticmap?center=' + str(lat) + ',' + \
-                              str(lon) + '&zoom=16&size=400x500&maptype=satellite&key=' + config['google_api_token']
-                    elif provider == 'Bing':
-                        imagerySet = "Aerial"
-                        centerPoint = "47.610,-122.107"
-                        BingMapsKey = "AmzJBkuslQlPtUYv0sYdZ7HXcu3jhtTVqUpAhRr_uSrEO1Zeoci5RTOlkYRfE_tn"
-                        zoomLevel="16"
-                        mapSize="400,500"
-                        centerPoint=str(lat)+","+str(lon)
-                        self.url ="http://dev.virtualearth.net/REST/v1/Imagery/Map/"+imagerySet+"/"+centerPoint+ \
-                        "/"+zoomLevel+"?mapSize="+mapSize+"&key="+config['bing_api_token']
-                    else:
-                        return("Wrong API")
-                    file_name = str(i + a) + '_' + str(j + b) + '.jpg'
-                    self.__save_img(file_path, file_name)
-                    if m % 20 == 0:
-                        print('pulled {} images ...'.format(m))
-                    m += 1
 
+                # parallelize on the images per tile (inputs)
+                inputs = range(-steps_per_tile, steps_per_tile)
+
+                # find available cores
+                num_cores = multiprocessing.cpu_count()
+
+                # run parallel job
+                Parallel(n_jobs=num_cores)(delayed(self.img_multiproc_wrapper)(i, j, a, b, provider, config, file_path)
+                                           for b in inputs)
+
+    def img_multiproc_wrapper(self, i, j, a, b, provider, config, file_path):
+        # wrapper for the url creation (depending on the engine) and for the pulling and saving of the image.
+        lon = self.centroid_x_coords[i + a]
+        lat = self.centroid_y_coords[j + b]
+
+        self.url = self.__produce_url(lon, lat, provider, config)
+
+        file_name = str(i + a) + '_' + str(j + b) + '.jpg'
+
+        self.__save_img(file_path, file_name)
+
+    def __produce_url(self, lon, lat, provider, config):
+        # wrapper for the creation of the url depending on the engine.
+        if provider == 'Google':
+            return('https://maps.googleapis.com/maps/api/staticmap?center=' + str(lat) + ',' +
+                    str(lon) + '&zoom=16&size=400x500&maptype=satellite&key=' + config['google_api_token'])
+
+        elif provider == 'Bing':
+            imagery_set = "Aerial"
+            zoom_level = "16"
+            map_size = "400,500"
+            center_point = str(lat) + "," + str(lon)
+
+            return("http://dev.virtualearth.net/REST/v1/Imagery/Map/" + imagery_set + "/" + center_point +
+                    "/" + zoom_level + "?mapSize=" + map_size + "&key=" + config['bing_api_token'])
+        else:
+            print("ERROR: Wrong API {}".format(provider))
 
     def __save_img(self, file_path, file_name):
         """
@@ -135,7 +152,8 @@ class RasterGrid:
         for every pair of coordinates, to parse the request and to save the image to the folder.
         """
         import numpy as np
-        import urllib
+        import urllib.request
+        import urllib.error
         from scipy import misc
         from scipy.misc.pilutil import imread
         from io import BytesIO
