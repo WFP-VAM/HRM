@@ -13,19 +13,34 @@ This is done through the following Notebooks:
   3. Generating features from fine-tuned CNN on nightlights (caffe).ipynb
   4. Predicting HH indicators with CNN features.ipynb
   
-  The data structure to run the code is:
+ The code is following closely the one shared on Neal Jean's Guthub repo: https://github.com/nealjean/predicting-poverty
+  
+The data structure to run the code is:
   
  ```
  
+Data
 ├── Datasets
+│   ├── Raw
+│   └── processses_survey.csv
 ├── Network
 ├── Outputs
 └── Satellite
+    ├── raster_of_the_world.tif
     ├── Bing
-    └── Google)
+    │   ├── 25161_9138
+    │   │   └── 25161_9138.jpg
+    └── Google
+        ├── 8866_8866
+        │   └── 8866_8866.jpg
+        ├── 8869_8869
+        │   └── 8869_8869.jpg
+        └── 9169_9169
+            └── 9169_9169.jpg
   ```
   
-  The code is following closely the one shared on Neal Jean's Guthub repo: https://github.com/nealjean/predicting-poverty
+  processses_survey.csv should contain at least 3 columns: "gpsLongitude","gpsLatitude" and one indicator. You can either work with individual survey data or aggregate the surveys to some geographic level. 
+  
   
  The next steps are (work in progress):
 + Applying the same methods in WFP assessments
