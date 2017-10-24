@@ -13,6 +13,17 @@ This is done through the following Notebooks:
   3. Generating features from fine-tuned CNN on nightlights (caffe).ipynb
   4. Predicting HH indicators with CNN features.ipynb
   
+  The data structure to run the code is:
+  
+  Data
+├── Datasets
+├── Network
+├── Outputs
+└── Satellite
+    ├── Bing
+    └── Google
+  
+  
   The code is following closely the one shared on Neal Jean's Guthub repo: https://github.com/nealjean/predicting-poverty
   
  The next steps are (work in progress):
