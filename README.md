@@ -15,14 +15,15 @@ This is done through the following Notebooks:
   
   The data structure to run the code is:
   
-  Data
+ ```
+ 
 ├── Datasets
 ├── Network
 ├── Outputs
 └── Satellite
     ├── Bing
-    └── Google
-  
+    └── Google)
+  ```
   
   The code is following closely the one shared on Neal Jean's Guthub repo: https://github.com/nealjean/predicting-poverty
   
