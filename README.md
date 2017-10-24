@@ -15,14 +15,26 @@ This is done through the following Notebooks:
   
  The code is following closely the one shared on Neal Jean's Guthub repo: https://github.com/nealjean/predicting-poverty
   
-The data structure to run the code is:
+### Refactoring  
+  
+#### Config file
+
+Don't forget to populate the public_config.yml with information about:
+* The dataset you are using and the filename. Check the data structure to see where to save the survey data.
+* The source of high-resolution satellite imageries, the number of tiles per point you are using and the tiff file you are using to define your gris coordinate system. Check the data structure to see where to save this tiff file.
+* The CNN network and the layer you are using to extract features
+
+Don't forget to populate the private_config.yml with information about:
+* You bing and/or API keys 
+
+#### Data Structure
   
  ```
  
 Data
 ├── Datasets
 │   ├── Raw
-│   └── processses_survey.csv
+│   └── processed_survey.csv
 ├── Network
 ├── Outputs
 └── Satellite
@@ -39,8 +51,11 @@ Data
             └── 9169_9169.jpg
   ```
   
-  processses_survey.csv should contain at least 3 columns: "gpsLongitude","gpsLatitude" and one indicator. You can either work with individual survey data or aggregate the surveys to some geographic level. 
+  processed_survey.csv should contain at least 3 columns: "gpsLongitude","gpsLatitude" and one indicator. You can either work with individual survey data or aggregate the surveys to some geographic level. The Raw folder can be used to store the raw data as well as complementary files such as the questionnaire.
   
+  raster_of_the_world.tif is a raster file that associated GRID coordinates to the areas of interest. We are currently working with a global raster at a 1km resolution taken from the NOAA nightlights "F182013.v4c_web.stable_lights.avg_vis.tif" and available at https://ngdc.noaa.gov/eog/dmsp/downloadV4composites.html. This raster can also be used to fine-tune the CNN.
+ 
+  ### Work in progress
   
  The next steps are (work in progress):
 + Applying the same methods in WFP assessments
