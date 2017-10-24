@@ -1,14 +1,13 @@
 dataset:
-    source: WB
-    country: Uganda
-    level: cluster
-    month: 1
-    year: 2011
-grid:
-  file: F182013.v4c_web.stable_lights.avg_vis.tif
+  country: Uganda
+  source: WB
+  level: cluster
+  month: 1
+  year: 2011
+  filename: WB_Uganda_2011_cluster.csv
 satellite:
-  source: bing
-  resolution: 1
+  grid: F182013.v4c_web.stable_lights.avg_vis.tif
+  source: Google
   step: 0
 network:
   model: ResNet50
