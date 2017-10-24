@@ -33,13 +33,14 @@ class RasterGrid:
         import pandas as pd
         from img_utils import get_cell_idx
         dataset= pd.read_csv(file)
+        print(dataset.head())
         list_i=[]
         list_j=[]
         for index, row in dataset.iterrows():
             i,j = get_cell_idx(row['gpsLongitude'],row['gpsLatitude'], self.top_left_x_coords, self.top_left_y_coords)
             list_i.append(i)
             list_j.append(j)
-        return list_j,list_j
+        return (list_i,list_j)
 
     def __read_raster(self, raster_file):
         """
@@ -183,35 +184,43 @@ class RasterGrid:
 
         if os.path.exists(file_path + file_name):
             print("{}{} already downloaded".format(file_path,file_name))
-            pass
 
-        try:
-            ur = urllib.request.urlopen(self.url).read()
-            buffer = BytesIO(ur)
-
-            image = imread(buffer, mode='RGB')
-            if np.array_equal(image[:, :10, :], image[:, 10:20, :]):
-                print("bad image")
-            else:
-                misc.imsave(file_path + file_name, image[50:450, :, :])
-
-        except urllib.error.HTTPError as err:
-
-            # try a second time!!!
+        else:
             try:
-                print('second try for url {}'.format(self.url))
                 ur = urllib.request.urlopen(self.url).read()
                 buffer = BytesIO(ur)
 
                 image = imread(buffer, mode='RGB')
-                if np.array_equal(image[:, :10, :], image[:, 10:20, :]):
-                    print("bad image")
-                else:
-                    misc.imsave(file_path + file_name, image[50:450, :, :])
+
+                ## Do not download images in places where Google or Bing does not have any image
+
+                #if np.array_equal(image[:, :10, :], image[:, 10:20, :]):
+                    #print("bad image")
+                #else:
+
+                misc.imsave(file_path + file_name, image[50:450, :, :])
 
             except urllib.error.HTTPError as err:
 
-                print('error code: \n', err.code)
-                print('error message: \n', err.read())
-                import sys
-                sys.exit("Error message")
+                # try a second time!!!
+                try:
+                    print('second try for url {}'.format(self.url))
+                    ur = urllib.request.urlopen(self.url).read()
+                    buffer = BytesIO(ur)
+
+                    image = imread(buffer, mode='RGB')
+
+                    ## Do not download images in places where Google or Bing does not have any image
+
+                    #if np.array_equal(image[:, :10, :], image[:, 10:20, :]):
+                        #print("bad image")
+                    #else:
+
+                    misc.imsave(file_path + file_name, image[50:450, :, :])
+
+                except urllib.error.HTTPError as err:
+
+                    print('error code: \n', err.code)
+                    print('error message: \n', err.read())
+                    import sys
+                    sys.exit("Error message")
