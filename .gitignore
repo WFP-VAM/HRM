@@ -8,6 +8,7 @@ Notebooks/.ipynb_checkpoints/
 
 Code/config.py
 config.yml
+private_config.yml
 
 .local/
 

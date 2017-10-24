@@ -1,0 +1,15 @@
+dataset:
+    source: WB
+    country: Uganda
+    level: cluster
+    month: 1
+    year: 2011
+grid:
+  file: F182013.v4c_web.stable_lights.avg_vis.tif
+satellite:
+  source: bing
+  resolution: 1
+  step: 0
+network:
+  model: ResNet50
+  layer: AvgPool
