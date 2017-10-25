@@ -1,3 +1,9 @@
+import os
+import yaml
+
+with open('../public_config.yml', 'r') as cfgfile:
+    public_config = yaml.load(cfgfile)
+
 
 class NNExtractor:
     """
@@ -5,20 +11,20 @@ class NNExtractor:
     -----
     Handles the feature extraction from a pre-trained NN.
     """
-    def __init__(self, config):
+    def __init__(self):
         """
         Initializes the NNExtractor object where the model to be used is defined.
         :param config: the config file
         """
-        self.config = config
-        self.output_image_dir=self.config['output_image_dir']
+        self.config = public_config
+        self.output_image_dir=os.path.join("../Data","Satellite",self.config["satellite"]["source"])
 
-        if config['model'] == 'ResNet50':
+        if self.config['network']['model'] == 'ResNet50':
             print('INFO: loading ResNet50 ...')
             from keras.applications.resnet50 import ResNet50
             self.net = ResNet50(weights='imagenet', include_top=False)
 
-        elif config['model'] == 'VGG16':
+        elif self.config['network']['model'] == 'VGG16':
             print('INFO: loading VGG16 ...')
             from keras.applications.vgg16 import VGG16
             from keras.applications.vgg16 import preprocess_input
@@ -37,9 +43,9 @@ class NNExtractor:
         from keras.preprocessing import image
         import os
         import numpy as np
-        if self.config['model'] == 'ResNet50':
+        if self.config['network']['model'] == 'ResNet50':
             from keras.applications.resnet50 import preprocess_input
-        elif self.config['model'] == 'VGG16':
+        elif self.config['network']['model'] == 'VGG16':
             from keras.applications.vgg16 import preprocess_input
         else:
             print('ERROR: only ResNet50 and VGG16 implemented so far')
@@ -73,9 +79,13 @@ class NNExtractor:
         import os
 
         Final = DataFrame([])
+
+        cnt=0
         for name in os.listdir(self.output_image_dir):
             if len(name) == 10:
-                print('scoring images for tile (i,j): {}'.format(name))
+                cnt+=1
+                if cnt%10 == 0:
+                    print("Feature extraction : {} images".format(cnt))
                 Final[name] = self.__average_features_dir(os.path.join(self.output_image_dir, name))
 
         return Final
