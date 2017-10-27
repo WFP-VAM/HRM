@@ -1,5 +1,9 @@
 import os
 import yaml
+import pandas as pd
+from img_utils import get_cell_idx
+import gdal
+import numpy as np
 
 with open('../public_config.yml', 'r') as cfgfile:
     public_config = yaml.load(cfgfile)
@@ -30,10 +34,7 @@ class RasterGrid:
 
     def get_gridcoordinates(self, file=os.path.join("../Data","Datasets",public_config["dataset"]["filename"])):
 
-        import pandas as pd
-        from img_utils import get_cell_idx
         dataset= pd.read_csv(file)
-        print(dataset.head())
         list_i=[]
         list_j=[]
         for index, row in dataset.iterrows():
@@ -41,6 +42,29 @@ class RasterGrid:
             list_i.append(i)
             list_j.append(j)
         return (list_i,list_j)
+
+    def get_gpscoordinates(self, list_i, list_j, step=public_config["satellite"]["step"]):
+        """
+        given a set of i and j it returns the lists on longitude and latitude.
+        :param list_i: list of i (raster/grid references)
+        :param list_j: list of j (raster/grid references)
+        :param step: the steps around the cluster
+        :return: two lists containing the gps coordinates corresponding to i and j.
+        """
+
+        lon = []
+        lat = []
+        # for all i and j
+        for i, j in zip(list_i, list_j):
+            # for all steps
+            # for a in range(-step, 1+step):
+            #     for b in range(-step, 1+step):
+            #         lon.append(self.centroid_x_coords[i + a])
+            #         lat.append(self.centroid_y_coords[j + b])
+            lon.append(self.centroid_x_coords[i])
+            lat.append(self.centroid_y_coords[j])
+
+        return(lon, lat)
 
     def __read_raster(self, raster_file):
         """
@@ -70,8 +94,7 @@ class RasterGrid:
         bands_data : numpy.ndarray  shape: (number of rows, number of columns, 1)
             Pixel value
         """
-        import gdal
-        import numpy as np
+
         gdal.UseExceptions()
 
         raster_dataset = gdal.Open(raster_file, gdal.GA_ReadOnly)
