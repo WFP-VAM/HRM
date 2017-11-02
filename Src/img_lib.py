@@ -22,15 +22,15 @@ class RasterGrid:
 
     def __init__(self,raster=os.path.join("../Data","Satellite",public_config["satellite"]["grid"]),image_dir=os.path.join("../Data","Satellite",public_config["satellite"]["source"])):
 
-          self.x_size, \
-          self.top_left_x_coords, \
-          self.top_left_y_coords, \
-          self.centroid_x_coords, \
-          self.centroid_y_coords, \
-          self.bands_data = self.__read_raster(raster)
-          self.url = None
-          self.output_image_dir=image_dir
-          self.config=public_config
+        self.x_size, \
+        self.top_left_x_coords, \
+        self.top_left_y_coords, \
+        self.centroid_x_coords, \
+        self.centroid_y_coords, \
+        self.bands_data = self.__read_raster(raster)
+        self.url = None
+        self.output_image_dir=image_dir
+        self.config = public_config
 
     def get_gridcoordinates(self, file=os.path.join("../Data","Datasets",public_config["dataset"]["filename"])):
 

@@ -22,7 +22,9 @@ class NNExtractor:
         if self.config['network']['model'] == 'ResNet50':
             print('INFO: loading ResNet50 ...')
             from keras.applications.resnet50 import ResNet50
-            self.net = ResNet50(weights='imagenet', include_top=False)
+            self.net = ResNet50(weights='imagenet', include_top=False, pooling=None)
+            # self.base_net = ResNet50(weights='imagenet', include_top=False)
+            # self.net = Model(inputs=self.base_net.input, outputs=self.base_net.get_layer('block4_pool').output)
 
         elif self.config['network']['model'] == 'VGG16':
             print('INFO: loading VGG16 ...')
@@ -85,7 +87,7 @@ class NNExtractor:
             if len(name) == 10:
                 cnt+=1
                 if cnt%10 == 0:
-                    print("Feature extraction : {} images".format(cnt))
+                    print("Feature extraction : {} tiles".format(cnt))
                 Final[name] = self.__average_features_dir(os.path.join(self.output_image_dir, name))
 
         return Final
