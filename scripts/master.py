@@ -57,8 +57,7 @@ def run():
     # write out
     features.to_csv("../Data/Features/config_id_{}.csv".format(config['id'][0]), index=False)
 
-    features=pd.read_csv("../Data/Features/config_id_{}.csv".format(config['id'][0]))
-
+    #features=pd.read_csv("../Data/Features/config_id_{}.csv".format(config['id'][0]))
 
     # ----------------- #
     # ADD SURVEY DATA ###
@@ -82,8 +81,8 @@ def run():
 
     y = data[config['indicator'][0]].values
 
-    #if config['indicator_log'][0] == True:
-        #y = np.log(y)  # Log-normal distribution
+    if config['indicator_log'][0] == True:
+        y = np.log(y)  # Log-normal distribution
 
     # PCA
     if config['model_pca'][0] > 0:
@@ -110,7 +109,7 @@ def run():
     results_df = pd.DataFrame([predict_r2,predict_mape,y],index=["predict_r2","predict_mape","y"])
     results_df=results_df.T
 
-    results_df.to_csv(os.path.join("../Data/Results",str("confi_"+config['id'][0])+"_results.csv"))
+    results_df.to_csv(os.path.join("../Data/Results","confi_"+str(config['id'][0])+"_results.csv"), index=False)
 
     score_r2_mean, score_r2_var, score_MAPE, score_MAPE_var = score_r2.mean(), score_r2.std() * 2, score_MAPE.mean(), score_MAPE.std() * 2
 
