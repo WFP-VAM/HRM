@@ -6,7 +6,7 @@
 """
 import os
 import sys
-sys.path.append("..\Src")
+sys.path.append(os.path.join("..","Src"))
 from img_lib import RasterGrid
 from sqlalchemy import create_engine
 import yaml
@@ -30,8 +30,12 @@ def run():
 
     config = pd.read_sql_query("select * from config where id = {}".format(sys.argv[1]), engine)
 
-    GRID = RasterGrid(raster=config["satellite_grid"][0],
-                      image_dir=os.path.join("../Data", "Satellite", config["satellite_source"][0]))
+    image_dir=os.path.join("../Data", "Satellite", config["satellite_source"][0])
+    print(image_dir)
+    raster=config["satellite_grid"][0]
+    print(raster)
+
+    GRID = RasterGrid(raster,image_dir)
 
     list_i, list_j = GRID.get_gridcoordinates(file=config["dataset_filename"][0])
 
@@ -107,4 +111,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-
