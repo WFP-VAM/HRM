@@ -56,6 +56,7 @@ def run():
     features = scoring_postprocess(features)
     # write out
     features.to_csv("../Data/Features/config_id_{}.csv".format(config['id'][0]), index=False)
+
     features=pd.read_csv("../Data/Features/config_id_{}.csv".format(config['id'][0]))
 
 
@@ -64,7 +65,11 @@ def run():
     # ----------------- #
     hh_data = pd.read_csv(config["dataset_filename"][0])
     data = hh_data.merge(features, on=["i", "j"])
+
+    data = data.loc[data[config['indicator'][0]] > 0]
+
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True) # shuffle data
+
     data_features = data[list(set(data.columns) - set(hh_data.columns) - set(['index']))]  # take only the CNN features
 
     # ----------------- #
@@ -72,14 +77,13 @@ def run():
     # ----------------- #
     from evaluation_utils import MAPE, r2_pearson
     from sklearn.linear_model import Ridge
-    from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
+    from sklearn.model_selection import GridSearchCV, KFold, cross_val_score, cross_val_predict
 
-    #data = data.loc[config['indicator'][0] > 0, :]
-    data = data.loc[data[config['indicator'][0]] > 0]
-    y = data[config['indicator'][0]].values  # Average normalized consumption per cluster
 
-    if config['indicator_log'][0] == True:
-        y = np.log(y)  # Log-normal distribution
+    y = data[config['indicator'][0]].values
+
+    #if config['indicator_log'][0] == True:
+        #y = np.log(y)  # Log-normal distribution
 
     # PCA
     if config['model_pca'][0] > 0:
@@ -99,6 +103,14 @@ def run():
     clf_MAPE = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=MAPE)
     score_r2 = cross_val_score(clf_r2, X, y, scoring=r2_pearson, cv=outer_cv)
     score_MAPE = cross_val_score(clf_MAPE, X, y, scoring=MAPE, cv=outer_cv)
+
+    predict_r2 = cross_val_predict(clf_r2, X, y, cv=outer_cv)
+    predict_mape = cross_val_predict(clf_MAPE, X, y, cv=outer_cv)
+
+    results_df = pd.DataFrame([predict_r2,predict_mape,y],index=["predict_r2","predict_mape","y"])
+    results_df=results_df.T
+
+    results_df.to_csv(os.path.join("../Data/Results",str("confi_"+config['id'][0])+"_results.csv"))
 
     score_r2_mean, score_r2_var, score_MAPE, score_MAPE_var = score_r2.mean(), score_r2.std() * 2, score_MAPE.mean(), score_MAPE.std() * 2
 
