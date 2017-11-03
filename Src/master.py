@@ -41,14 +41,10 @@ GRID.download_images(list_i, list_j)
 # ----------------- #
 # SCORING ###########
 # ----------------- #
-network = NNExtractor()
+from utils import scoring_postprocess
+network = NNExtractor(config['satellite_image_dir'][0], config['network_model'][0])
 features = network.extract_features()
-# postprocess
-features = features.transpose().reset_index()
-features["i"] = features["index"].str.slice(0,5)
-features["j"] = features["index"].str.slice(6,10)
-features["i"] = pd.to_numeric(features["i"])
-features["j"] = pd.to_numeric(features["j"])
+features = scoring_postprocess(features)
 # write out
 features.to_csv("../Data/Features/config_id_{}.csv".format(config['id'][0]), index=False)
 
@@ -63,14 +59,15 @@ data_features = data[list(set(data.columns) - set(hh_data.columns) - set(['index
 # ----------------- #
 # MODEL #############
 # ----------------- #
+from evaluation_utils import MAPE, r2_pearson
 from sklearn.linear_model import Ridge
-from scipy import stats
-from sklearn.metrics import make_scorer
 from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
 
-y_raw = data["cons"].values  # Average normalized consumption per cluster
-y_raw = y_raw[y_raw > 0]
-y = np.log(y_raw)  # Log-normal distribution
+data = data.loc[config['indicator'][0] > 0, :]
+y = data[config['indicator'][0]].values  # Average normalized consumption per cluster
+
+if config['indicator_log'] == True:
+    y = np.log(y)  # Log-normal distribution
 
 # PCA
 if config['model_pca'][0] > 0:
@@ -80,18 +77,6 @@ if config['model_pca'][0] > 0:
 else:
     X = data_features
 
-
-# SCORERS
-def r2_pearson(ground_truth, predictions):
-    r2_pearson=stats.pearsonr(ground_truth, predictions)[0] ** 2
-    return r2_pearson
-
-def MAPE(y, yhat):
-    diff = np.abs((y-yhat)/y)
-    return(np.sum(diff)/len(y))
-
-r2_pearson = make_scorer(r2_pearson, greater_is_better=True)
-MAPE  = make_scorer(MAPE, greater_is_better=False)
 
 # TRAIN
 outer_cv = KFold(5, shuffle=True, random_state=75788)
@@ -110,4 +95,5 @@ score_r2_mean, score_r2_var, score_MAPE = score_r2.mean(), score_r2.std() * 2, s
 query = """
 insert into results (run_date, config_id, r2pearson, r2pearson_var, mape)
 values (current_date, {}, {}, {}, {}) """.format(
-    config['id'], score_r2_mean, score_r2_var, score_MAPE)
+    config['id'][0], score_r2_mean, score_r2_var, score_MAPE)
+engine.execute(query)
