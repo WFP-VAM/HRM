@@ -11,13 +11,14 @@ class NNExtractor:
     -----
     Handles the feature extraction from a pre-trained NN.
     """
-    def __init__(self, output_image_dir, model_type='ResNet50'):
+    def __init__(self, output_image_dir, model_type='ResNet50',step=public_config["satellite"]["step"]):
         """
         Initializes the NNExtractor object where the model to be used is defined.
         :param config: the config file
         """
         self.model_type = model_type
         self.output_image_dir = output_image_dir
+        self.step=step
 
         if self.model_type == 'ResNet50':
             print('INFO: loading ResNet50 ...')
@@ -57,8 +58,8 @@ class NNExtractor:
 
         for a in range(-self.step, 1 + self.step):
             for b in range(-self.step, 1 + self.step):
-                i = int(name.str.slice(0, 5)) + a
-                j = int(name.str.slice(6, 10)) + b
+                i = int(name[0: 5]) + a
+                j = int(name[6:10]) + b
 
                 img_path = os.path.join(image_dir, name, str(i)+'_'+str(j)+".jpg")
 

@@ -37,22 +37,22 @@ def run():
 
     GRID = RasterGrid(raster,image_dir)
 
-    list_i, list_j = GRID.get_gridcoordinates(file=config["dataset_filename"][0])
-
-    # ----------------- #
-    # DOWNLOADING #######
-    # ----------------- #
-    print("INFO: downlaoding images ...")
-    GRID.download_images(list_i, list_j)
-    print("INFO: images downloaded")
+    # list_i, list_j = GRID.get_gridcoordinates(file=config["dataset_filename"][0])
+    #
+    # # ----------------- #
+    # # DOWNLOADING #######
+    # # ----------------- #
+    # print("INFO: downlaoding images ...")
+    # GRID.download_images(list_i, list_j)
+    # print("INFO: images downloaded")
     # ----------------- #
     # SCORING ###########
     # ----------------- #
     from utils import scoring_postprocess
     network = NNExtractor(config['satellite_image_dir'][0], config['network_model'][0])
-    print("INFO: downlaoding images ...")
+    print("INFO: initiating network ...")
     features = network.extract_features()
-    print("INFO: images downloaded")
+    print("INFO: extracting features")
     features = scoring_postprocess(features)
     # write out
     features.to_csv("../Data/Features/config_id_{}.csv".format(config['id'][0]), index=False)
