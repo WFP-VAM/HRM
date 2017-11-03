@@ -37,14 +37,14 @@ def run():
 
     GRID = RasterGrid(raster,image_dir)
 
-    # list_i, list_j = GRID.get_gridcoordinates(file=config["dataset_filename"][0])
-    #
+    list_i, list_j = GRID.get_gridcoordinates(file=config["dataset_filename"][0])
+
     # # ----------------- #
     # # DOWNLOADING #######
     # # ----------------- #
-    # print("INFO: downlaoding images ...")
-    # GRID.download_images(list_i, list_j)
-    # print("INFO: images downloaded")
+    print("INFO: downlaoding images ...")
+    GRID.download_images(list_i, list_j)
+    print("INFO: images downloaded")
     # ----------------- #
     # SCORING ###########
     # ----------------- #
@@ -56,6 +56,8 @@ def run():
     features = scoring_postprocess(features)
     # write out
     features.to_csv("../Data/Features/config_id_{}.csv".format(config['id'][0]), index=False)
+    features=pd.read_csv("../Data/Features/config_id_{}.csv".format(config['id'][0]))
+
 
     # ----------------- #
     # ADD SURVEY DATA ###
@@ -72,10 +74,11 @@ def run():
     from sklearn.linear_model import Ridge
     from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
 
-    data = data.loc[config['indicator'][0] > 0, :]
+    #data = data.loc[config['indicator'][0] > 0, :]
+    data = data.loc[data[config['indicator'][0]] > 0]
     y = data[config['indicator'][0]].values  # Average normalized consumption per cluster
 
-    if config['indicator_log'] == True:
+    if config['indicator_log'][0] == True:
         y = np.log(y)  # Log-normal distribution
 
     # PCA
@@ -104,10 +107,9 @@ def run():
     # ----------------- #
     query = """
     insert into results (run_date, config_id, r2pearson, r2pearson_var, mape, mape_var)
-    values (current_date, {}, {}, {}, {}) """.format(
+    values (current_date, {}, {}, {}, {},{}) """.format(
         config['id'][0], score_r2_mean, score_r2_var, score_MAPE, score_MAPE_var)
     engine.execute(query)
-
 
 if __name__ == "__main__":
     run()

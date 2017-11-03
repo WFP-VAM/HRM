@@ -1,5 +1,6 @@
 from scipy import stats
 from sklearn.metrics import make_scorer
+import numpy as np
 
 # SCORERS
 def r2_pearson(ground_truth, predictions):
