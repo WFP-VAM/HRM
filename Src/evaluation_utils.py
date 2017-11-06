@@ -10,10 +10,8 @@ def r2_pearson(ground_truth, predictions):
 
 
 def MAPE(y, yhat):
-    if y != 0:
-        diff = np.abs((y-yhat)/y)
-    else:
-        diff = np.abs(yhat)
+
+    diff = np.abs(np.divide((y-yhat), y, out=np.zeros_like(yhat), where=y!=0))
 
     return(np.sum(diff)/len(y))
 
