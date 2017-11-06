@@ -14,11 +14,11 @@ import pandas as pd
 from nn_extractor import NNExtractor
 import numpy as np
 
-def run():
+def run(id):
     # ----------------- #
     # SETUP #############
     # ----------------- #
-    print("INFO: config id =", sys.argv[1])
+    print("INFO: config id =", id)
 
     with open('../private_config.yml', 'r') as cfgfile:
         private_config = yaml.load(cfgfile)
@@ -28,7 +28,7 @@ def run():
                                     private_config['DB']['host'], private_config['DB']['database']))
 
 
-    config = pd.read_sql_query("select * from config where id = {}".format(sys.argv[1]), engine)
+    config = pd.read_sql_query("select * from config where id = {}".format(id), engine)
 
     image_dir=os.path.join("../Data", "Satellite", config["satellite_source"][0])
     print(image_dir)
@@ -123,4 +123,5 @@ def run():
     engine.execute(query)
 
 if __name__ == "__main__":
-    run()
+    for id in sys.argv[1:]:
+        run(id)
