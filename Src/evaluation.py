@@ -30,24 +30,24 @@ class Scoring:
     def MAPE(self,ground_truth, predictions):
         return np.mean(np.abs((ground_truth - predictions) / ground_truth)) * 100
 
-    def PCA_array(self,data_features,n_components=10):
+    def PCA_array(self,data_features,n_components):
         from sklearn.decomposition import PCA
         from pandas import DataFrame
         #from numpy import transpose
         pca = PCA(n_components)
         pca.fit(data_features.transpose())
         eigenvectors=pca.components_
-        PCA_array = transpose(eigenvectors)
+        PCA_array = np.transpose(eigenvectors)
         return PCA_array
 
-    def GridSearch(self,model,scorer,n_splits,alphas = [0.1,1,10,100,1000]):
+    def GridSearch(self,model,scorer,n_splits,alphas = [0.01,0.1,1,10,100]):
         from sklearn.model_selection import GridSearchCV, KFold
         param = np.array(alphas)
         inner_cv = KFold(n_splits, shuffle=True, random_state=1673)
         clf = GridSearchCV(estimator=model, param_grid=dict(alpha=param), cv=inner_cv, scoring=scorer)
         return clf
 
-    def CrossValScore(self,PCA=False,n_splits=5,model=Ridge(),gridsearch=True,scorer="r2_pearson"):
+    def CrossValScore(self,PCA=False,n_components=10,n_splits=5,model=Ridge(),gridsearch=True,scorer="r2_pearson"):
         """"
         Get the cross validated score of a given model with the different parametrers:
         PCA: Yes or No (with 10 components)
@@ -55,7 +55,7 @@ class Scoring:
         model: Regression model
         gridsearch: look for the best regularization Parameter
         Scorer: explained_variance, neg_mean_absolute_error,neg_mean_squared_error, neg_mean_squared_log_error
-        neg_median_absolute_error,r2
+        neg_median_absolute_error, r2
 
         """
 
@@ -65,11 +65,11 @@ class Scoring:
         if scorer=="r2_pearson":
             scorer=make_scorer(self.r2_pearson)
         if scorer=="MAPE":
-            scorer=make_scorer(self.MAPE)
+            scorer=make_scorer(self.MAPE,greater_is_better=False)
         if gridsearch:
             model=self.GridSearch(model,scorer,n_splits)
         if PCA:
-            score = cross_val_score(model, self.PCA_array(self.X), self.y, scoring=scorer,cv=outer_cv)
+            score = cross_val_score(model, self.PCA_array(self.X, n_components), self.y, scoring=scorer,cv=outer_cv)
         else:
             score = cross_val_score(model, self.X, self.y, scoring=scorer,cv=outer_cv)
         print("score: %0.2f (+/- %0.2f)" % (score.mean(), score.std() * 2))

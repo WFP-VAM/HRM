@@ -12,12 +12,15 @@ import pandas as pd
 import sys
 sys.path.append("../Src")
 from img_lib import RasterGrid
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 # ----------------------------------------------------------------------
 # import and process the features created
 
-features = pd.read_csv('../Data/Intermediate_files/google_sat_CNN_features_lsms_ResNet_tf_last.csv')
+#features = pd.read_csv('../Data/Intermediate_files/google_sat_CNN_features_lsms_ResNet_tf_last.csv')
+features = pd.read_csv('../Data\Features\google_Uganda_ResNet50_last.csv')
 
 non_feature_columns = ['index', 'i', 'j']
 feature_columns = list(set(features.columns.values) - set(non_feature_columns))
@@ -41,14 +44,68 @@ dfx['i'], dfx['j'] = features['i'], features['j']
 
 # for what clusters?
 GRId.config["dataset"]["filename"]
-dfx['lon'] , dfx['lat']  = GRId.get_gpscoordinates(dfx['i'], dfx['j'])
+dfx['lon'], dfx['lat'] = GRId.get_gpscoordinates(dfx['i'], dfx['j'])
 dfx['lonlat'] = dfx[['lon', 'lat']].round(2).astype(str).apply(lambda x: ','.join(x), axis = 1)
 
+# ----------------------------------------------------------------------
+# add indicators score
+hh_data = pd.read_csv("../Data/Intermediate_files/hh_data_2011_cluster_minHH.csv")[['cons', 'i', 'j']]
+hh_data.columns
+dfx = pd.merge(dfx, hh_data, on=['i', 'j'])
 
 # ----------------------------------------------------------------------
 # export for Viz
 dfx.to_clipboard()
 
+
+# ----------------------------------------------------------------------
+# attach images
+from PIL import Image
+
+# output_image_dir=os.path.join("../Data","Satellite", GRId.config["satellite"]["source"])
+#
+# for dir in os.listdir(output_image_dir):
+#     image_dir = os.path.join(output_image_dir, dir)
+#     for name in os.listdir(image_dir):
+#
+#         if ((name.endswith(".jpg")) & (name == dir+'.jpg')):
+
+            #image = Image.open(output_image_dir+ "\\" + dir + "\\" +name)
+            #dfx.loc[((int(dfx['i'][0])) & (dfx.j == int(name[6:10][0]))), 'image'] = image
+
+
+
+
+#-----------------------------------------------------------------------
+# matplotlib viz
+plt.subplots_adjust(bottom=0.1)
+plt.scatter(
+    dfx['x'], dfx['y'], marker='o', c=dfx['i'], s=dfx['j']/1000,
+    cmap=plt.get_cmap('Spectral'))
+
+for label, x, y in zip(dfx['lonlat'], dfx['x'], dfx['y']):
+    plt.annotate(
+        label,
+        xy=(x, y), xytext=(-10, 10),
+        textcoords='offset points', ha='right', va='bottom',
+        bbox=dict(boxstyle='round,pad=0.1', fc='yellow', alpha=0.5),
+        arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+
+
+#-----------------------------------------------------------------------
+# matplotlib viz for colour
+
+pd.cut(np.log(dfx.cons), 4).unique()
+dfx['cons_cat'] = pd.cut(np.log(dfx.cons), 4, labels=False)
+dfx['cons_cat'].replace({0: 'red', 1: 'orange', 2: 'yellow', 3: 'green'}, inplace=True)
+fig, ax = plt.subplots()
+for cat in dfx.cons_cat.unique():
+    print(cat)
+    ax.scatter(
+        dfx.loc[dfx['cons_cat'] == cat, 'x'],
+        dfx.loc[dfx['cons_cat'] == cat, 'y'], c=cat, label=cat)
+ax.legend()
+plt.show()
 
 # ----------------------------------------------------------------------
 # other
