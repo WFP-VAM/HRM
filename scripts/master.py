@@ -32,7 +32,7 @@ def run(id):
 
     image_dir=os.path.join("../Data", "Satellite", config["satellite_source"][0])
     print(image_dir)
-    raster=config["satellite_grid"][0]
+    raster = config["satellite_grid"][0]
     print(raster)
 
     GRID = RasterGrid(raster,image_dir)
@@ -44,20 +44,24 @@ def run(id):
     # # ----------------- #
     print("INFO: downlaoding images ...")
     GRID.download_images(list_i, list_j)
-    print("INFO: images downloaded")
+    print("INFO: images downloaded.")
     # ----------------- #
     # SCORING ###########
     # ----------------- #
-    from utils import scoring_postprocess
-    network = NNExtractor(config['satellite_image_dir'][0], config['network_model'][0])
-    print("INFO: initiating network ...")
-    features = network.extract_features()
-    print("INFO: extracting features")
-    features = scoring_postprocess(features)
-    # write out
-    features.to_csv("../Data/Features/config_id_{}.csv".format(config['id'][0]), index=False)
+    # check if features file already there
+    if os.path.isfile("../Data/Features/features_config_id_{}.csv".format(id)):
+        print('INFO: images already scored for id: ', id)
+        features = pd.read_csv("../Data/Features/features_config_id_{}.csv".format(id))
 
-    #features=pd.read_csv("../Data/Features/config_id_{}.csv".format(config['id'][0]))
+    else:
+        from utils import scoring_postprocess
+        network = NNExtractor(config['satellite_image_dir'][0], config['network_model'][0])
+        print("INFO: initiating network ...")
+        features = network.extract_features()
+        print("INFO: extracting features")
+        features = scoring_postprocess(features)
+        # write out
+        features.to_csv("../Data/Features/features_config_id_{}.csv".format(config['id'][0]), index=False)
 
     # ----------------- #
     # ADD SURVEY DATA ###
@@ -78,11 +82,11 @@ def run(id):
     from sklearn.linear_model import Ridge
     from sklearn.model_selection import GridSearchCV, KFold, cross_val_score, cross_val_predict
 
-
     y = data[config['indicator'][0]].values
 
+    # Log-normal distribution
     if config['indicator_log'][0] == True:
-        y = np.log(y)  # Log-normal distribution
+        y = np.log(y)
 
     # PCA
     if config['model_pca'][0] > 0:
@@ -92,8 +96,7 @@ def run(id):
     else:
         X = data_features
 
-
-    # TRAIN
+    # TRAIN MODEL
     print("INFO: training model ...")
     outer_cv = KFold(5, shuffle=True, random_state=75788)
     model = Ridge()
@@ -106,21 +109,35 @@ def run(id):
     predict_r2 = cross_val_predict(clf_r2, X, y, cv=outer_cv)
     predict_mape = cross_val_predict(clf_MAPE, X, y, cv=outer_cv)
 
-    results_df = pd.DataFrame([predict_r2,predict_mape,y],index=["predict_r2","predict_mape","y"])
-    results_df=results_df.T
+    # WRITE FULL RESULTS to FILE SYSTEM
+    results_df = pd.DataFrame([predict_r2, predict_mape, y], index=["predict_r2", "predict_mape", "y"]).T
+    if not os.path.exists('../Data/Results'):
+        os.makedirs('../Data/Results')
+    results_df.to_csv(os.path.join("../Data/Results", "confi_"+str(id)+"_results.csv"), index=False)
 
-    results_df.to_csv(os.path.join("../Data/Results","confi_"+str(config['id'][0])+"_results.csv"), index=False)
+    # SAVE MODEL FOR PRODUCTION
+    from sklearn.externals import joblib
+    prod_cv = clf_MAPE.fit(X, y)
+    print('INFO: best parameter: ', prod_cv.best_params_)
+    model_prod = Ridge(alpha=prod_cv.best_params_['alpha'])
+    model_prod.fit(X, y)
+    if not os.path.exists('../Models'):
+        os.makedirs('../Models')
+    joblib.dump(model_prod, '../Models/ridge_model_config_id_{}.pkl'.format(id))
+    print('INFO: model saved.')
+
+    # ------------------ #
+    # WRITE SCORES to DB #
+    # ------------------ #
 
     score_r2_mean, score_r2_var, score_MAPE, score_MAPE_var = score_r2.mean(), score_r2.std() * 2, score_MAPE.mean(), score_MAPE.std() * 2
 
-    # ----------------- #
-    # WRITE RESULTS PUT #
-    # ----------------- #
     query = """
     insert into results (run_date, config_id, r2pearson, r2pearson_var, mape, mape_var)
     values (current_date, {}, {}, {}, {},{}) """.format(
         config['id'][0], score_r2_mean, score_r2_var, score_MAPE, score_MAPE_var)
     engine.execute(query)
+
 
 if __name__ == "__main__":
     for id in sys.argv[1:]:
