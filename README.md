@@ -14,7 +14,22 @@ This is done through the following Notebooks:
   4. Predicting HH indicators with CNN features.ipynb
   
  The code is following closely the one shared on Neal Jean's Guthub repo: https://github.com/nealjean/predicting-poverty
-  
+
+### Automation (HOW TO RUN):
+```
+python master.py args
+```
+where args are the ids of the table "config" in the database. Each id should be space sperated, example to trigger for configs 1, 2 and 3 do:
+```
+python master.py 1 2 3 > log.txt &
+```
+This will:
+* downlaod the relevant satellite images. (if not therte already)
+* extract the features for each image. (if no features for that config_id)
+* write r2 Pearson and MAPE scores to the ```results``` table.
+* save the full predictions on the left-out data.
+* save the trained model.
+
 ### Refactoring  
   
 #### Config file
