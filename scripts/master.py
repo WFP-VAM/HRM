@@ -43,7 +43,7 @@ def run(id):
     # # DOWNLOADING #######
     # # ----------------- #
     print("INFO: downlaoding images ...")
-    GRID.download_images(list_i, list_j)
+    GRID.download_images(list_i, list_j,step=config["satellite_step"][0],provider=config["satellite_source"][0])
     print("INFO: images downloaded.")
     # ----------------- #
     # SCORING ###########
