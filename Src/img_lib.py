@@ -124,7 +124,7 @@ class RasterGrid:
 
         return x_size, top_left_x_coords, top_left_y_coords, centroid_x_coords, centroid_y_coords, bands_data
 
-    def download_images(self, list_i, list_j,step=public_config["satellite"]["step"],provider=public_config["satellite"]["source"]):
+    def download_images(self, list_i, list_j,step = public_config["satellite"]["step"],provider=public_config["satellite"]["source"]):
         """
         Function
         --------
@@ -260,7 +260,7 @@ class RasterGrid:
         list_lon = []
 
         for lat in range(-35, 60, 1):
-            if lat % 10 == 0: print('INFO: getting coordinates ', lat)
+            if lat % 10 == 0: print('INFO: getting latitudes ', lat)
 
             for lon in range(-120, 150, 1):
                 g = geocoder.osm([lat, lon], method='reverse')

@@ -30,7 +30,7 @@ def run(id):
 
     config = pd.read_sql_query("select * from config where id = {}".format(id), engine)
 
-    image_dir=os.path.join("../Data", "Satellite", config["satellite_source"][0])
+    image_dir = os.path.join("../Data", "Satellite", config["satellite_source"][0])
     print(image_dir)
     raster = config["satellite_grid"][0]
     print(raster)
@@ -101,16 +101,21 @@ def run(id):
     outer_cv = KFold(5, shuffle=True, random_state=75788)
     model = Ridge()
     inner_cv = KFold(5, shuffle=True, random_state=1673)
+
+    clf = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv)
     clf_r2 = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=r2_pearson)
     clf_MAPE = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=MAPE)
+
+    score = cross_val_score(clf, X, y, cv=outer_cv)
     score_r2 = cross_val_score(clf_r2, X, y, scoring=r2_pearson, cv=outer_cv)
     score_MAPE = cross_val_score(clf_MAPE, X, y, scoring=MAPE, cv=outer_cv)
 
+    predict = cross_val_predict(clf, X, y, cv=outer_cv)
     predict_r2 = cross_val_predict(clf_r2, X, y, cv=outer_cv)
     predict_mape = cross_val_predict(clf_MAPE, X, y, cv=outer_cv)
 
     # WRITE FULL RESULTS to FILE SYSTEM
-    results_df = pd.DataFrame([predict_r2, predict_mape, y], index=["predict_r2", "predict_mape", "y"]).T
+    results_df = pd.DataFrame([predict, predict_r2, predict_mape, y], index=["predict", "predict_r2", "predict_mape", "y"]).T
     if not os.path.exists('../Data/Results'):
         os.makedirs('../Data/Results')
     results_df.to_csv(os.path.join("../Data/Results", "confi_"+str(id)+"_results.csv"), index=False)
@@ -130,12 +135,13 @@ def run(id):
     # WRITE SCORES to DB #
     # ------------------ #
 
-    score_r2_mean, score_r2_var, score_MAPE, score_MAPE_var = score_r2.mean(), score_r2.std() * 2, score_MAPE.mean(), score_MAPE.std() * 2
+    score, score_mean, score_r2_mean, score_r2_var, score_MAPE, score_MAPE_var = \
+        score.mean(), score.std() * 2, score_r2.mean(), score_r2.std() * 2, score_MAPE.mean(), score_MAPE.std() * 2
 
     query = """
-    insert into results (run_date, config_id, r2pearson, r2pearson_var, mape, mape_var)
-    values (current_date, {}, {}, {}, {},{}) """.format(
-        config['id'][0], score_r2_mean, score_r2_var, score_MAPE, score_MAPE_var)
+    insert into results (run_date, config_id, r2, r2_var, r2pearson, r2pearson_var, mape, mape_var)
+    values (current_date, {}, {}, {}, {}, {}, {},{}) """.format(
+        config['id'][0], score, score_mean, score_r2_mean, score_r2_var, score_MAPE, score_MAPE_var)
     engine.execute(query)
 
 
