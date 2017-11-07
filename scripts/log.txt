@@ -1,0 +1,278 @@
+INFO: config id = 12
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+../Data/Satellite/Google/23154_7373/23154_7373.jpg already downloaded
+10 images downloaded
+../Data/Satellite/Google/23181_7357/23181_7357.jpg already downloaded
+20 images downloaded
+../Data/Satellite/Google/23167_7357/23167_7357.jpg already downloaded
+../Data/Satellite/Google/23077_7406/23077_7406.jpg already downloaded
+30 images downloaded
+../Data/Satellite/Google/23103_7402/23103_7402.jpg already downloaded
+40 images downloaded
+50 images downloaded
+../Data/Satellite/Google/23113_7402/23113_7402.jpg already downloaded
+60 images downloaded
+../Data/Satellite/Google/23135_7387/23135_7387.jpg already downloaded
+70 images downloaded
+80 images downloaded
+90 images downloaded
+100 images downloaded
+110 images downloaded
+120 images downloaded
+130 images downloaded
+../Data/Satellite/Google/23097_7161/23097_7161.jpg already downloaded
+140 images downloaded
+150 images downloaded
+INFO: images downloaded.
+INFO: images already scored for id:  12
+INFO: training model ...
+INFO: best parameter:  {'alpha': 100}
+INFO: model saved.
+INFO: config id = 13
+../Data/Satellite/Bing
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+../Data/Satellite/Bing/23197_7356/23197_7356.jpg already downloaded
+10 images downloaded
+../Data/Satellite/Bing/23193_7356/23193_7356.jpg already downloaded
+../Data/Satellite/Bing/23175_7360/23175_7360.jpg already downloaded
+../Data/Satellite/Bing/23175_7360/23175_7360.jpg already downloaded
+20 images downloaded
+30 images downloaded
+40 images downloaded
+../Data/Satellite/Bing/23114_7402/23114_7402.jpg already downloaded
+../Data/Satellite/Bing/23114_7403/23114_7403.jpg already downloaded
+50 images downloaded
+60 images downloaded
+../Data/Satellite/Bing/23131_7393/23131_7393.jpg already downloaded
+../Data/Satellite/Bing/23135_7387/23135_7387.jpg already downloaded
+../Data/Satellite/Bing/23150_7375/23150_7375.jpg already downloaded
+70 images downloaded
+../Data/Satellite/Bing/22960_7322/22960_7322.jpg already downloaded
+80 images downloaded
+90 images downloaded
+100 images downloaded
+110 images downloaded
+120 images downloaded
+130 images downloaded
+../Data/Satellite/Bing/23157_7323/23157_7323.jpg already downloaded
+140 images downloaded
+150 images downloaded
+../Data/Satellite/Bing/23173_7290/23173_7290.jpg already downloaded
+../Data/Satellite/Bing/23173_7290/23173_7290.jpg already downloaded
+../Data/Satellite/Bing/23174_7290/23174_7290.jpg already downloaded
+INFO: images downloaded.
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: best parameter:  {'alpha': 100}
+INFO: model saved.
+INFO: config id = 14
+../Data/Satellite/Bing
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+../Data/Satellite/Bing/23154_7373/23154_7373.jpg already downloaded
+../Data/Satellite/Bing/23153_7373/23153_7373.jpg already downloaded
+../Data/Satellite/Bing/23197_7356/23197_7356.jpg already downloaded
+../Data/Satellite/Bing/23193_7356/23193_7356.jpg already downloaded
+../Data/Satellite/Bing/23156_7366/23156_7366.jpg already downloaded
+../Data/Satellite/Bing/23157_7367/23157_7367.jpg already downloaded
+../Data/Satellite/Bing/23154_7374/23154_7374.jpg already downloaded
+../Data/Satellite/Bing/23154_7375/23154_7375.jpg already downloaded
+10 images downloaded
+../Data/Satellite/Bing/23193_7356/23193_7356.jpg already downloaded
+../Data/Satellite/Bing/23161_7361/23161_7361.jpg already downloaded
+../Data/Satellite/Bing/23182_7360/23182_7360.jpg already downloaded
+../Data/Satellite/Bing/23168_7359/23168_7359.jpg already downloaded
+../Data/Satellite/Bing/23181_7357/23181_7357.jpg already downloaded
+../Data/Satellite/Bing/23175_7360/23175_7360.jpg already downloaded
+../Data/Satellite/Bing/23170_7357/23170_7357.jpg already downloaded
+../Data/Satellite/Bing/23175_7360/23175_7360.jpg already downloaded
+../Data/Satellite/Bing/23175_7360/23175_7360.jpg already downloaded
+20 images downloaded
+../Data/Satellite/Bing/23171_7359/23171_7359.jpg already downloaded
+../Data/Satellite/Bing/23095_7337/23095_7337.jpg already downloaded
+../Data/Satellite/Bing/23157_7330/23157_7330.jpg already downloaded
+../Data/Satellite/Bing/23167_7357/23167_7357.jpg already downloaded
+../Data/Satellite/Bing/23112_7346/23112_7346.jpg already downloaded
+../Data/Satellite/Bing/23099_7408/23099_7408.jpg already downloaded
+../Data/Satellite/Bing/23062_7359/23062_7359.jpg already downloaded
+../Data/Satellite/Bing/23077_7406/23077_7406.jpg already downloaded
+../Data/Satellite/Bing/23106_7404/23106_7404.jpg already downloaded
+../Data/Satellite/Bing/23091_7401/23091_7401.jpg already downloaded
+30 images downloaded
+../Data/Satellite/Bing/23074_7362/23074_7362.jpg already downloaded
+../Data/Satellite/Bing/23095_7413/23095_7413.jpg already downloaded
+../Data/Satellite/Bing/23085_7387/23085_7387.jpg already downloaded
+../Data/Satellite/Bing/23103_7402/23103_7402.jpg already downloaded
+../Data/Satellite/Bing/23084_7389/23084_7389.jpg already downloaded
+../Data/Satellite/Bing/23102_7404/23102_7404.jpg already downloaded
+../Data/Satellite/Bing/23098_7408/23098_7408.jpg already downloaded
+../Data/Satellite/Bing/23069_7418/23069_7418.jpg already downloaded
+../Data/Satellite/Bing/23112_7401/23112_7401.jpg already downloaded
+40 images downloaded
+../Data/Satellite/Bing/23114_7403/23114_7403.jpg already downloaded
+../Data/Satellite/Bing/23111_7405/23111_7405.jpg already downloaded
+../Data/Satellite/Bing/23110_7396/23110_7396.jpg already downloaded
+../Data/Satellite/Bing/23114_7402/23114_7402.jpg already downloaded
+../Data/Satellite/Bing/23114_7402/23114_7402.jpg already downloaded
+../Data/Satellite/Bing/23114_7403/23114_7403.jpg already downloaded
+../Data/Satellite/Bing/23116_7400/23116_7400.jpg already downloaded
+../Data/Satellite/Bing/23117_7404/23117_7404.jpg already downloaded
+../Data/Satellite/Bing/23106_7399/23106_7399.jpg already downloaded
+../Data/Satellite/Bing/23111_7403/23111_7403.jpg already downloaded
+50 images downloaded
+../Data/Satellite/Bing/23113_7401/23113_7401.jpg already downloaded
+../Data/Satellite/Bing/23113_7402/23113_7402.jpg already downloaded
+../Data/Satellite/Bing/23112_7403/23112_7403.jpg already downloaded
+../Data/Satellite/Bing/23133_7390/23133_7390.jpg already downloaded
+../Data/Satellite/Bing/23145_7374/23145_7374.jpg already downloaded
+../Data/Satellite/Bing/23131_7393/23131_7393.jpg already downloaded
+../Data/Satellite/Bing/23134_7389/23134_7389.jpg already downloaded
+../Data/Satellite/Bing/23151_7353/23151_7353.jpg already downloaded
+../Data/Satellite/Bing/23135_7387/23135_7387.jpg already downloaded
+../Data/Satellite/Bing/23141_7382/23141_7382.jpg already downloaded
+60 images downloaded
+../Data/Satellite/Bing/23150_7375/23150_7375.jpg already downloaded
+../Data/Satellite/Bing/23131_7393/23131_7393.jpg already downloaded
+../Data/Satellite/Bing/23129_7396/23129_7396.jpg already downloaded
+../Data/Satellite/Bing/23135_7387/23135_7387.jpg already downloaded
+../Data/Satellite/Bing/23150_7375/23150_7375.jpg already downloaded
+../Data/Satellite/Bing/23135_7386/23135_7386.jpg already downloaded
+../Data/Satellite/Bing/22988_7382/22988_7382.jpg already downloaded
+../Data/Satellite/Bing/22919_7326/22919_7326.jpg already downloaded
+../Data/Satellite/Bing/22960_7322/22960_7322.jpg already downloaded
+70 images downloaded
+../Data/Satellite/Bing/22960_7322/22960_7322.jpg already downloaded
+../Data/Satellite/Bing/22990_7370/22990_7370.jpg already downloaded
+../Data/Satellite/Bing/22902_7368/22902_7368.jpg already downloaded
+../Data/Satellite/Bing/22943_7354/22943_7354.jpg already downloaded
+../Data/Satellite/Bing/22938_7338/22938_7338.jpg already downloaded
+../Data/Satellite/Bing/22950_7381/22950_7381.jpg already downloaded
+../Data/Satellite/Bing/22932_7391/22932_7391.jpg already downloaded
+../Data/Satellite/Bing/22965_7364/22965_7364.jpg already downloaded
+../Data/Satellite/Bing/22951_7375/22951_7375.jpg already downloaded
+../Data/Satellite/Bing/22935_7359/22935_7359.jpg already downloaded
+80 images downloaded
+../Data/Satellite/Bing/22919_7390/22919_7390.jpg already downloaded
+../Data/Satellite/Bing/23026_7369/23026_7369.jpg already downloaded
+../Data/Satellite/Bing/23047_7374/23047_7374.jpg already downloaded
+../Data/Satellite/Bing/23059_7372/23059_7372.jpg already downloaded
+../Data/Satellite/Bing/23046_7309/23046_7309.jpg already downloaded
+../Data/Satellite/Bing/23047_7380/23047_7380.jpg already downloaded
+../Data/Satellite/Bing/23043_7362/23043_7362.jpg already downloaded
+../Data/Satellite/Bing/23086_7344/23086_7344.jpg already downloaded
+../Data/Satellite/Bing/23045_7315/23045_7315.jpg already downloaded
+../Data/Satellite/Bing/23031_7351/23031_7351.jpg already downloaded
+90 images downloaded
+../Data/Satellite/Bing/23034_7288/23034_7288.jpg already downloaded
+../Data/Satellite/Bing/23057_7317/23057_7317.jpg already downloaded
+../Data/Satellite/Bing/23035_7279/23035_7279.jpg already downloaded
+../Data/Satellite/Bing/23005_7322/23005_7322.jpg already downloaded
+../Data/Satellite/Bing/23075_7348/23075_7348.jpg already downloaded
+../Data/Satellite/Bing/23017_7394/23017_7394.jpg already downloaded
+../Data/Satellite/Bing/23035_7401/23035_7401.jpg already downloaded
+../Data/Satellite/Bing/22994_7392/22994_7392.jpg already downloaded
+../Data/Satellite/Bing/23045_7422/23045_7422.jpg already downloaded
+../Data/Satellite/Bing/23066_7419/23066_7419.jpg already downloaded
+100 images downloaded
+../Data/Satellite/Bing/23000_7387/23000_7387.jpg already downloaded
+../Data/Satellite/Bing/23035_7387/23035_7387.jpg already downloaded
+../Data/Satellite/Bing/23042_7413/23042_7413.jpg already downloaded
+../Data/Satellite/Bing/23043_7414/23043_7414.jpg already downloaded
+../Data/Satellite/Bing/23053_7379/23053_7379.jpg already downloaded
+../Data/Satellite/Bing/22998_7399/22998_7399.jpg already downloaded
+../Data/Satellite/Bing/23029_7380/23029_7380.jpg already downloaded
+../Data/Satellite/Bing/23024_7337/23024_7337.jpg already downloaded
+../Data/Satellite/Bing/22996_7274/22996_7274.jpg already downloaded
+110 images downloaded
+../Data/Satellite/Bing/23000_7258/23000_7258.jpg already downloaded
+../Data/Satellite/Bing/23037_7267/23037_7267.jpg already downloaded
+../Data/Satellite/Bing/23019_7359/23019_7359.jpg already downloaded
+../Data/Satellite/Bing/23012_7325/23012_7325.jpg already downloaded
+../Data/Satellite/Bing/23010_7251/23010_7251.jpg already downloaded
+../Data/Satellite/Bing/23001_7289/23001_7289.jpg already downloaded
+../Data/Satellite/Bing/23034_7329/23034_7329.jpg already downloaded
+../Data/Satellite/Bing/23008_7335/23008_7335.jpg already downloaded
+../Data/Satellite/Bing/23002_7334/23002_7334.jpg already downloaded
+120 images downloaded
+../Data/Satellite/Bing/23133_7199/23133_7199.jpg already downloaded
+../Data/Satellite/Bing/23073_7225/23073_7225.jpg already downloaded
+../Data/Satellite/Bing/23131_7242/23131_7242.jpg already downloaded
+../Data/Satellite/Bing/23212_7189/23212_7189.jpg already downloaded
+../Data/Satellite/Bing/23218_7217/23218_7217.jpg already downloaded
+../Data/Satellite/Bing/23200_7204/23200_7204.jpg already downloaded
+../Data/Satellite/Bing/23223_7232/23223_7232.jpg already downloaded
+../Data/Satellite/Bing/23205_7246/23205_7246.jpg already downloaded
+../Data/Satellite/Bing/23177_7273/23177_7273.jpg already downloaded
+130 images downloaded
+../Data/Satellite/Bing/23110_7245/23110_7245.jpg already downloaded
+../Data/Satellite/Bing/23106_7224/23106_7224.jpg already downloaded
+../Data/Satellite/Bing/23097_7161/23097_7161.jpg already downloaded
+../Data/Satellite/Bing/23128_7208/23128_7208.jpg already downloaded
+../Data/Satellite/Bing/23096_7317/23096_7317.jpg already downloaded
+../Data/Satellite/Bing/23059_7284/23059_7284.jpg already downloaded
+../Data/Satellite/Bing/23153_7321/23153_7321.jpg already downloaded
+../Data/Satellite/Bing/23157_7323/23157_7323.jpg already downloaded
+../Data/Satellite/Bing/23157_7322/23157_7322.jpg already downloaded
+../Data/Satellite/Bing/23157_7323/23157_7323.jpg already downloaded
+140 images downloaded
+../Data/Satellite/Bing/23121_7299/23121_7299.jpg already downloaded
+../Data/Satellite/Bing/23124_7261/23124_7261.jpg already downloaded
+../Data/Satellite/Bing/23094_7323/23094_7323.jpg already downloaded
+../Data/Satellite/Bing/23120_7352/23120_7352.jpg already downloaded
+../Data/Satellite/Bing/23157_7306/23157_7306.jpg already downloaded
+../Data/Satellite/Bing/23160_7302/23160_7302.jpg already downloaded
+../Data/Satellite/Bing/23130_7284/23130_7284.jpg already downloaded
+../Data/Satellite/Bing/23185_7278/23185_7278.jpg already downloaded
+../Data/Satellite/Bing/23174_7289/23174_7289.jpg already downloaded
+../Data/Satellite/Bing/23173_7290/23173_7290.jpg already downloaded
+150 images downloaded
+../Data/Satellite/Bing/23173_7290/23173_7290.jpg already downloaded
+../Data/Satellite/Bing/23173_7290/23173_7290.jpg already downloaded
+../Data/Satellite/Bing/23168_7294/23168_7294.jpg already downloaded
+../Data/Satellite/Bing/23172_7290/23172_7290.jpg already downloaded
+../Data/Satellite/Bing/23174_7290/23174_7290.jpg already downloaded
+../Data/Satellite/Bing/23174_7290/23174_7290.jpg already downloaded
+../Data/Satellite/Bing/23177_7286/23177_7286.jpg already downloaded
+../Data/Satellite/Bing/23191_7266/23191_7266.jpg already downloaded
+../Data/Satellite/Bing/23172_7291/23172_7291.jpg already downloaded
+../Data/Satellite/Bing/23207_7272/23207_7272.jpg already downloaded
+INFO: images downloaded.
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: best parameter:  {'alpha': 0.001}
+INFO: model saved.

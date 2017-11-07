@@ -1,0 +1,825 @@
+INFO: config id = 3
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+../Data/Satellite/Google/25207_9151/25207_9151.jpg already downloaded
+10 images downloaded
+../Data/Satellite/Google/25232_9103/25232_9103.jpg already downloaded
+20 images downloaded
+30 images downloaded
+40 images downloaded
+../Data/Satellite/Google/25245_9036/25245_9036.jpg already downloaded
+../Data/Satellite/Google/25417_9024/25417_9024.jpg already downloaded
+50 images downloaded
+../Data/Satellite/Google/25505_8995/25505_8995.jpg already downloaded
+60 images downloaded
+../Data/Satellite/Google/25182_8990/25182_8990.jpg already downloaded
+../Data/Satellite/Google/25411_8987/25411_8987.jpg already downloaded
+70 images downloaded
+../Data/Satellite/Google/25496_8968/25496_8968.jpg already downloaded
+80 images downloaded
+90 images downloaded
+../Data/Satellite/Google/25505_8960/25505_8960.jpg already downloaded
+../Data/Satellite/Google/25513_8960/25513_8960.jpg already downloaded
+100 images downloaded
+110 images downloaded
+120 images downloaded
+130 images downloaded
+140 images downloaded
+150 images downloaded
+160 images downloaded
+../Data/Satellite/Google/25693_8916/25693_8916.jpg already downloaded
+170 images downloaded
+../Data/Satellite/Google/25295_8901/25295_8901.jpg already downloaded
+180 images downloaded
+../Data/Satellite/Google/25576_8889/25576_8889.jpg already downloaded
+190 images downloaded
+200 images downloaded
+../Data/Satellite/Google/25711_8862/25711_8862.jpg already downloaded
+210 images downloaded
+../Data/Satellite/Google/25759_8840/25759_8840.jpg already downloaded
+220 images downloaded
+230 images downloaded
+240 images downloaded
+250 images downloaded
+../Data/Satellite/Google/25548_8728/25548_8728.jpg already downloaded
+260 images downloaded
+270 images downloaded
+280 images downloaded
+../Data/Satellite/Google/25310_8639/25310_8639.jpg already downloaded
+290 images downloaded
+../Data/Satellite/Google/25388_8606/25388_8606.jpg already downloaded
+300 images downloaded
+INFO: images downloaded
+INFO: loading ResNet50 ...
+Downloading data from https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5
+    8192/94653016 [..............................] - ETA: 1022s   24576/94653016 [..............................] - ETA: 682s    40960/94653016 [..............................] - ETA: 614s   73728/94653016 [..............................] - ETA: 455s  106496/94653016 [..............................] - ETA: 393s  139264/94653016 [..............................] - ETA: 361s  196608/94653016 [..............................] - ETA: 298s  262144/94653016 [..............................] - ETA: 255s  352256/94653016 [..............................] - ETA: 213s  458752/94653016 [..............................] - ETA: 182s  614400/94653016 [..............................] - ETA: 149s  770048/94653016 [..............................] - ETA: 129s  974848/94653016 [..............................] - ETA: 110s 1220608/94653016 [..............................] - ETA: 95s  1482752/94653016 [..............................] - ETA: 83s 1794048/94653016 [..............................] - ETA: 73s 2146304/94653016 [..............................] - ETA: 65s 2596864/94653016 [..............................] - ETA: 56s 3203072/94653016 [>.............................] - ETA: 47s 3801088/94653016 [>.............................] - ETA: 41s 4014080/94653016 [>.............................] - ETA: 40s 4448256/94653016 [>.............................] - ETA: 37s 5398528/94653016 [>.............................] - ETA: 32s 6234112/94653016 [>.............................] - ETA: 29s 7413760/94653016 [=>............................] - ETA: 25s 8003584/94653016 [=>............................] - ETA: 23s 8208384/94653016 [=>............................] - ETA: 23s 8757248/94653016 [=>............................] - ETA: 22s 9396224/94653016 [=>............................] - ETA: 21s 9641984/94653016 [==>...........................] - ETA: 21s10231808/94653016 [==>...........................] - ETA: 20s10870784/94653016 [==>...........................] - ETA: 19s11083776/94653016 [==>...........................] - ETA: 19s11657216/94653016 [==>...........................] - ETA: 18s12378112/94653016 [==>...........................] - ETA: 18s12591104/94653016 [==>...........................] - ETA: 18s13197312/94653016 [===>..........................] - ETA: 17s13901824/94653016 [===>..........................] - ETA: 16s14114816/94653016 [===>..........................] - ETA: 16s14721024/94653016 [===>..........................] - ETA: 16s15441920/94653016 [===>..........................] - ETA: 15s15654912/94653016 [===>..........................] - ETA: 15s16261120/94653016 [====>.........................] - ETA: 15s16982016/94653016 [====>.........................] - ETA: 14s17195008/94653016 [====>.........................] - ETA: 14s17842176/94653016 [====>.........................] - ETA: 14s18522112/94653016 [====>.........................] - ETA: 14s18735104/94653016 [====>.........................] - ETA: 14s19415040/94653016 [=====>........................] - ETA: 13s20078592/94653016 [=====>........................] - ETA: 13s20291584/94653016 [=====>........................] - ETA: 13s20963328/94653016 [=====>........................] - ETA: 13s21618688/94653016 [=====>........................] - ETA: 12s21831680/94653016 [=====>........................] - ETA: 12s22519808/94653016 [======>.......................] - ETA: 12s23158784/94653016 [======>.......................] - ETA: 12s23371776/94653016 [======>.......................] - ETA: 12s24059904/94653016 [======>.......................] - ETA: 11s24715264/94653016 [======>.......................] - ETA: 11s24928256/94653016 [======>.......................] - ETA: 11s25616384/94653016 [=======>......................] - ETA: 11s26255360/94653016 [=======>......................] - ETA: 11s26468352/94653016 [=======>......................] - ETA: 11s27172864/94653016 [=======>......................] - ETA: 11s27811840/94653016 [=======>......................] - ETA: 10s28024832/94653016 [=======>......................] - ETA: 10s28712960/94653016 [========>.....................] - ETA: 10s29351936/94653016 [========>.....................] - ETA: 10s29564928/94653016 [========>.....................] - ETA: 10s30261248/94653016 [========>.....................] - ETA: 10s30908416/94653016 [========>.....................] - ETA: 10s31121408/94653016 [========>.....................] - ETA: 10s31825920/94653016 [=========>....................] - ETA: 9s 32464896/94653016 [=========>....................] - ETA: 9s32677888/94653016 [=========>....................] - ETA: 9s33382400/94653016 [=========>....................] - ETA: 9s34021376/94653016 [=========>....................] - ETA: 9s34234368/94653016 [=========>....................] - ETA: 9s34938880/94653016 [==========>...................] - ETA: 9s35577856/94653016 [==========>...................] - ETA: 8s35790848/94653016 [==========>...................] - ETA: 8s36495360/94653016 [==========>...................] - ETA: 8s37134336/94653016 [==========>...................] - ETA: 8s37347328/94653016 [==========>...................] - ETA: 8s38068224/94653016 [===========>..................] - ETA: 8s38690816/94653016 [===========>..................] - ETA: 8s38903808/94653016 [===========>..................] - ETA: 8s39641088/94653016 [===========>..................] - ETA: 8s40247296/94653016 [===========>..................] - ETA: 8s40460288/94653016 [===========>..................] - ETA: 8s41230336/94653016 [============>.................] - ETA: 7s41803776/94653016 [============>.................] - ETA: 7s42016768/94653016 [============>.................] - ETA: 7s42786816/94653016 [============>.................] - ETA: 7s43360256/94653016 [============>.................] - ETA: 7s43589632/94653016 [============>.................] - ETA: 7s44376064/94653016 [=============>................] - ETA: 7s45146112/94653016 [=============>................] - ETA: 7s45932544/94653016 [=============>................] - ETA: 7s46694400/94653016 [=============>................] - ETA: 6s47276032/94653016 [=============>................] - ETA: 6s47505408/94653016 [==============>...............] - ETA: 6s48291840/94653016 [==============>...............] - ETA: 6s49061888/94653016 [==============>...............] - ETA: 6s49848320/94653016 [==============>...............] - ETA: 6s50634752/94653016 [===============>..............] - ETA: 6s51421184/94653016 [===============>..............] - ETA: 6s52207616/94653016 [===============>..............] - ETA: 5s52994048/94653016 [===============>..............] - ETA: 5s53796864/94653016 [================>.............] - ETA: 5s54583296/94653016 [================>.............] - ETA: 5s55386112/94653016 [================>.............] - ETA: 5s56008704/94653016 [================>.............] - ETA: 5s56795136/94653016 [=================>............] - ETA: 5s57040896/94653016 [=================>............] - ETA: 5s57892864/94653016 [=================>............] - ETA: 5s58548224/94653016 [=================>............] - ETA: 4s59367424/94653016 [=================>............] - ETA: 4s59678720/94653016 [=================>............] - ETA: 4s60383232/94653016 [==================>...........] - ETA: 4s61251584/94653016 [==================>...........] - ETA: 4s61579264/94653016 [==================>...........] - ETA: 4s62545920/94653016 [==================>...........] - ETA: 4s63299584/94653016 [===================>..........] - ETA: 4s64249856/94653016 [===================>..........] - ETA: 4s64593920/94653016 [===================>..........] - ETA: 3s65576960/94653016 [===================>..........] - ETA: 3s66412544/94653016 [====================>.........] - ETA: 3s66830336/94653016 [====================>.........] - ETA: 3s67821568/94653016 [====================>.........] - ETA: 3s68640768/94653016 [====================>.........] - ETA: 3s69074944/94653016 [====================>.........] - ETA: 3s70074368/94653016 [=====================>........] - ETA: 3s70950912/94653016 [=====================>........] - ETA: 3s71458816/94653016 [=====================>........] - ETA: 2s72491008/94653016 [=====================>........] - ETA: 2s73392128/94653016 [======================>.......] - ETA: 2s73916416/94653016 [======================>.......] - ETA: 2s74989568/94653016 [======================>.......] - ETA: 2s75915264/94653016 [=======================>......] - ETA: 2s76439552/94653016 [=======================>......] - ETA: 2s77586432/94653016 [=======================>......] - ETA: 2s78553088/94653016 [=======================>......] - ETA: 1s79060992/94653016 [========================>.....] - ETA: 1s80265216/94653016 [========================>.....] - ETA: 1s81289216/94653016 [========================>.....] - ETA: 1s81879040/94653016 [========================>.....] - ETA: 1s83001344/94653016 [=========================>....] - ETA: 1s84123648/94653016 [=========================>....] - ETA: 1s84746240/94653016 [=========================>....] - ETA: 1s85876736/94653016 [==========================>...] - ETA: 1s87056384/94653016 [==========================>...] - ETA: 0s87703552/94653016 [==========================>...] - ETA: 0s88563712/94653016 [===========================>..] - ETA: 0s88924160/94653016 [===========================>..] - ETA: 0s90316800/94653016 [===========================>..] - ETA: 0s90726400/94653016 [===========================>..] - ETA: 0s91332608/94653016 [===========================>..] - ETA: 0s91529216/94653016 [============================>.] - ETA: 0s92676096/94653016 [============================>.] - ETA: 0s93118464/94653016 [============================>.] - ETA: 0s93134848/94653016 [============================>.] - ETA: 0s93167616/94653016 [============================>.] - ETA: 0s93216768/94653016 [============================>.] - ETA: 0s93265920/94653016 [============================>.] - ETA: 0s93347840/94653016 [============================>.] - ETA: 0s93429760/94653016 [============================>.] - ETA: 0s93544448/94653016 [============================>.] - ETA: 0s93708288/94653016 [============================>.] - ETA: 0s93904896/94653016 [============================>.] - ETA: 0s94011392/94653016 [============================>.] - ETA: 0s94199808/94653016 [============================>.] - ETA: 0s94543872/94653016 [============================>.] - ETA: 0s94658560/94653016 [==============================] - 11s    
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+Feature extraction : 150 tiles
+Feature extraction : 160 tiles
+Feature extraction : 170 tiles
+Feature extraction : 180 tiles
+Feature extraction : 190 tiles
+Feature extraction : 200 tiles
+Feature extraction : 210 tiles
+Feature extraction : 220 tiles
+Feature extraction : 230 tiles
+Feature extraction : 240 tiles
+Feature extraction : 250 tiles
+Feature extraction : 260 tiles
+Feature extraction : 270 tiles
+Feature extraction : 280 tiles
+Feature extraction : 290 tiles
+Feature extraction : 300 tiles
+Feature extraction : 310 tiles
+Feature extraction : 320 tiles
+Feature extraction : 330 tiles
+Feature extraction : 340 tiles
+Feature extraction : 350 tiles
+Feature extraction : 360 tiles
+Feature extraction : 370 tiles
+Feature extraction : 380 tiles
+Feature extraction : 390 tiles
+Feature extraction : 400 tiles
+Feature extraction : 410 tiles
+Feature extraction : 420 tiles
+Feature extraction : 430 tiles
+Feature extraction : 440 tiles
+Feature extraction : 450 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: config id = 4
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+../Data/Satellite/Google/25175_9140/25175_9140.jpg already downloaded
+10 images downloaded
+20 images downloaded
+30 images downloaded
+40 images downloaded
+50 images downloaded
+60 images downloaded
+70 images downloaded
+80 images downloaded
+90 images downloaded
+100 images downloaded
+110 images downloaded
+120 images downloaded
+130 images downloaded
+140 images downloaded
+../Data/Satellite/Google/25617_8931/25617_8931.jpg already downloaded
+../Data/Satellite/Google/25257_8929/25257_8929.jpg already downloaded
+150 images downloaded
+160 images downloaded
+170 images downloaded
+180 images downloaded
+190 images downloaded
+200 images downloaded
+../Data/Satellite/Google/25687_8866/25687_8866.jpg already downloaded
+210 images downloaded
+220 images downloaded
+230 images downloaded
+240 images downloaded
+../Data/Satellite/Google/25526_8757/25526_8757.jpg already downloaded
+250 images downloaded
+260 images downloaded
+270 images downloaded
+280 images downloaded
+../Data/Satellite/Google/25475_8668/25475_8668.jpg already downloaded
+290 images downloaded
+../Data/Satellite/Google/25322_8629/25322_8629.jpg already downloaded
+../Data/Satellite/Google/25369_8610/25369_8610.jpg already downloaded
+300 images downloaded
+INFO: images downloaded
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+Feature extraction : 150 tiles
+Feature extraction : 160 tiles
+Feature extraction : 170 tiles
+Feature extraction : 180 tiles
+Feature extraction : 190 tiles
+Feature extraction : 200 tiles
+Feature extraction : 210 tiles
+Feature extraction : 220 tiles
+Feature extraction : 230 tiles
+Feature extraction : 240 tiles
+Feature extraction : 250 tiles
+Feature extraction : 260 tiles
+Feature extraction : 270 tiles
+Feature extraction : 280 tiles
+Feature extraction : 290 tiles
+Feature extraction : 300 tiles
+Feature extraction : 310 tiles
+Feature extraction : 320 tiles
+Feature extraction : 330 tiles
+Feature extraction : 340 tiles
+Feature extraction : 350 tiles
+Feature extraction : 360 tiles
+Feature extraction : 370 tiles
+Feature extraction : 380 tiles
+Feature extraction : 390 tiles
+Feature extraction : 400 tiles
+Feature extraction : 410 tiles
+Feature extraction : 420 tiles
+Feature extraction : 430 tiles
+Feature extraction : 440 tiles
+Feature extraction : 450 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: config id = 5
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+10 images downloaded
+../Data/Satellite/Google/25232_9103/25232_9103.jpg already downloaded
+20 images downloaded
+30 images downloaded
+40 images downloaded
+50 images downloaded
+60 images downloaded
+../Data/Satellite/Google/25451_8991/25451_8991.jpg already downloaded
+70 images downloaded
+80 images downloaded
+90 images downloaded
+100 images downloaded
+../Data/Satellite/Google/25522_8958/25522_8958.jpg already downloaded
+110 images downloaded
+120 images downloaded
+130 images downloaded
+140 images downloaded
+150 images downloaded
+160 images downloaded
+../Data/Satellite/Google/25278_8913/25278_8913.jpg already downloaded
+170 images downloaded
+180 images downloaded
+190 images downloaded
+../Data/Satellite/Google/25607_8876/25607_8876.jpg already downloaded
+200 images downloaded
+210 images downloaded
+220 images downloaded
+../Data/Satellite/Google/25729_8834/25729_8834.jpg already downloaded
+230 images downloaded
+240 images downloaded
+250 images downloaded
+../Data/Satellite/Google/25573_8747/25573_8747.jpg already downloaded
+../Data/Satellite/Google/25548_8728/25548_8728.jpg already downloaded
+260 images downloaded
+270 images downloaded
+../Data/Satellite/Google/25757_8692/25757_8692.jpg already downloaded
+280 images downloaded
+290 images downloaded
+../Data/Satellite/Google/25317_8607/25317_8607.jpg already downloaded
+300 images downloaded
+INFO: images downloaded
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+Feature extraction : 150 tiles
+Feature extraction : 160 tiles
+Feature extraction : 170 tiles
+Feature extraction : 180 tiles
+Feature extraction : 190 tiles
+Feature extraction : 200 tiles
+Feature extraction : 210 tiles
+Feature extraction : 220 tiles
+Feature extraction : 230 tiles
+Feature extraction : 240 tiles
+Feature extraction : 250 tiles
+Feature extraction : 260 tiles
+Feature extraction : 270 tiles
+Feature extraction : 280 tiles
+Feature extraction : 290 tiles
+Feature extraction : 300 tiles
+Feature extraction : 310 tiles
+Feature extraction : 320 tiles
+Feature extraction : 330 tiles
+Feature extraction : 340 tiles
+Feature extraction : 350 tiles
+Feature extraction : 360 tiles
+Feature extraction : 370 tiles
+Feature extraction : 380 tiles
+Feature extraction : 390 tiles
+Feature extraction : 400 tiles
+Feature extraction : 410 tiles
+Feature extraction : 420 tiles
+Feature extraction : 430 tiles
+Feature extraction : 440 tiles
+Feature extraction : 450 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: config id = 6
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+../Data/Satellite/Google/25161_9138/25161_9138.jpg already downloaded
+10 images downloaded
+20 images downloaded
+30 images downloaded
+40 images downloaded
+../Data/Satellite/Google/25346_9035/25346_9035.jpg already downloaded
+50 images downloaded
+../Data/Satellite/Google/25373_9018/25373_9018.jpg already downloaded
+60 images downloaded
+70 images downloaded
+80 images downloaded
+90 images downloaded
+100 images downloaded
+110 images downloaded
+120 images downloaded
+130 images downloaded
+140 images downloaded
+150 images downloaded
+160 images downloaded
+170 images downloaded
+../Data/Satellite/Google/25502_8903/25502_8903.jpg already downloaded
+180 images downloaded
+190 images downloaded
+../Data/Satellite/Google/25724_8874/25724_8874.jpg already downloaded
+200 images downloaded
+../Data/Satellite/Google/25711_8862/25711_8862.jpg already downloaded
+../Data/Satellite/Google/25646_8858/25646_8858.jpg already downloaded
+210 images downloaded
+220 images downloaded
+230 images downloaded
+240 images downloaded
+../Data/Satellite/Google/25589_8760/25589_8760.jpg already downloaded
+250 images downloaded
+260 images downloaded
+../Data/Satellite/Google/25512_8716/25512_8716.jpg already downloaded
+270 images downloaded
+280 images downloaded
+290 images downloaded
+300 images downloaded
+INFO: images downloaded
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+Feature extraction : 150 tiles
+Feature extraction : 160 tiles
+Feature extraction : 170 tiles
+Feature extraction : 180 tiles
+Feature extraction : 190 tiles
+Feature extraction : 200 tiles
+Feature extraction : 210 tiles
+Feature extraction : 220 tiles
+Feature extraction : 230 tiles
+Feature extraction : 240 tiles
+Feature extraction : 250 tiles
+Feature extraction : 260 tiles
+Feature extraction : 270 tiles
+Feature extraction : 280 tiles
+Feature extraction : 290 tiles
+Feature extraction : 300 tiles
+Feature extraction : 310 tiles
+Feature extraction : 320 tiles
+Feature extraction : 330 tiles
+Feature extraction : 340 tiles
+Feature extraction : 350 tiles
+Feature extraction : 360 tiles
+Feature extraction : 370 tiles
+Feature extraction : 380 tiles
+Feature extraction : 390 tiles
+Feature extraction : 400 tiles
+Feature extraction : 410 tiles
+Feature extraction : 420 tiles
+Feature extraction : 430 tiles
+Feature extraction : 440 tiles
+Feature extraction : 450 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: config id = 7
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+../Data/Satellite/Google/23154_7373/23154_7373.jpg already downloaded
+10 images downloaded
+20 images downloaded
+30 images downloaded
+../Data/Satellite/Google/23099_7407/23099_7407.jpg already downloaded
+40 images downloaded
+../Data/Satellite/Google/23111_7405/23111_7405.jpg already downloaded
+50 images downloaded
+../Data/Satellite/Google/23112_7403/23112_7403.jpg already downloaded
+60 images downloaded
+../Data/Satellite/Google/23150_7375/23150_7375.jpg already downloaded
+../Data/Satellite/Google/23135_7386/23135_7386.jpg already downloaded
+70 images downloaded
+80 images downloaded
+../Data/Satellite/Google/23045_7315/23045_7315.jpg already downloaded
+90 images downloaded
+100 images downloaded
+110 images downloaded
+120 images downloaded
+../Data/Satellite/Google/23242_7250/23242_7250.jpg already downloaded
+130 images downloaded
+../Data/Satellite/Google/23106_7224/23106_7224.jpg already downloaded
+../Data/Satellite/Google/23157_7323/23157_7323.jpg already downloaded
+140 images downloaded
+150 images downloaded
+INFO: images downloaded
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+Feature extraction : 150 tiles
+Feature extraction : 160 tiles
+Feature extraction : 170 tiles
+Feature extraction : 180 tiles
+Feature extraction : 190 tiles
+Feature extraction : 200 tiles
+Feature extraction : 210 tiles
+Feature extraction : 220 tiles
+Feature extraction : 230 tiles
+Feature extraction : 240 tiles
+Feature extraction : 250 tiles
+Feature extraction : 260 tiles
+Feature extraction : 270 tiles
+Feature extraction : 280 tiles
+Feature extraction : 290 tiles
+Feature extraction : 300 tiles
+Feature extraction : 310 tiles
+Feature extraction : 320 tiles
+Feature extraction : 330 tiles
+Feature extraction : 340 tiles
+Feature extraction : 350 tiles
+Feature extraction : 360 tiles
+Feature extraction : 370 tiles
+Feature extraction : 380 tiles
+Feature extraction : 390 tiles
+Feature extraction : 400 tiles
+Feature extraction : 410 tiles
+Feature extraction : 420 tiles
+Feature extraction : 430 tiles
+Feature extraction : 440 tiles
+Feature extraction : 450 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: config id = 8
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+10 images downloaded
+../Data/Satellite/Google/23165_7357/23165_7357.jpg already downloaded
+../Data/Satellite/Google/23161_7361/23161_7361.jpg already downloaded
+20 images downloaded
+30 images downloaded
+40 images downloaded
+50 images downloaded
+../Data/Satellite/Google/23135_7387/23135_7387.jpg already downloaded
+60 images downloaded
+70 images downloaded
+80 images downloaded
+90 images downloaded
+100 images downloaded
+110 images downloaded
+120 images downloaded
+130 images downloaded
+140 images downloaded
+150 images downloaded
+INFO: images downloaded
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+Feature extraction : 150 tiles
+Feature extraction : 160 tiles
+Feature extraction : 170 tiles
+Feature extraction : 180 tiles
+Feature extraction : 190 tiles
+Feature extraction : 200 tiles
+Feature extraction : 210 tiles
+Feature extraction : 220 tiles
+Feature extraction : 230 tiles
+Feature extraction : 240 tiles
+Feature extraction : 250 tiles
+Feature extraction : 260 tiles
+Feature extraction : 270 tiles
+Feature extraction : 280 tiles
+Feature extraction : 290 tiles
+Feature extraction : 300 tiles
+Feature extraction : 310 tiles
+Feature extraction : 320 tiles
+Feature extraction : 330 tiles
+Feature extraction : 340 tiles
+Feature extraction : 350 tiles
+Feature extraction : 360 tiles
+Feature extraction : 370 tiles
+Feature extraction : 380 tiles
+Feature extraction : 390 tiles
+Feature extraction : 400 tiles
+Feature extraction : 410 tiles
+Feature extraction : 420 tiles
+Feature extraction : 430 tiles
+Feature extraction : 440 tiles
+Feature extraction : 450 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: config id = 9
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+10 images downloaded
+../Data/Satellite/Google/23181_7357/23181_7357.jpg already downloaded
+20 images downloaded
+30 images downloaded
+40 images downloaded
+50 images downloaded
+60 images downloaded
+70 images downloaded
+80 images downloaded
+../Data/Satellite/Google/23026_7369/23026_7369.jpg already downloaded
+90 images downloaded
+100 images downloaded
+110 images downloaded
+120 images downloaded
+../Data/Satellite/Google/23177_7273/23177_7273.jpg already downloaded
+130 images downloaded
+140 images downloaded
+150 images downloaded
+INFO: images downloaded
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+Feature extraction : 150 tiles
+Feature extraction : 160 tiles
+Feature extraction : 170 tiles
+Feature extraction : 180 tiles
+Feature extraction : 190 tiles
+Feature extraction : 200 tiles
+Feature extraction : 210 tiles
+Feature extraction : 220 tiles
+Feature extraction : 230 tiles
+Feature extraction : 240 tiles
+Feature extraction : 250 tiles
+Feature extraction : 260 tiles
+Feature extraction : 270 tiles
+Feature extraction : 280 tiles
+Feature extraction : 290 tiles
+Feature extraction : 300 tiles
+Feature extraction : 310 tiles
+Feature extraction : 320 tiles
+Feature extraction : 330 tiles
+Feature extraction : 340 tiles
+Feature extraction : 350 tiles
+Feature extraction : 360 tiles
+Feature extraction : 370 tiles
+Feature extraction : 380 tiles
+Feature extraction : 390 tiles
+Feature extraction : 400 tiles
+Feature extraction : 410 tiles
+Feature extraction : 420 tiles
+Feature extraction : 430 tiles
+Feature extraction : 440 tiles
+Feature extraction : 450 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: config id = 10
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+10 images downloaded
+20 images downloaded
+../Data/Satellite/Google/23171_7359/23171_7359.jpg already downloaded
+30 images downloaded
+40 images downloaded
+50 images downloaded
+../Data/Satellite/Google/23145_7374/23145_7374.jpg already downloaded
+60 images downloaded
+70 images downloaded
+80 images downloaded
+90 images downloaded
+../Data/Satellite/Google/23057_7317/23057_7317.jpg already downloaded
+100 images downloaded
+110 images downloaded
+../Data/Satellite/Google/23002_7334/23002_7334.jpg already downloaded
+120 images downloaded
+130 images downloaded
+140 images downloaded
+150 images downloaded
+../Data/Satellite/Google/23173_7290/23173_7290.jpg already downloaded
+INFO: images downloaded
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+Feature extraction : 150 tiles
+Feature extraction : 160 tiles
+Feature extraction : 170 tiles
+Feature extraction : 180 tiles
+Feature extraction : 190 tiles
+Feature extraction : 200 tiles
+Feature extraction : 210 tiles
+Feature extraction : 220 tiles
+Feature extraction : 230 tiles
+Feature extraction : 240 tiles
+Feature extraction : 250 tiles
+Feature extraction : 260 tiles
+Feature extraction : 270 tiles
+Feature extraction : 280 tiles
+Feature extraction : 290 tiles
+Feature extraction : 300 tiles
+Feature extraction : 310 tiles
+Feature extraction : 320 tiles
+Feature extraction : 330 tiles
+Feature extraction : 340 tiles
+Feature extraction : 350 tiles
+Feature extraction : 360 tiles
+Feature extraction : 370 tiles
+Feature extraction : 380 tiles
+Feature extraction : 390 tiles
+Feature extraction : 400 tiles
+Feature extraction : 410 tiles
+Feature extraction : 420 tiles
+Feature extraction : 430 tiles
+Feature extraction : 440 tiles
+Feature extraction : 450 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: config id = 11
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+10 images downloaded
+20 images downloaded
+../Data/Satellite/Google/23062_7359/23062_7359.jpg already downloaded
+30 images downloaded
+40 images downloaded
+50 images downloaded
+60 images downloaded
+70 images downloaded
+../Data/Satellite/Google/22990_7370/22990_7370.jpg already downloaded
+80 images downloaded
+90 images downloaded
+100 images downloaded
+110 images downloaded
+120 images downloaded
+130 images downloaded
+../Data/Satellite/Google/23128_7208/23128_7208.jpg already downloaded
+140 images downloaded
+../Data/Satellite/Google/23121_7299/23121_7299.jpg already downloaded
+150 images downloaded
+INFO: images downloaded
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+Feature extraction : 150 tiles
+Feature extraction : 160 tiles
+Feature extraction : 170 tiles
+Feature extraction : 180 tiles
+Feature extraction : 190 tiles
+Feature extraction : 200 tiles
+Feature extraction : 210 tiles
+Feature extraction : 220 tiles
+Feature extraction : 230 tiles
+Feature extraction : 240 tiles
+Feature extraction : 250 tiles
+Feature extraction : 260 tiles
+Feature extraction : 270 tiles
+Feature extraction : 280 tiles
+Feature extraction : 290 tiles
+Feature extraction : 300 tiles
+Feature extraction : 310 tiles
+Feature extraction : 320 tiles
+Feature extraction : 330 tiles
+Feature extraction : 340 tiles
+Feature extraction : 350 tiles
+Feature extraction : 360 tiles
+Feature extraction : 370 tiles
+Feature extraction : 380 tiles
+Feature extraction : 390 tiles
+Feature extraction : 400 tiles
+Feature extraction : 410 tiles
+Feature extraction : 420 tiles
+Feature extraction : 430 tiles
+Feature extraction : 440 tiles
+Feature extraction : 450 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: config id = 12
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+10 images downloaded
+20 images downloaded
+30 images downloaded
+40 images downloaded
+../Data/Satellite/Google/23106_7399/23106_7399.jpg already downloaded
+50 images downloaded
+60 images downloaded
+../Data/Satellite/Google/23136_7386/23136_7386.jpg already downloaded
+70 images downloaded
+80 images downloaded
+90 images downloaded
+../Data/Satellite/Google/23035_7401/23035_7401.jpg already downloaded
+100 images downloaded
+110 images downloaded
+120 images downloaded
+130 images downloaded
+140 images downloaded
+150 images downloaded
+INFO: images downloaded
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+Feature extraction : 150 tiles
+Feature extraction : 160 tiles
+Feature extraction : 170 tiles
+Feature extraction : 180 tiles
+Feature extraction : 190 tiles
+Feature extraction : 200 tiles
+Feature extraction : 210 tiles
+Feature extraction : 220 tiles
+Feature extraction : 230 tiles
+Feature extraction : 240 tiles
+Feature extraction : 250 tiles
+Feature extraction : 260 tiles
+Feature extraction : 270 tiles
+Feature extraction : 280 tiles
+Feature extraction : 290 tiles
+Feature extraction : 300 tiles
+Feature extraction : 310 tiles
+Feature extraction : 320 tiles
+Feature extraction : 330 tiles
+Feature extraction : 340 tiles
+Feature extraction : 350 tiles
+Feature extraction : 360 tiles
+Feature extraction : 370 tiles
+Feature extraction : 380 tiles
+Feature extraction : 390 tiles
+Feature extraction : 400 tiles
+Feature extraction : 410 tiles
+Feature extraction : 420 tiles
+Feature extraction : 430 tiles
+Feature extraction : 440 tiles
+Feature extraction : 450 tiles
+INFO: extracting features
+INFO: training model ...

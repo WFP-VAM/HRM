@@ -1,0 +1,47 @@
+INFO: config id = 17
+../Data/Satellite/Bing
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+10 images downloaded
+20 images downloaded
+30 images downloaded
+40 images downloaded
+50 images downloaded
+60 images downloaded
+70 images downloaded
+../Data/Satellite/Bing/22951_7375/22951_7375.jpg already downloaded
+80 images downloaded
+../Data/Satellite/Bing/23059_7372/23059_7372.jpg already downloaded
+../Data/Satellite/Bing/23046_7309/23046_7309.jpg already downloaded
+../Data/Satellite/Bing/23086_7344/23086_7344.jpg already downloaded
+90 images downloaded
+../Data/Satellite/Bing/22994_7392/22994_7392.jpg already downloaded
+100 images downloaded
+../Data/Satellite/Bing/23053_7379/23053_7379.jpg already downloaded
+110 images downloaded
+../Data/Satellite/Bing/23037_7267/23037_7267.jpg already downloaded
+../Data/Satellite/Bing/23002_7334/23002_7334.jpg already downloaded
+120 images downloaded
+../Data/Satellite/Bing/23073_7225/23073_7225.jpg already downloaded
+130 images downloaded
+../Data/Satellite/Bing/23096_7317/23096_7317.jpg already downloaded
+../Data/Satellite/Bing/23153_7321/23153_7321.jpg already downloaded
+../Data/Satellite/Bing/23157_7323/23157_7323.jpg already downloaded
+../Data/Satellite/Bing/23157_7323/23157_7323.jpg already downloaded
+140 images downloaded
+../Data/Satellite/Bing/23121_7299/23121_7299.jpg already downloaded
+150 images downloaded
+../Data/Satellite/Bing/23173_7290/23173_7290.jpg already downloaded
+../Data/Satellite/Bing/23168_7294/23168_7294.jpg already downloaded
+../Data/Satellite/Bing/23172_7290/23172_7290.jpg already downloaded
+../Data/Satellite/Bing/23174_7290/23174_7290.jpg already downloaded
+../Data/Satellite/Bing/23174_7290/23174_7290.jpg already downloaded
+../Data/Satellite/Bing/23177_7286/23177_7286.jpg already downloaded
+../Data/Satellite/Bing/23191_7266/23191_7266.jpg already downloaded
+../Data/Satellite/Bing/23172_7291/23172_7291.jpg already downloaded
+../Data/Satellite/Bing/23207_7272/23207_7272.jpg already downloaded
+INFO: images downloaded.
+INFO: images already scored for id:  17
+INFO: training model ...
+INFO: best parameter:  {'alpha': 100}
+INFO: model saved.
