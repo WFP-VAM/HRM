@@ -5,8 +5,6 @@ from img_utils import get_cell_idx
 import gdal
 import numpy as np
 
-with open('../public_config.yml', 'r') as cfgfile:
-    public_config = yaml.load(cfgfile)
 
 with open('../private_config.yml', 'r') as cfgfile:
     tokens = yaml.load(cfgfile)
@@ -20,7 +18,7 @@ class RasterGrid:
     from Google Static API.
     """
 
-    def __init__(self,raster=os.path.join("../Data","Satellite",public_config["satellite"]["grid"]),image_dir=os.path.join("../Data","Satellite",public_config["satellite"]["source"])):
+    def __init__(self,raster,image_dir):
 
         self.x_size, \
         self.top_left_x_coords, \
@@ -30,9 +28,8 @@ class RasterGrid:
         self.bands_data = self.__read_raster(raster)
         self.url = None
         self.output_image_dir=image_dir
-        self.config = public_config
 
-    def get_gridcoordinates(self, file=os.path.join("../Data","Datasets",public_config["dataset"]["filename"])):
+    def get_gridcoordinates(self, file):
 
         dataset= pd.read_csv(file)
         list_i=[]
@@ -43,7 +40,7 @@ class RasterGrid:
             list_j.append(j)
         return (list_i,list_j)
 
-    def get_gpscoordinates(self, list_i, list_j, step=public_config["satellite"]["step"]):
+    def get_gpscoordinates(self, list_i, list_j, step):
         """
         given a set of i and j it returns the lists on longitude and latitude.
         :param list_i: list of i (raster/grid references)
@@ -124,7 +121,7 @@ class RasterGrid:
 
         return x_size, top_left_x_coords, top_left_y_coords, centroid_x_coords, centroid_y_coords, bands_data
 
-    def download_images(self, list_i, list_j,step = public_config["satellite"]["step"],provider=public_config["satellite"]["source"]):
+    def download_images(self, list_i, list_j,step,provider):
         """
         Function
         --------
@@ -271,4 +268,3 @@ class RasterGrid:
                 except TypeError:
                     pass
         return list_lat, list_lon
-

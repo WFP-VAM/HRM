@@ -1,17 +1,13 @@
 import os
 import yaml
 
-with open('../public_config.yml', 'r') as cfgfile:
-    public_config = yaml.load(cfgfile)
-
-
 class NNExtractor:
     """
     Class
     -----
     Handles the feature extraction from a pre-trained NN.
     """
-    def __init__(self, output_image_dir, model_type='ResNet50',step=public_config["satellite"]["step"]):
+    def __init__(self, output_image_dir, model_type, step):
         """
         Initializes the NNExtractor object where the model to be used is defined.
         :param config: the config file
