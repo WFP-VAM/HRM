@@ -14,7 +14,9 @@ def scoring_postprocess(features):
 # get all coordinates for country
 import shapefile
 from shapely.geometry import shape, Point
-def get_coordinates_of_country(path_to_shape_file, spacing=1):
+import numpy as np
+
+def get_coordinates_from_shp(path_to_shape_file, spacing=1):
     """
     function that given a shapefile it return all the coordinates within the boundary. You can chose the coordinates
     steps over which it  checks (ex. integers -> spacings=1)
@@ -34,8 +36,8 @@ def get_coordinates_of_country(path_to_shape_file, spacing=1):
 
     list_lat = []
     list_lon = []
-    for lat in range(-35, 60, spacing):
-        for lon in range(-120, 150, spacing):
+    for lat in np.arange(-35, 60, spacing):
+        for lon in np.arange(-120, 150, spacing):
             if check(lon, lat):
                 list_lon.append(lon)
                 list_lat.append(lat)
