@@ -55,9 +55,9 @@ def run(id):
 
     else:
         from utils import scoring_postprocess
-        network = NNExtractor(config['satellite_image_dir'][0], config['network_model'][0])
+        network = NNExtractor(config['satellite_image_dir'][0], config['network_model'][0],config['satellite_step'][0])
         print("INFO: initiating network ...")
-        features = network.extract_features()
+        features = network.extract_features(list_i, list_j)
         print("INFO: extracting features")
         features = scoring_postprocess(features)
         # write out
