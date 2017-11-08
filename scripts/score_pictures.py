@@ -9,7 +9,8 @@
 config_id = 1
 adm0_file_path = "../Data/Shapefiles/UGA_adm_shp/UGA_adm0.shp"
 gpscoordinates_sampling = 1
-path_to_shapefile = "../Data/Shapefiles/UGA_adm_shp/UGA_adm2.shp"
+adm = 1
+path_to_shapefile = "../Data/Shapefiles/UGA_adm_shp/UGA_adm1.shp"
 
 # --------- #
 # LIBRARIES #
@@ -98,7 +99,7 @@ colormap = linear.YlGn.scale(
 
 m = folium.Map(
     location=[1.130956, 32.354771],
-    tiles='Stamen Terrain',
+    tiles='MapQuest Open Aerial',
     zoom_start=6
 )
 m.choropleth(
@@ -113,4 +114,4 @@ m.choropleth(
 # SAVE PLOT #
 if not os.path.exists('../Plots'):
     os.makedirs('../Plots')
-    m.save(os.path.join('../Plots','map_config_{}.html'.format(config_id)))
+    m.save(os.path.join('../Plots','map_config_{}_amd_{}.html'.format(config_id, adm)))
