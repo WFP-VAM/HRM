@@ -109,4 +109,8 @@ m.choropleth(
     fill_color='YlGn',
 )
 
-m.save('map_config_{}.html'.format(config_id))
+# --------- #
+# SAVE PLOT #
+if not os.path.exists('../Plots'):
+    os.makedirs('../Plots')
+    m.save(os.path.join('../Plots','map_config_{}.html'.format(config_id)))
