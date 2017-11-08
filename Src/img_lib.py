@@ -18,7 +18,7 @@ class RasterGrid:
     from Google Static API.
     """
 
-    def __init__(self,raster,image_dir):
+    def __init__(self, raster, image_dir):
 
         self.x_size, \
         self.top_left_x_coords, \
@@ -39,6 +39,16 @@ class RasterGrid:
             list_i.append(i)
             list_j.append(j)
         return (list_i,list_j)
+
+    def get_gridcoordinates2(self, list_lat, list_lon):
+
+        list_i=[]
+        list_j=[]
+        for i, j in zip(list_lat, list_lon):
+            i, j = get_cell_idx(j, i, self.top_left_x_coords, self.top_left_y_coords)
+            list_i.append(i)
+            list_j.append(j)
+        return (list_i, list_j)
 
     def get_gpscoordinates(self, list_i, list_j, step):
         """
@@ -121,7 +131,7 @@ class RasterGrid:
 
         return x_size, top_left_x_coords, top_left_y_coords, centroid_x_coords, centroid_y_coords, bands_data
 
-    def download_images(self, list_i, list_j,step,provider):
+    def download_images(self, list_i, list_j, step, provider):
         """
         Function
         --------
@@ -198,8 +208,6 @@ class RasterGrid:
         this private method is used by the "download_images" to call the Google API
         for every pair of coordinates, to parse the request and to save the image to the folder.
         """
-        import numpy as np
-        import urllib.request
         import urllib.error
         from scipy import misc
         from scipy.misc.pilutil import imread
