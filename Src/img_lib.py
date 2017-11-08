@@ -237,11 +237,12 @@ class RasterGrid:
 
                     ## Do not download images in places where Google or Bing does not have any image
 
+                    if (image[:,:,0]==245).sum()>=100000: #Gray image in Bing
+                        print("No image in Bing API")
                     #if np.array_equal(image[:, :10, :], image[:, 10:20, :]):
                         #print("bad image")
-                    #else:
-
-                    misc.imsave(file_path + file_name, image[50:450, :, :])
+                    else:
+                        misc.imsave(file_path + file_name, image[50:450, :, :])
 
                 except urllib.error.HTTPError as err:
 
