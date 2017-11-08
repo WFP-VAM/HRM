@@ -32,7 +32,7 @@ class NNExtractor:
         else:
             print("ERROR: Only ResNet50 and VGG16 implemented so far")
 
-    def __average_features_dir(self, image_dir, name):
+    def __average_features_dir(self, image_dir, i,j):
         """
         Private function that takes the average of the features computed for all the images in the cluster into one feature.
         :param image_dir: string with path to the folder with images for one tile.
@@ -49,15 +49,15 @@ class NNExtractor:
         else:
             print('ERROR: only ResNet50 and VGG16 implemented so far')
 
-        i = 0
         features_df = DataFrame([])
 
         for a in range(-self.step, 1 + self.step):
             for b in range(-self.step, 1 + self.step):
-                i = int(name[0: 5]) + a
-                j = int(name[6:10]) + b
+                k = i + a
+                l = j + b
+                name=str(k)+'_'+str(l)
 
-                img_path = os.path.join(image_dir, name, str(i)+'_'+str(j)+".jpg")
+                img_path = os.path.join(image_dir, name +".jpg")
 
                 img = image.load_img(img_path, target_size=(400, 400))  # TODO: understand target_size
                 image_preprocess = image.img_to_array(img)
@@ -90,7 +90,7 @@ class NNExtractor:
 
         return avg_features
 
-    def extract_features(self):
+    def extract_features(self,list_i,list_j):
         """
         Loops over the folders (tiles) and collects the features.
         :return:
@@ -101,12 +101,12 @@ class NNExtractor:
         Final = DataFrame([])
 
         cnt=0
-        for name in os.listdir(self.output_image_dir):
-            if len(name) == 10:
-                cnt += 1
-                if cnt%10 == 0:
-                    print("Feature extraction : {} tiles".format(cnt))
-                Final[name] = self.__average_features_dir(self.output_image_dir, name)
+        for i, j in zip(list_i, list_j):
+            name=str(i)+'_'+str(j)
+            cnt += 1
+            if cnt%10 == 0:
+                print("Feature extraction : {} tiles".format(cnt))
+            Final[name] = self.__average_features_dir(self.output_image_dir,i,j)
 
         return Final
 

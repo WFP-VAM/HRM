@@ -27,7 +27,7 @@ class RasterGrid:
         self.centroid_y_coords, \
         self.bands_data = self.__read_raster(raster)
         self.url = None
-        self.output_image_dir=image_dir
+        self.output_image_dir=image_dir+"/"
 
     def get_gridcoordinates(self, file):
 
@@ -152,32 +152,37 @@ class RasterGrid:
             if cnt%10 == 0:
                 print("{} images downloaded".format(cnt))
 
-            file_path = self.output_image_dir + '/' + str(i) + '_' + str(j) + '/'
-            if not os.path.isdir(file_path):
-                os.makedirs(file_path)
+            file_path = self.output_image_dir
 
             for a in range(-step, 1+step):
 
                 # parallelize on the images per tile (inputs)
-                inputs = range(-step, 1+step)
+                for b in range(-step, 1+step):
 
-                # find available cores
-                num_cores = multiprocessing.cpu_count()
+                    # find available cores
+                    #num_cores = multiprocessing.cpu_count()
 
-                # run parallel job
-                Parallel(n_jobs=num_cores)(delayed(self.img_multiproc_wrapper)(i, j, a, b, provider, file_path)
-                                           for b in inputs)
+                    # run parallel job
+                    # Parallel(n_jobs=num_cores)(delayed(self.img_multiproc_wrapper)(i, j, a, b, provider, file_path)
+                    #                            for b in inputs)
 
-    def img_multiproc_wrapper(self, i, j, a, b, provider, file_path):
-        # wrapper for the url creation (depending on the engine) and for the pulling and saving of the image.
-        lon = self.centroid_x_coords[i + a]
-        lat = self.centroid_y_coords[j + b]
+                    lon = self.centroid_x_coords[i + a]
+                    lat = self.centroid_y_coords[j + b]
+                    self.url = self.__produce_url(lon, lat, provider)
+                    file_name = str(i + a) + '_' + str(j + b) + '.jpg'
+                    self.__save_img(file_path, file_name)
 
-        self.url = self.__produce_url(lon, lat, provider)
 
-        file_name = str(i + a) + '_' + str(j + b) + '.jpg'
-
-        self.__save_img(file_path, file_name)
+    # def img_multiproc_wrapper(self, i, j, a, b, provider, file_path):
+    #     # wrapper for the url creation (depending on the engine) and for the pulling and saving of the image.
+    #     lon = self.centroid_x_coords[i + a]
+    #     lat = self.centroid_y_coords[j + b]
+    #
+    #     self.url = self.__produce_url(lon, lat, provider)
+    #
+    #     file_name = str(i + a) + '_' + str(j + b) + '.jpg'
+    #
+    #     self.__save_img(file_path, file_name)
 
     def __produce_url(self, lon, lat, provider):
         # wrapper for the creation of the url depending on the engine.
