@@ -28,7 +28,7 @@ import folium
 @click.option('--adm0_file_path', type=click.Path(exists=True), default="../Data/Shapefiles/UGA_adm_shp/UGA_adm0.shp")
 @click.option('--path_to_shapefile', type=click.Path(exists=True), default="../Data/Shapefiles/UGA_adm_shp/UGA_adm1.shp")
 @click.option('--config_id', default=1)
-@click.option('--gpscoordinates_sampling', default=0.5)
+@click.option('--gpscoordinates_sampling', default=0.1)
 @click.option('--adm', default=1)
 def main(adm0_file_path, path_to_shapefile, config_id, gpscoordinates_sampling, adm):
 
@@ -101,9 +101,10 @@ def main(adm0_file_path, path_to_shapefile, config_id, gpscoordinates_sampling, 
 
     m = folium.Map(
         location=[1.130956, 32.354771],
-        tiles='MapQuest Open Aerial',
+        tiles='Stamen Terrain',
         zoom_start=6
     )
+
     m.choropleth(
         geo_data=path_to_shapefile[:-3]+"json",
         data=map_df,
@@ -114,7 +115,7 @@ def main(adm0_file_path, path_to_shapefile, config_id, gpscoordinates_sampling, 
 
     # --------- #
     # SAVE PLOT #
-    print("INFO: plotting ...")
+    print("INFO: saving plot ...")
     if not os.path.exists('../Plots'):
         os.makedirs('../Plots')
     m.save(os.path.join('../Plots','map_config_{}_amd_{}.html'.format(config_id, adm)))
