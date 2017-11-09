@@ -60,7 +60,7 @@ def main(adm0_file_path, path_to_shapefile, config_id, gpscoordinates_sampling, 
     # ---------------------------------- #
     # EXTRACT FEATURES FOR IMGS IN SCOPE #
     print("INFO: extracting features for images in scope ...")
-    network = NNExtractor(image_dir, 'ResNet50', step=config['satellite_step'][0])
+    network = NNExtractor(image_dir, config['network_model'][0], step=config['satellite_step'][0])
     features = scoring_postprocess(network.extract_features(list_i, list_j))
 
     # ---------------------- #
