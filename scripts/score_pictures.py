@@ -60,7 +60,7 @@ def main(adm0_file_path, path_to_shapefile, config_id, gpscoordinates_sampling, 
     # ---------------------------------- #
     # EXTRACT FEATURES FOR IMGS IN SCOPE #
     print("INFO: extracting features for images in scope ...")
-    network = NNExtractor(image_dir, config['network_model'][0], step=config['satellite_step'][0])
+    network = NNExtractor(image_dir, 'ResNet50', step=config['satellite_step'][0])
     features = scoring_postprocess(network.extract_features(list_i, list_j))
 
     # ---------------------- #
@@ -94,6 +94,7 @@ def main(adm0_file_path, path_to_shapefile, config_id, gpscoordinates_sampling, 
                            'means': polygon_means})
 
     map_df.means = map_df.means.fillna(np.mean(map_df.means))  # TODO: handle nans
+    map_dict = map_df.set_index('loc')['means']
 
     colormap = linear.YlGn.scale(
         map_df.means.min(),
@@ -104,14 +105,20 @@ def main(adm0_file_path, path_to_shapefile, config_id, gpscoordinates_sampling, 
         tiles='Stamen Terrain',
         zoom_start=6
     )
-
-    m.choropleth(
-        geo_data=path_to_shapefile[:-3]+"json",
-        data=map_df,
-        columns=['loc', 'means'],
-        key_on='feature.id',
-        fill_color='YlGn',
-    )
+    folium.GeoJson(
+        adm2_map,
+        name='map_df',
+        style_function=lambda feature: {
+            'fillColor': colormap(map_dict[feature['id']]),
+            'color': 'black',
+            'weight': 0.5,
+            'dashArray': '5, 5',
+            'fillOpacity': 0.7,
+        }
+    ).add_to(m)
+    folium.LayerControl().add_to(m)
+    colormap.caption = 'indicator color scale'
+    colormap.add_to(m)
 
     # --------- #
     # SAVE PLOT #
