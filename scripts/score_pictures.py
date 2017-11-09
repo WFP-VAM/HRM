@@ -84,7 +84,7 @@ def main(adm0_file_path, path_to_shapefile, config_id, gpscoordinates_sampling, 
     # ---- #
     # PLOT #
     # convert shapefile to GeoJSON
-    print("INFO: printing ...")
+    print("INFO: plotting ...")
     shape2json(path_to_shapefile, outfile=path_to_shapefile[:-3]+"json")
 
     with open(path_to_shapefile[:-3]+"json") as f:
@@ -114,9 +114,10 @@ def main(adm0_file_path, path_to_shapefile, config_id, gpscoordinates_sampling, 
 
     # --------- #
     # SAVE PLOT #
+    print("INFO: plotting ...")
     if not os.path.exists('../Plots'):
         os.makedirs('../Plots')
-        m.save(os.path.join('../Plots','map_config_{}_amd_{}.html'.format(config_id, adm)))
+    m.save(os.path.join('../Plots','map_config_{}_amd_{}.html'.format(config_id, adm)))
 
 
 if __name__ == '__main__':
