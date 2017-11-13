@@ -27,7 +27,7 @@ class NNExtractor:
             print('INFO: loading VGG16 ...')
             from keras.applications.vgg16 import VGG16
             from keras.applications.vgg16 import preprocess_input
-            self.net = VGG16(weights='imagenet', include_top=False)
+            self.net = VGG16(weights='imagenet', include_top=False, pooling='avg')
 
         else:
             print("ERROR: Only ResNet50 and VGG16 implemented so far")
@@ -65,7 +65,6 @@ class NNExtractor:
                 image_preprocess = preprocess_input(image_preprocess)
 
                 features = self.net.predict(image_preprocess)
-
                 features = features.ravel()
 
                 features_df[name] = features
@@ -73,22 +72,7 @@ class NNExtractor:
 
         return avg_features
 
-        # for name in os.listdir(image_dir):
-        #     if name.endswith(".jpg"):
-        #         img_path = os.path.join(image_dir, name)
-        #         img = image.load_img(img_path, target_size=(400, 400))  # TODO: understand target_size
-        #         image_preprocess = image.img_to_array(img)
-        #         image_preprocess = np.expand_dims(image_preprocess, axis=0)
-        #         image_preprocess = preprocess_input(image_preprocess)
-        #
-        #         features = self.net.predict(image_preprocess)
-        #
-        #         features = features.ravel()
-        #
-        #         features_df[name] = features
-        # avg_features = features_df.mean(axis=1)
 
-        return avg_features
 
     def extract_features(self,list_i,list_j):
         """

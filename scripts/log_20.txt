@@ -1,0 +1,97 @@
+INFO: config id = 20
+../Data/Satellite/Google
+../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif
+INFO: downlaoding images ...
+10 images downloaded
+../Data/Satellite/Google/25242_9104/25242_9104.jpg already downloaded
+../Data/Satellite/Google/25221_9091/25221_9091.jpg already downloaded
+20 images downloaded
+30 images downloaded
+40 images downloaded
+50 images downloaded
+../Data/Satellite/Google/25373_9018/25373_9018.jpg already downloaded
+60 images downloaded
+70 images downloaded
+../Data/Satellite/Google/25512_8969/25512_8969.jpg already downloaded
+80 images downloaded
+90 images downloaded
+100 images downloaded
+110 images downloaded
+120 images downloaded
+130 images downloaded
+../Data/Satellite/Google/25589_8942/25589_8942.jpg already downloaded
+140 images downloaded
+150 images downloaded
+160 images downloaded
+170 images downloaded
+180 images downloaded
+190 images downloaded
+200 images downloaded
+../Data/Satellite/Google/25670_8862/25670_8862.jpg already downloaded
+210 images downloaded
+../Data/Satellite/Google/25297_8849/25297_8849.jpg already downloaded
+220 images downloaded
+230 images downloaded
+240 images downloaded
+../Data/Satellite/Google/25486_8780/25486_8780.jpg already downloaded
+../Data/Satellite/Google/25631_8757/25631_8757.jpg already downloaded
+250 images downloaded
+../Data/Satellite/Google/25581_8735/25581_8735.jpg already downloaded
+260 images downloaded
+270 images downloaded
+280 images downloaded
+../Data/Satellite/Google/25698_8635/25698_8635.jpg already downloaded
+290 images downloaded
+300 images downloaded
+INFO: images downloaded.
+INFO: loading ResNet50 ...
+INFO: initiating network ...
+Feature extraction : 10 tiles
+Feature extraction : 20 tiles
+Feature extraction : 30 tiles
+Feature extraction : 40 tiles
+Feature extraction : 50 tiles
+Feature extraction : 60 tiles
+Feature extraction : 70 tiles
+Feature extraction : 80 tiles
+Feature extraction : 90 tiles
+Feature extraction : 100 tiles
+Feature extraction : 110 tiles
+Feature extraction : 120 tiles
+Feature extraction : 130 tiles
+Feature extraction : 140 tiles
+Feature extraction : 150 tiles
+Feature extraction : 160 tiles
+Feature extraction : 170 tiles
+Feature extraction : 180 tiles
+Feature extraction : 190 tiles
+Feature extraction : 200 tiles
+Feature extraction : 210 tiles
+Feature extraction : 220 tiles
+Feature extraction : 230 tiles
+Feature extraction : 240 tiles
+Feature extraction : 250 tiles
+Feature extraction : 260 tiles
+Feature extraction : 270 tiles
+Feature extraction : 280 tiles
+Feature extraction : 290 tiles
+Feature extraction : 300 tiles
+Feature extraction : 310 tiles
+Feature extraction : 320 tiles
+Feature extraction : 330 tiles
+Feature extraction : 340 tiles
+Feature extraction : 350 tiles
+Feature extraction : 360 tiles
+Feature extraction : 370 tiles
+Feature extraction : 380 tiles
+Feature extraction : 390 tiles
+Feature extraction : 400 tiles
+Feature extraction : 410 tiles
+Feature extraction : 420 tiles
+Feature extraction : 430 tiles
+Feature extraction : 440 tiles
+Feature extraction : 450 tiles
+INFO: extracting features
+INFO: training model ...
+INFO: best parameter:  {'alpha': 1000}
+INFO: model saved.

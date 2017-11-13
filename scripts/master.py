@@ -55,10 +55,10 @@ def run(id):
 
     else:
         from utils import scoring_postprocess
-        network = NNExtractor(config['satellite_image_dir'][0], config['network_model'][0],config['satellite_step'][0])
         print("INFO: initiating network ...")
+        network = NNExtractor(config['satellite_image_dir'][0], config['network_model'][0],config['satellite_step'][0])
+        print("INFO: extracting features ...")
         features = network.extract_features(list_i, list_j)
-        print("INFO: extracting features")
         features = scoring_postprocess(features)
         # write out
         features.to_csv("../Data/Features/features_config_id_{}.csv".format(config['id'][0]), index=False)
@@ -146,5 +146,6 @@ def run(id):
 
 
 if __name__ == "__main__":
+
     for id in sys.argv[1:]:
         run(id)

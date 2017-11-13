@@ -85,8 +85,12 @@ def shape2json(fname, outfile="states.json"):
     for sr in reader.shapeRecords():
         atr = dict(zip(field_names, sr.record))
         geom = sr.shape.__geo_interface__
-        buffer.append(dict(id=str(atr['ID_0'])+'_'+str(atr['ID_1'])+'_'+str(atr['ID_2']), type="Feature", \
+        try:
+            buffer.append(dict(id=str(atr['ID_0'])+'_'+str(atr['ID_1'])+'_'+str(atr['ID_2']), type="Feature", \
                            geometry=geom, properties=atr))
+        except KeyError:
+            buffer.append(dict(id=str(atr['ID_0']) + '_' + str(atr['ID_1']), type="Feature", \
+                               geometry=geom, properties=atr))
 
     # write the GeoJSON file
     from json import dumps
