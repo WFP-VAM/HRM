@@ -20,7 +20,7 @@ import numpy as np
 # import and process the features created
 
 #features = pd.read_csv('../Data/Intermediate_files/google_sat_CNN_features_lsms_ResNet_tf_last.csv')
-features = pd.read_csv('../Data\Features\google_Uganda_ResNet50_last.csv')
+features = pd.read_csv('../Data/Features/features_config_id_1.csv')
 
 non_feature_columns = ['index', 'i', 'j']
 feature_columns = list(set(features.columns.values) - set(non_feature_columns))
@@ -39,12 +39,11 @@ dfx = pd.DataFrame(x, columns=['x', 'y'])
 
 # ----------------------------------------------------------------------
 # get raster and retrieve relevant raster coordinates
-GRId = RasterGrid()
+GRId = RasterGrid(raster='../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif', image_dir='../Data/Satellite/Google')
 dfx['i'], dfx['j'] = features['i'], features['j']
 
 # for what clusters?
-GRId.config["dataset"]["filename"]
-dfx['lon'], dfx['lat'] = GRId.get_gpscoordinates(dfx['i'], dfx['j'])
+dfx['lon'], dfx['lat'] = GRId.get_gpscoordinates(dfx['i'], dfx['j'], step=0)
 dfx['lonlat'] = dfx[['lon', 'lat']].round(2).astype(str).apply(lambda x: ','.join(x), axis = 1)
 
 # ----------------------------------------------------------------------

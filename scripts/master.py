@@ -57,6 +57,10 @@ def run(id):
         from utils import scoring_postprocess
         print("INFO: initiating network ...")
         network = NNExtractor(config['satellite_image_dir'][0], config['network_model'][0],config['satellite_step'][0])
+
+        if config['custom_weights'][0] != None:
+            network.load_weights(config['custom_weights'][0])
+
         print("INFO: extracting features ...")
         features = network.extract_features(list_i, list_j)
         features = scoring_postprocess(features)

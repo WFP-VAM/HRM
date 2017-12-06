@@ -32,6 +32,10 @@ class NNExtractor:
         else:
             print("ERROR: Only ResNet50 and VGG16 implemented so far")
 
+    def load_weights(self, weights_path):
+        print('INFO: loading custom weights ...')
+        self.net.load_weights(weights_path)
+
     def __average_features_dir(self, image_dir, i,j):
         """
         Private function that takes the average of the features computed for all the images in the cluster into one feature.
