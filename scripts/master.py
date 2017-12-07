@@ -14,11 +14,12 @@ import pandas as pd
 from nn_extractor import NNExtractor
 import numpy as np
 
+
 def run(id):
     # ----------------- #
     # SETUP #############
     # ----------------- #
-    print("INFO: config id =", id)
+    print(str(np.datetime64('now')), " INFO: config id =", id)
 
     with open('../private_config.yml', 'r') as cfgfile:
         private_config = yaml.load(cfgfile)
@@ -42,20 +43,20 @@ def run(id):
     # # ----------------- #
     # # DOWNLOADING #######
     # # ----------------- #
-    print("INFO: downlaoding images ...")
+    print(str(np.datetime64('now')), " INFO: downlaoding images ...")
     GRID.download_images(list_i, list_j,step=config["satellite_step"][0],provider=config["satellite_source"][0])
-    print("INFO: images downloaded.")
+    print(str(np.datetime64('now')), " INFO: images downloaded.")
     # ----------------- #
     # SCORING ###########
     # ----------------- #
     # check if features file already there
     if os.path.isfile("../Data/Features/features_config_id_{}.csv".format(id)):
-        print('INFO: images already scored for id: ', id)
+        print(str(np.datetime64('now')), ' INFO: images already scored for id: ', id)
         features = pd.read_csv("../Data/Features/features_config_id_{}.csv".format(id))
 
     else:
         from utils import scoring_postprocess
-        print("INFO: initiating network ...")
+        print(str(np.datetime64('now')), " INFO: initiating network ...")
         network = NNExtractor(config['satellite_image_dir'][0], config['network_model'][0],config['satellite_step'][0])
 
         if config['custom_weights'][0] != None:
@@ -101,7 +102,7 @@ def run(id):
         X = data_features
 
     # TRAIN MODEL
-    print("INFO: training model ...")
+    print(str(np.datetime64('now')), " INFO: training model ...")
     outer_cv = KFold(5, shuffle=True, random_state=75788)
     model = Ridge()
     inner_cv = KFold(5, shuffle=True, random_state=1673)
@@ -133,7 +134,7 @@ def run(id):
     if not os.path.exists('../Models'):
         os.makedirs('../Models')
     joblib.dump(model_prod, '../Models/ridge_model_config_id_{}.pkl'.format(id))
-    print('INFO: model saved.')
+    print(str(np.datetime64('now')), 'INFO: model saved.')
 
     # ------------------ #
     # WRITE SCORES to DB #
