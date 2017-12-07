@@ -34,7 +34,7 @@ class NNExtractor:
 
     def load_weights(self, weights_path):
         print('INFO: loading custom weights ...')
-        self.net.load_weights(weights_path)
+        self.net.load_weights(weights_path, by_name=True)
 
     def __average_features_dir(self, image_dir, i,j):
         """
