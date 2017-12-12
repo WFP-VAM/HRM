@@ -1,6 +1,3 @@
-import os
-import yaml
-
 class NNExtractor:
     """
     Class
@@ -16,18 +13,17 @@ class NNExtractor:
         self.output_image_dir = output_image_dir
         self.step=step
 
+        import tensorflow as tf
+
         if self.model_type == 'ResNet50':
             print('INFO: loading ResNet50 ...')
-            from keras.applications.resnet50 import ResNet50
-            self.net = ResNet50(weights='imagenet', include_top=False, pooling=None)
+            self.net = tf.keras.applications.ResNet50(weights='imagenet', include_top=False, pooling=None)
             # self.base_net = ResNet50(weights='imagenet', include_top=False)
             # self.net = Model(inputs=self.base_net.input, outputs=self.base_net.get_layer('block4_pool').output)
 
         elif self.model_type == 'VGG16':
             print('INFO: loading VGG16 ...')
-            from keras.applications.vgg16 import VGG16
-            from keras.applications.vgg16 import preprocess_input
-            self.net = VGG16(weights='imagenet', include_top=False, pooling='avg')
+            self.net = tf.eras.applications.vgg16.VGG16(weights='imagenet', include_top=False, pooling='avg')
 
         else:
             print("ERROR: Only ResNet50 and VGG16 implemented so far")
@@ -43,13 +39,14 @@ class NNExtractor:
         :return: a list with the averages for each feature extracted from the images in the tile.
         """
         from pandas import DataFrame
-        from keras.preprocessing import image
+        import tensorflow as tf
         import os
         import numpy as np
         if self.model_type == 'ResNet50':
-            from keras.applications.resnet50 import preprocess_input
+            preprocess_input = tf.keras.applications.resnet50.preprocess_input
         elif self.model_type == 'VGG16':
-            from keras.applications.vgg16 import preprocess_input
+            preprocess_input = tf.keras.applications.vgg16.preprocess_input
+
         else:
             print('ERROR: only ResNet50 and VGG16 implemented so far')
 
@@ -63,8 +60,8 @@ class NNExtractor:
 
                 img_path = os.path.join(image_dir, name +".jpg")
 
-                img = image.load_img(img_path, target_size=(400, 400))  # TODO: understand target_size
-                image_preprocess = image.img_to_array(img)
+                img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))  # TODO: understand target_size
+                image_preprocess = tf.keras.preprocessing.image.img_to_array(img)
                 image_preprocess = np.expand_dims(image_preprocess, axis=0)
                 image_preprocess = preprocess_input(image_preprocess)
 
@@ -94,7 +91,7 @@ class NNExtractor:
             cnt += 1
             if cnt%10 == 0:
                 print("Feature extraction : {} tiles".format(cnt))
-            Final[name] = self.__average_features_dir(self.output_image_dir,i,j)
+            Final[name] = self.__average_features_dir(self.output_image_dir, i, j)
 
         return Final
 
