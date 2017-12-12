@@ -23,8 +23,7 @@ class NNExtractor:
 
         elif self.model_type == 'VGG16':
             print('INFO: loading VGG16 ...')
-            self.net = tf.eras.applications.vgg16.VGG16(weights='imagenet', include_top=False, pooling='avg')
-
+            self.net = tf.keras.applications.vgg16.VGG16(weights='imagenet', include_top=False, pooling='avg')
         else:
             print("ERROR: Only ResNet50 and VGG16 implemented so far")
 
