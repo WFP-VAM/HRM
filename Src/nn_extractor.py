@@ -15,6 +15,7 @@ class NNExtractor:
 
         import tensorflow as tf
 
+
         if self.model_type == 'ResNet50':
             print('INFO: loading ResNet50 ...')
             self.net = tf.keras.applications.ResNet50(weights='imagenet', include_top=False, pooling=None)
