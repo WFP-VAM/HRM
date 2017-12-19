@@ -132,7 +132,7 @@ def run(id):
     # WRITE FULL RESULTS to FILE SYSTEM
     if config['output'][0] == 'regression': results_df = pd.DataFrame([predict, predict_r2, predict_mape, y],
                                                                       index=["predict", "predict_r2", "predict_mape", "y"]).T
-    if config['output'][0] == 'classification': results_df = pd.DataFrame([predict, predict_r2, predict_mape, y],
+    if config['output'][0] == 'classification': results_df = pd.DataFrame([predict, y],
                                                                       index=["predict", "y"]).T
     if not os.path.exists('../Data/Results'):
         os.makedirs('../Data/Results')
