@@ -140,7 +140,7 @@ def run(id):
 
     # SAVE MODEL FOR PRODUCTION
     from sklearn.externals import joblib
-    prod_cv = clf_MAPE.fit(X, y)
+    prod_cv = clf.fit(X, y)
     print('INFO: best parameter: ', prod_cv.best_params_)
     model_prod = Ridge(alpha=prod_cv.best_params_['alpha'])
     model_prod.fit(X, y)
