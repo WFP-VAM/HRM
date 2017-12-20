@@ -62,7 +62,7 @@ train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
     zoom_range=0.2,
     horizontal_flip=True)
 
-test_datagen = tf.keras.preprocessing.image.ImageDataGenerator.ImageDataGenerator(rescale=1. / 255)
+test_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
 
 train_generator = train_datagen.flow_from_directory(
     train_data_dir,
