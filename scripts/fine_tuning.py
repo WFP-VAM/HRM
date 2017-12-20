@@ -1,11 +1,5 @@
-from keras import applications
-from keras.preprocessing.image import ImageDataGenerator
-from keras import optimizers
-from keras.models import Sequential, Model
-from keras.layers import Dropout, Flatten, Dense
-import pandas as pd
-import shutil
-import os
+import tensorflow as tf
+
 # AIM:
 #given a FCS dataset, it downloads the relevant images, and fine tunes the model, then saves the weights
 
@@ -37,18 +31,18 @@ epochs = 50
 batch_size = 8
 
 # build the VGG16 network
-base_model = applications.VGG16(weights='imagenet', include_top=False, input_shape=(400,400,3))
+base_model = tf.keras.applications.VGG16(weights='imagenet', include_top=False, input_shape=(400,400,3))
 print('Model loaded.')
 
 # build a classifier model to put on top of the convolutional model
-top_model = Sequential()
-top_model.add(Flatten(input_shape=base_model.output_shape[1:]))
-top_model.add(Dense(256, activation='relu', kernel_initializer='random_uniform', bias_initializer='zeros'))
-top_model.add(Dropout(0.5))
-top_model.add(Dense(1, activation='sigmoid'))
+top_model = tf.keras.models.Sequential()
+top_model.add(tf.keras.layers.Flatten(input_shape=base_model.output_shape[1:]))
+top_model.add(tf.keras.layers.Dense(256, activation='relu', kernel_initializer='random_uniform', bias_initializer='zeros'))
+top_model.add(tf.keras.layers.Dropout(0.5))
+top_model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
 
 # add the model on top of the convolutional base
-model = Model(inputs=base_model.input, outputs=top_model(base_model.output))
+model = tf.keras.models.Model(inputs=base_model.input, outputs=top_model(base_model.output))
 
 # set the first 25 layers (up to the last conv block)
 # to non-trainable (weights will not be updated)
@@ -58,17 +52,17 @@ for layer in model.layers[:25]:
 # compile the model with a SGD/momentum optimizer
 # and a very slow learning rate.
 model.compile(loss='categorical_crossentropy',
-              optimizer=optimizers.SGD(lr=1e-4, momentum=0.9),
+              optimizer=tf.keras.optimizers.SGD(lr=1e-4, momentum=0.9),
               metrics=['accuracy'])
 
 # prepare data augmentation configuration
-train_datagen = ImageDataGenerator(
+train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
     rescale=1. / 255,
     shear_range=0.2,
     zoom_range=0.2,
     horizontal_flip=True)
 
-test_datagen = ImageDataGenerator(rescale=1. / 255)
+test_datagen = tf.keras.preprocessing.image.ImageDataGenerator.ImageDataGenerator(rescale=1. / 255)
 
 train_generator = train_datagen.flow_from_directory(
     train_data_dir,
