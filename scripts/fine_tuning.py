@@ -39,7 +39,7 @@ top_model = tf.keras.models.Sequential()
 top_model.add(tf.keras.layers.Flatten(input_shape=base_model.output_shape[1:]))
 top_model.add(tf.keras.layers.Dense(256, activation='relu', kernel_initializer='random_uniform', bias_initializer='zeros'))
 top_model.add(tf.keras.layers.Dropout(0.5))
-top_model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+top_model.add(tf.keras.layers.Dense(3, activation='softmax'))
 
 # add the model on top of the convolutional base
 model = tf.keras.models.Model(inputs=base_model.input, outputs=top_model(base_model.output))
