@@ -79,7 +79,7 @@ validation_generator = test_datagen.flow_from_directory(
 # fine-tune the model
 model.fit_generator(
     train_generator,
-    samples_per_epoch=nb_train_samples,
+    steps_per_epoch=nb_train_samples // batch_size,
     epochs=epochs,
     validation_data=validation_generator,
-    nb_val_samples=nb_validation_samples)
+    validation_steps=nb_validation_samples // batch_size)
