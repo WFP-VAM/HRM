@@ -28,7 +28,7 @@ img_width, img_height = 400, 400
 nb_train_samples = 585
 nb_validation_samples = 183
 epochs = 100
-batch_size = 8
+batch_size = 16
 
 # build the VGG16 network
 base_model = tf.keras.applications.VGG16(weights='imagenet', include_top=False, input_shape=(400,400,3))
@@ -44,15 +44,15 @@ top_model.add(tf.keras.layers.Dense(3, activation='softmax'))
 # add the model on top of the convolutional base
 model = tf.keras.models.Model(inputs=base_model.input, outputs=top_model(base_model.output))
 
-# set the first 25 layers (up to the last conv block)
+
 # to non-trainable (weights will not be updated)
-for layer in model.layers[:25]:
+for layer in model.layers[:18]:  # 18 leaves the last max pool out
     layer.trainable = False
 
 # compile the model with a SGD/momentum optimizer
 # and a very slow learning rate.
 model.compile(loss='categorical_crossentropy',
-              optimizer=tf.keras.optimizers.SGD(lr=1e-5, momentum=0.9),
+              optimizer=tf.keras.optimizers.SGD(lr=1e-4, momentum=0.9),
               metrics=['accuracy'])
 
 # prepare data augmentation configuration
@@ -60,7 +60,9 @@ train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
     rescale=1. / 255,
     shear_range=0.2,
     zoom_range=0.2,
-    horizontal_flip=True)
+    rotation_range=90,
+    horizontal_flip=True,
+    vertical_flip=True)
 
 test_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
 
