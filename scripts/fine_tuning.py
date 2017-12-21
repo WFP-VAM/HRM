@@ -25,10 +25,10 @@ validation_data_dir = '../Data/validate'
 # dimensions of our images.
 img_width, img_height = 400, 400
 
-nb_train_samples = 489
-nb_validation_samples = 273
-epochs = 50
-batch_size = 16
+nb_train_samples = 585
+nb_validation_samples = 183
+epochs = 100
+batch_size = 8
 
 # build the VGG16 network
 base_model = tf.keras.applications.VGG16(weights='imagenet', include_top=False, input_shape=(400,400,3))
@@ -52,7 +52,7 @@ for layer in model.layers[:25]:
 # compile the model with a SGD/momentum optimizer
 # and a very slow learning rate.
 model.compile(loss='categorical_crossentropy',
-              optimizer=tf.keras.optimizers.SGD(lr=1e-4, momentum=0.9),
+              optimizer=tf.keras.optimizers.SGD(lr=1e-5, momentum=0.9),
               metrics=['accuracy'])
 
 # prepare data augmentation configuration
@@ -76,28 +76,25 @@ validation_generator = test_datagen.flow_from_directory(
     batch_size=batch_size,
     class_mode='categorical')
 
+tensorboard = tf.keras.callbacks.TensorBoard(log_dir='../logs', histogram_freq=0,
+                          write_graph=True, write_images=False)
+
 # fine-tune the model
 history = model.fit_generator(
     train_generator,
     steps_per_epoch=nb_train_samples // batch_size,
     epochs=epochs,
     validation_data=validation_generator,
-    validation_steps=nb_validation_samples // batch_size)
+    validation_steps=nb_validation_samples // batch_size,
+    callbacks=[tensorboard])
 
 # plot training
-import matplotlib as plt
-acc = history.history['acc']
-val_acc = history.history['val_acc']
-loss = history.history['loss']
-val_loss = history.history['val_loss']
-epochs = range(len(acc))
-
-plt.plot(epochs, acc, 'r.')
-plt.plot(epochs, val_acc, 'r')
-plt.title('Training and validation accuracy')
-
-plt.figure()
-plt.plot(epochs, loss, 'r.')
-plt.plot(epochs, val_loss, 'r-')
-plt.title('Training and validation loss')
-plt.save('training_history.png')
+import matplotlib.pyplot as plt
+plt.switch_backend('agg')
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('training_history.png')
