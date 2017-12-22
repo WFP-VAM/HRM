@@ -3,7 +3,7 @@
 import tensorflow as tf
 from tensorflow.python.keras.layers import Activation, Dropout, Flatten, Dense, Conv2D, MaxPooling2D
 from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.optimizers import SGD
+from tensorflow.python.keras.optimizers import RMSprop
 
 import pandas as pd
 import numpy as np
@@ -15,19 +15,19 @@ labels = pd.read_csv('labels.csv')
 img_width, img_height = 400, 400
 
 nb_train_samples = 1101
-nb_validation_samples = 367
+nb_validation_samples = 363
 epochs = 100
 batch_size = 16
 
 # build the VGG16 network
 model = Sequential()
-model.add(Conv2D(32, (3, 3), input_shape=(400, 400, 3)))
+model.add(Conv2D(32, (3, 3), padding='same', input_shape=(400, 400, 3)))
 model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
-model.add(Conv2D(32, (3, 3)))
+model.add(Conv2D(32, (3, 3), padding='same'))
 model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(MaxPooling2D(pool_size=(2, 2)), strides=(2, 2))
 
 model.add(Conv2D(64, (3, 3)))
 model.add(Activation('relu'))
@@ -40,7 +40,7 @@ model.add(Dropout(0.5))
 model.add(Dense(1))
 model.add(Activation('linear'))
 
-opt = SGD(lr=0.001, decay=0.1)
+opt = RMSprop(lr=0.0001, rho=0.9, epsilon=1e-08, decay=1e-6)
 
 model.compile(loss='mse',
               optimizer=opt)
