@@ -3,6 +3,8 @@
 import tensorflow as tf
 from tensorflow.python.keras.layers import Activation, Dropout, Flatten, Dense, Conv2D, MaxPooling2D
 from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.optimizers import SGD
+
 import pandas as pd
 import numpy as np
 
@@ -14,7 +16,7 @@ img_width, img_height = 400, 400
 
 nb_train_samples = 1101
 nb_validation_samples = 367
-epochs = 1
+epochs = 100
 batch_size = 16
 
 # build the VGG16 network
@@ -38,8 +40,10 @@ model.add(Dropout(0.5))
 model.add(Dense(1))
 model.add(Activation('linear'))
 
+opt = SGD(lr=0.001, decay=0.1)
+
 model.compile(loss='mse',
-              optimizer='rmsprop')
+              optimizer=opt)
 
 
 def regression_flow_from_directory(flow_from_directory_gen, list_of_values):
