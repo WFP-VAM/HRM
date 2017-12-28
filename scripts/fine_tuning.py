@@ -34,6 +34,18 @@ batch_size = 16
 base_model = tf.keras.applications.VGG16(weights='imagenet', include_top=False, input_shape=(400,400,3))
 print('Model loaded.')
 
+# to non-trainable (weights will not be updated)
+for layer in base_model.layers:  # 18 leaves the last max pool out
+    if ((layer.name == 'block5_conv1') |
+            (layer.name == 'block5_conv2') |
+            (layer.name == 'block5_conv3') |
+            (layer.name == 'block5_pool')):
+        layer.trainable = True
+    else:
+        layer.trainable = False
+
+    print(layer.name, ' : ', layer.trainable)
+
 # build a classifier model to put on top of the convolutional model
 top_model = tf.keras.models.Sequential()
 top_model.add(tf.keras.layers.Flatten(input_shape=base_model.output_shape[1:]))
@@ -43,16 +55,6 @@ top_model.add(tf.keras.layers.Dense(3, activation='softmax'))
 
 # add the model on top of the convolutional base
 model = tf.keras.models.Model(inputs=base_model.input, outputs=top_model(base_model.output))
-
-
-# to non-trainable (weights will not be updated)
-for layer in model.layers:  # 18 leaves the last max pool out
-    if ((layer.name == 'block5_conv1') | (layer.name == 'block5_conv2') | (layer.name == 'block5_conv3')): 
-        layer.trainable = True
-    else:
-        layer.trainable = False
-
-    print (layer.name, ' : ', layer.trainable)
 
 # compile the model with a SGD/momentum optimizer
 # and a very slow learning rate.
