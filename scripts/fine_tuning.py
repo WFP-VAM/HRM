@@ -27,7 +27,7 @@ img_width, img_height = 400, 400
 
 nb_train_samples = 585
 nb_validation_samples = 183
-epochs = 100
+epochs = 30
 batch_size = 16
 
 # build the VGG16 network
@@ -37,7 +37,7 @@ print('Model loaded.')
 # build a classifier model to put on top of the convolutional model
 top_model = tf.keras.models.Sequential()
 top_model.add(tf.keras.layers.Flatten(input_shape=base_model.output_shape[1:]))
-top_model.add(tf.keras.layers.Dense(256, activation='relu', kernel_initializer='random_uniform', bias_initializer='zeros'))
+top_model.add(tf.keras.layers.Dense(128, activation='relu', kernel_initializer='random_uniform', bias_initializer='zeros'))
 top_model.add(tf.keras.layers.Dropout(0.5))
 top_model.add(tf.keras.layers.Dense(3, activation='softmax'))
 
@@ -46,8 +46,13 @@ model = tf.keras.models.Model(inputs=base_model.input, outputs=top_model(base_mo
 
 
 # to non-trainable (weights will not be updated)
-for layer in model.layers[:18]:  # 18 leaves the last max pool out
-    layer.trainable = False
+for layer in model.layers:  # 18 leaves the last max pool out
+    if ((layer.name == 'block5_conv1') | (layer.name == 'block5_conv2') | (layer.name == 'block5_conv3')): 
+        layer.trainable = True
+    else:
+        layer.trainable = False
+
+    print (layer.name, ' : ', layer.trainable)
 
 # compile the model with a SGD/momentum optimizer
 # and a very slow learning rate.
@@ -59,9 +64,7 @@ model.compile(loss='categorical_crossentropy',
 train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
     rescale=1. / 255,
     shear_range=0.2,
-    zoom_range=0.2,
     rotation_range=90,
-    horizontal_flip=True,
     vertical_flip=True)
 
 test_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
