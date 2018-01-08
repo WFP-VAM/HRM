@@ -174,5 +174,9 @@ def run(id):
 
 if __name__ == "__main__":
 
+    import tensorflow as tf
     for id in sys.argv[1:]:
         run(id)
+  
+    # rubbish collection
+    tf.keras.backend.clear_session()
