@@ -14,7 +14,7 @@ class NNExtractor:
         self.step=step
 
         import tensorflow as tf
-
+        from tensorflow.python.keras.applications.vgg16 import VGG16
 
         if self.model_type == 'ResNet50':
             print('INFO: loading ResNet50 ...')
@@ -24,7 +24,7 @@ class NNExtractor:
 
         elif self.model_type == 'VGG16':
             print('INFO: loading VGG16 ...')
-            self.net = tf.keras.applications.vgg16.VGG16(weights='imagenet', include_top=False, pooling='avg')
+            self.net = VGG16(weights='imagenet', include_top=False, pooling='avg')
         else:
             print("ERROR: Only ResNet50 and VGG16 implemented so far")
 
