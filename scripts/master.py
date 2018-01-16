@@ -109,16 +109,15 @@ def run(id):
         inner_cv = KFold(5, shuffle=True, random_state=1673)
 
         clf = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=r2)
-        clf_r2 = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=r2_pearson)
-        clf_MAPE = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=MAPE)
+        # clf_r2 = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=r2_pearson)
+        # clf_MAPE = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=MAPE)
 
         score = cross_val_score(clf, X, y, scoring=r2, cv=outer_cv)
-        score_r2 = cross_val_score(clf_r2, X, y, scoring=r2_pearson, cv=outer_cv)
-        score_MAPE = cross_val_score(clf_MAPE, X, y, scoring=MAPE, cv=outer_cv)
+        score_r2 = cross_val_score(clf, X, y, scoring=r2_pearson, cv=outer_cv)
+        score_MAPE = cross_val_score(clf, X, y, scoring=MAPE, cv=outer_cv)
 
         predict = cross_val_predict(clf, X, y, cv=outer_cv)
-        predict_r2 = cross_val_predict(clf_r2, X, y, cv=outer_cv)
-        predict_mape = cross_val_predict(clf_MAPE, X, y, cv=outer_cv)
+
     elif config['output'][0] == 'classification':
         from sklearn.linear_model import RidgeClassifier
         outer_cv = KFold(5, shuffle=True, random_state=75788)
@@ -130,8 +129,8 @@ def run(id):
         predict = cross_val_predict(clf, X, y, cv=outer_cv)
 
     # WRITE FULL RESULTS to FILE SYSTEM
-    if config['output'][0] == 'regression': results_df = pd.DataFrame([predict, predict_r2, predict_mape, y],
-                                                                      index=["predict", "predict_r2", "predict_mape", "y"]).T
+    if config['output'][0] == 'regression': results_df = pd.DataFrame([predict, y],
+                                                                      index=["predict", "y"]).T
     if config['output'][0] == 'classification': results_df = pd.DataFrame([predict, y],
                                                                       index=["predict", "y"]).T
     if not os.path.exists('../Data/Results'):
