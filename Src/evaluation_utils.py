@@ -16,6 +16,6 @@ def MAPE(y, yhat):
     return(np.sum(diff)/len(y))
 
 
-r2 = make_scorer(r2_score, greater_is_better=False) # counter intuitive but otherwise shit results???
+r2 = make_scorer(r2_score, greater_is_better=True) # counter intuitive but otherwise shit results???
 r2_pearson = make_scorer(r2_pearson, greater_is_better=True)
 MAPE = make_scorer(MAPE, greater_is_better=False)
