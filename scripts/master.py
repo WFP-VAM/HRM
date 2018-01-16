@@ -83,7 +83,7 @@ def run(id):
     # ----------------- #
     # MODEL #############
     # ----------------- #
-    from evaluation_utils import MAPE, r2_pearson
+    from evaluation_utils import MAPE, r2_pearson, r2
     from sklearn.linear_model import Ridge
     from sklearn.model_selection import GridSearchCV, KFold, cross_val_score, cross_val_predict
 
@@ -108,11 +108,11 @@ def run(id):
         model = Ridge()
         inner_cv = KFold(5, shuffle=True, random_state=1673)
 
-        clf = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv)
+        clf = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=r2)
         clf_r2 = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=r2_pearson)
         clf_MAPE = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=MAPE)
 
-        score = cross_val_score(clf, X, y, cv=outer_cv)
+        score = cross_val_score(clf, X, y, scoring=r2, cv=outer_cv)
         score_r2 = cross_val_score(clf_r2, X, y, scoring=r2_pearson, cv=outer_cv)
         score_MAPE = cross_val_score(clf_MAPE, X, y, scoring=MAPE, cv=outer_cv)
 
