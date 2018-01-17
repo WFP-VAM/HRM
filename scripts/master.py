@@ -153,7 +153,7 @@ def run(id):
         query = """
         insert into results (run_date, config_id, r2, r2_var, r2pearson, r2pearson_var, mape, mape_var)
         values (current_date, {}, {}, {}, {}, {}, {},{}) """.format(
-            config['id'][0], score_r2, score_r2_mean, score_mean, score_var, score_MAPE, score_MAPE_var)
+            config['id'][0], score_r2_mean, score_r2_var, score_mean, score_var, score_MAPE, score_MAPE_var)
         engine.execute(query)
 
     if config['output'][0] == 'classification':
