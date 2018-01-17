@@ -123,6 +123,7 @@ def run(id):
         score = cross_val_score(clf, X, y, cv=outer_cv)
         predict = cross_val_predict(clf, X, y, cv=outer_cv)
 
+    print('INFO: Pearson score: ', score.mean())
     # WRITE FULL RESULTS to FILE SYSTEM
     if config['output'][0] == 'regression': results_df = pd.DataFrame([predict, y],
                                                                       index=["predict", "y"]).T
