@@ -4,6 +4,7 @@
 - extracts features
 - loads a pre-trained model
 - makes predictions
+- plots
 """
 import os
 import sys
@@ -59,9 +60,16 @@ def main(adm0_file_path, path_to_shapefile, config_id, gpscoordinates_sampling, 
 
     # ---------------------------------- #
     # EXTRACT FEATURES FOR IMGS IN SCOPE #
-    print("INFO: extracting features for images in scope ...")
-    network = NNExtractor(image_dir, config['network_model'][0], step=config['satellite_step'][0])
-    features = scoring_postprocess(network.extract_features(list_i, list_j))
+    if os.path.isfile("../Data/Features/scored_config_id_{}.csv".format(id)):
+        print(str(np.datetime64('now')), ' INFO: images already scored for id: ', id)
+        features = pd.read_csv("../Data/Features/scored_config_id_{}.csv".format(id))
+
+    else:
+        print("INFO: extracting features for images in scope ...")
+        network = NNExtractor(image_dir, config['network_model'][0], step=config['satellite_step'][0])
+        features = scoring_postprocess(network.extract_features(list_i, list_j))
+        # write out
+        features.to_csv("../Data/Features/scored_config_id_{}.csv".format(config['id'][0]), index=False)
 
     # ---------------------- #
     # LOAD MODEL AND PREDICT #
@@ -101,7 +109,7 @@ def main(adm0_file_path, path_to_shapefile, config_id, gpscoordinates_sampling, 
         map_df.means.max())
 
     m = folium.Map(
-        location=[1.130956, 32.354771],
+        location=[9.151201, 7.875277],
         tiles='Stamen Terrain',
         zoom_start=6
     )

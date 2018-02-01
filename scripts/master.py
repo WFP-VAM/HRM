@@ -129,6 +129,10 @@ def run(id):
                                                                       index=["predict", "y"]).T
     if config['output'][0] == 'classification': results_df = pd.DataFrame([predict, y],
                                                                       index=["predict", "y"]).T
+
+    # attach coordinates
+    results_df['i'], results_df['j'] = data.i, data.j
+
     if not os.path.exists('../Data/Results'):
         os.makedirs('../Data/Results')
     results_df.to_csv(os.path.join("../Data/Results", "confi_"+str(id)+"_results.csv"), index=False)
