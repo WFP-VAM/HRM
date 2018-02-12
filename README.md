@@ -30,7 +30,6 @@ This will:
 * save the full predictions on the left-out data.
 * save the trained model.
 
-### Refactoring  
   
 #### Config file
 
@@ -86,4 +85,7 @@ Data
   + Extract features from previous layers in the network
 + Adding features coming from other sources 
   + Ex: conflict GIS maps or CDR data (WorldPop approach) 
+  
+### Ridge Regression
+![coefficientsa as a function of the L2 parameter Alpha for VGG16 features](https://github.com/WFP-VAM/HRM/blob/master/Plots/alpha_for_VGG16_features.png)
 
