@@ -8,6 +8,7 @@ import os
 import sys
 sys.path.append(os.path.join("..","Src"))
 from img_lib import RasterGrid
+from img_utils import getRastervalue
 from sqlalchemy import create_engine
 import yaml
 import pandas as pd
@@ -74,10 +75,16 @@ def run(id):
     hh_data = pd.read_csv(config["dataset_filename"][0])
     data = hh_data.merge(features, on=["i", "j"])
 
+    # ----------------- #
+    # ADD OTHER FEATURES  ###
+    # ----------------- #
+    if config["land_use_raster"][0]!=None:
+        raster_file = config["land_use_raster"][0]
+        data["land_use"]=data.apply(getRastervalue,args=(raster_file,),axis=1)
+
+
     data = data.loc[data[config['indicator'][0]] > 0]
-
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True) # shuffle data
-
     data_features = data[list(set(data.columns) - set(hh_data.columns) - set(['index']))]  # take only the CNN features
 
     # ----------------- #
@@ -176,6 +183,6 @@ if __name__ == "__main__":
     import tensorflow as tf
     for id in sys.argv[1:]:
         run(id)
-  
+
     # rubbish collection
     tf.keras.backend.clear_session()

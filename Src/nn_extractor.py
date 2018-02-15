@@ -86,11 +86,12 @@ class NNExtractor:
         Final = DataFrame([])
 
         cnt=0
+        toal=len(list_i)
         for i, j in zip(list_i, list_j):
             name=str(i)+'_'+str(j)
-            cnt += 1
-            if cnt%10 == 0:
-                print("Feature extraction : {} tiles".format(cnt))
+            #cnt += 1
+            #if cnt%10 == 0:
+            print("Feature extraction : {} tiles out of {}".format(cnt,total),end='\r')
             Final[name] = self.__average_features_dir(self.output_image_dir, i, j)
 
         return Final

@@ -146,11 +146,11 @@ class RasterGrid:
         import multiprocessing
 
         cnt=0
-        for i, j in zip(list_i, list_j):
-            cnt+=1
+        total=len(list_i)*(2*step+1)**2
 
-            if cnt%10 == 0:
-                print("{} images downloaded".format(cnt))
+        for i, j in zip(list_i, list_j):
+
+            #if cnt%10 == 0:
 
             file_path = self.output_image_dir
 
@@ -158,6 +158,9 @@ class RasterGrid:
 
                 # parallelize on the images per tile (inputs)
                 for b in range(-step, 1+step):
+
+                    print("{} images downloaded out of {}".format(cnt,total),end='\r')
+                    cnt+=1
 
                     # find available cores
                     #num_cores = multiprocessing.cpu_count()
