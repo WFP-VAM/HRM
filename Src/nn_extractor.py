@@ -86,7 +86,7 @@ class NNExtractor:
         Final = DataFrame([])
 
         cnt=0
-        toal=len(list_i)
+        total=len(list_i)
         for i, j in zip(list_i, list_j):
             name=str(i)+'_'+str(j)
             #cnt += 1
