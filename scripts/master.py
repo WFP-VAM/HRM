@@ -73,6 +73,10 @@ def run(id):
     # ADD SURVEY DATA ###
     # ----------------- #
     hh_data = pd.read_csv(config["dataset_filename"][0])
+
+    hh_data["i"]=list_i
+    hh_data["j"]=list_j
+
     data = hh_data.merge(features, on=["i", "j"])
 
     # ----------------- #
