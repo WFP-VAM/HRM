@@ -11,7 +11,7 @@ class NNExtractor:
         """
         self.model_type = model_type
         self.output_image_dir = output_image_dir
-        self.step=step
+        self.step = step
 
         import tensorflow as tf
         from tensorflow.python.keras.applications.vgg16 import VGG16
@@ -32,7 +32,7 @@ class NNExtractor:
         print('INFO: loading custom weights ...')
         self.net.load_weights(weights_path, by_name=True)
 
-    def __average_features_dir(self, image_dir, i,j):
+    def __average_features_dir(self, image_dir, i, j):
         """
         Private function that takes the average of the features computed for all the images in the cluster into one feature.
         :param image_dir: string with path to the folder with images for one tile.
@@ -52,11 +52,13 @@ class NNExtractor:
 
         features_df = DataFrame([])
 
+        batch_list = []
+        c = 0
         for a in range(-self.step, 1 + self.step):
             for b in range(-self.step, 1 + self.step):
                 k = i + a
                 l = j + b
-                name=str(k)+'_'+str(l)
+                name = str(k)+'_'+str(l)
 
                 img_path = os.path.join(image_dir, name +".jpg")
 
@@ -65,11 +67,13 @@ class NNExtractor:
                 image_preprocess = np.expand_dims(image_preprocess, axis=0)
                 image_preprocess = preprocess_input(image_preprocess)
 
-                features = self.net.predict(image_preprocess)
-                features = features.ravel()
+                batch_list.append(image_preprocess)
 
-                features_df[name] = features
-        avg_features = features_df.mean(axis=1)
+                c += 1
+
+        features = self.net.predict(np.array(batch_list).reshape(c, 400, 400,3))
+
+        avg_features = np.mean(features, axis=0)
 
         return avg_features
 
@@ -81,17 +85,17 @@ class NNExtractor:
         :return:
         """
         from pandas import DataFrame
-        import os
 
         Final = DataFrame([])
 
-        cnt=0
-        total=len(list_i)
+        cnt = 0
+        total = len(list_i)
+
         for i, j in zip(list_i, list_j):
-            name=str(i)+'_'+str(j)
+            name = str(i)+'_'+str(j)
             cnt += 1
-            #if cnt%10 == 0:
-            print("Feature extraction : {} tiles out of {}".format(cnt,total),end='\r')
+            if cnt%10: print("Feature extraction : {} tiles out of {}".format(cnt, total), end='\r')
+
             Final[name] = self.__average_features_dir(self.output_image_dir, i, j)
 
         return Final
