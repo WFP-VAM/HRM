@@ -4,6 +4,7 @@ import pandas as pd
 from img_utils import get_cell_idx
 import gdal
 import numpy as np
+import sentinel_utils
 
 
 with open('../private_config.yml', 'r') as cfgfile:
@@ -171,9 +172,12 @@ class RasterGrid:
 
                     lon = self.centroid_x_coords[i + a]
                     lat = self.centroid_y_coords[j + b]
-                    self.url = self.__produce_url(lon, lat, provider)
                     file_name = str(i + a) + '_' + str(j + b) + '.jpg'
-                    self.__save_img(file_path, file_name)
+                    if os.path.exists(file_path + file_name):
+                        print("{}{} already downloaded".format(file_path,file_name))
+                    else:
+                        self.url = self.__produce_url(lon, lat, provider)
+                        self.__save_img(file_path, file_name, provider)
 
 
     # def img_multiproc_wrapper(self, i, j, a, b, provider, file_path):
@@ -189,6 +193,7 @@ class RasterGrid:
 
     def __produce_url(self, lon, lat, provider):
         # wrapper for the creation of the url depending on the engine.
+
         if provider == 'Google':
             return('https://maps.googleapis.com/maps/api/staticmap?center=' + str(lat) + ',' +
                     str(lon) + '&zoom=16&size=400x500&maptype=satellite&key=' + tokens['Google'])
@@ -201,10 +206,19 @@ class RasterGrid:
 
             return("http://dev.virtualearth.net/REST/v1/Imagery/Map/" + imagery_set + "/" + center_point +
                     "/" + zoom_level + "?mapSize=" + map_size + "&key=" + tokens['Bing'])
+
+        elif provider == 'Sentinel':
+            d=5000
+            geojson=sentinel_utils.squaretogeojson(lon,lat,d)
+            start_date='2017-01-01'
+            end_date='2018-01-01'
+            url=sentinel_utils.gee_url(geojson,start_date,end_date)
+            return url
+
         else:
             print("ERROR: Wrong API {}".format(provider))
 
-    def __save_img(self, file_path, file_name):
+    def __save_img(self, file_path, file_name, provider):
         """
         Function
         --------
@@ -217,36 +231,38 @@ class RasterGrid:
         from io import BytesIO
 
         # try to pull the image
+        try:
+            ur = urllib.request.urlopen(self.url).read()
+            buffer = BytesIO(ur)
 
-        if os.path.exists(file_path + file_name):
-            print("{}{} already downloaded".format(file_path,file_name))
+            if provider == 'Sentinel':
+                gee_tif=sentinel_utils.download_and_unzip(buffer,3,6,file_path)
+                sentinel_utils.rgbtiffstojpg(gee_tif,file_path,file_name)
 
-        else:
+            else:
+                image = imread(buffer, mode='RGB')
+                misc.imsave(file_path + file_name, image[50:450, :, :])
+                ## Do not download images in places where Google or Bing does not have any image
+                #if np.array_equal(image[:, :10, :], image[:, 10:20, :]):
+                #print("bad image")
+                #else:
+
+        except urllib.error.HTTPError as err:
+
+            # try a second time!!!
             try:
+                print('second try for url {}'.format(self.url))
                 ur = urllib.request.urlopen(self.url).read()
                 buffer = BytesIO(ur)
 
-                image = imread(buffer, mode='RGB')
-
-                ## Do not download images in places where Google or Bing does not have any image
-
-                #if np.array_equal(image[:, :10, :], image[:, 10:20, :]):
-                    #print("bad image")
-                #else:
-
-                misc.imsave(file_path + file_name, image[50:450, :, :])
-
-            except urllib.error.HTTPError as err:
-
-                # try a second time!!!
-                try:
-                    print('second try for url {}'.format(self.url))
-                    ur = urllib.request.urlopen(self.url).read()
-                    buffer = BytesIO(ur)
+                if provider == 'Sentinel':
+                    gee_tif=sentinel_utils.download_and_unzip(buffer,3,6,file_path)
+                    rgbtiffstojpg(gee_tif,file_path+file_name)
+                else:
 
                     image = imread(buffer, mode='RGB')
 
-                    ## Do not download images in places where Google or Bing does not have any image
+                ## Do not download images in places where Google or Bing does not have any image
 
                     if (image[:,:,0]==245).sum()>=100000: #Gray image in Bing
                         print("No image in Bing API")
@@ -255,12 +271,12 @@ class RasterGrid:
                     else:
                         misc.imsave(file_path + file_name, image[50:450, :, :])
 
-                except urllib.error.HTTPError as err:
+            except urllib.error.HTTPError as err:
 
-                    print('error code: \n', err.code)
-                    print('error message: \n', err.read())
-                    import sys
-                    sys.exit("Error message")
+                print('error code: \n', err.code)
+                print('error message: \n', err.read())
+                import sys
+                sys.exit("Error message")
 
     def get_coordinates_of_country(self, country):
         """
