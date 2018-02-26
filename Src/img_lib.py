@@ -132,7 +132,7 @@ class RasterGrid:
 
         return x_size, top_left_x_coords, top_left_y_coords, centroid_x_coords, centroid_y_coords, bands_data
 
-    def download_images(self, list_i, list_j, step, provider):
+    def download_images(self, list_i, list_j, step, provider,start_date="2017-01-01",end_date="2018-01-01"):
         """
         Function
         --------
@@ -172,12 +172,17 @@ class RasterGrid:
 
                     lon = self.centroid_x_coords[i + a]
                     lat = self.centroid_y_coords[j + b]
-                    file_name = str(i + a) + '_' + str(j + b) + '.jpg'
+
+                    if provider=="Sentinel":
+                        file_name = str(i + a) + '_' + str(j + b) + "_" + str(start_date)+"_"+str(end_date) + '.jpg'
+                    else:
+                        file_name = str(i + a) + '_' + str(j + b) + '.jpg'
+
                     if os.path.exists(file_path + file_name):
                         print("{}{} already downloaded".format(file_path,file_name))
                     else:
-                        self.url = self.__produce_url(lon, lat, provider)
-                        self.__save_img(file_path, file_name, provider)
+                        self.url = self.__produce_url(lon, lat, provider,start_date,end_date)
+                        self.__save_img(file_path, file_name, provider,start_date,end_date)
 
 
     # def img_multiproc_wrapper(self, i, j, a, b, provider, file_path):
@@ -191,7 +196,7 @@ class RasterGrid:
     #
     #     self.__save_img(file_path, file_name)
 
-    def __produce_url(self, lon, lat, provider):
+    def __produce_url(self, lon, lat, provider,start_date="2017-01-01",end_date="2018-01-01"):
         # wrapper for the creation of the url depending on the engine.
 
         if provider == 'Google':
@@ -210,15 +215,13 @@ class RasterGrid:
         elif provider == 'Sentinel':
             d=5000
             geojson=sentinel_utils.squaretogeojson(lon,lat,d)
-            start_date='2017-01-01'
-            end_date='2018-01-01'
-            url=sentinel_utils.gee_url(geojson,start_date,end_date)
+            url=sentinel_utils.gee_url(geojson,str(start_date),str(end_date))
             return url
 
         else:
             print("ERROR: Wrong API {}".format(provider))
 
-    def __save_img(self, file_path, file_name, provider):
+    def __save_img(self, file_path, file_name, provider,start_date="2017-01-01",end_date="2018-01-01"):
         """
         Function
         --------
@@ -257,7 +260,7 @@ class RasterGrid:
 
                 if provider == 'Sentinel':
                     gee_tif=sentinel_utils.download_and_unzip(buffer,3,6,file_path)
-                    rgbtiffstojpg(gee_tif,file_path+file_name)
+                    rgbtiffstojpg(gee_tif,file_path,file_name)
                 else:
 
                     image = imread(buffer, mode='RGB')

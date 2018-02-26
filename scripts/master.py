@@ -29,23 +29,42 @@ def run(id):
                            .format(private_config['DB']['user'], private_config['DB']['password'],
                                     private_config['DB']['host'], private_config['DB']['database']))
 
-
     config = pd.read_sql_query("select * from config where id = {}".format(id), engine)
 
-    image_dir = os.path.join("../Data", "Satellite", config["satellite_source"][0])
-    print(image_dir)
+    dataset = config["dataset_filename"][0]
+    indicator = config["indicator"][0]
     raster = config["satellite_grid"][0]
-    print(raster)
+    step = config["satellite_step"][0]
+    provider = config["satellite_source"][0]
+    start_date = config["sentinel_start"][0]
+    end_date = config["sentinel_end"][0]
+    land_use_raster = config["land_use_raster"][0]
+    network_model = config['network_model'][0]
+    custom_weights = config['custom_weights'][0]
+    indicator_log = config['indicator_log'][0]
+    model_pca = config['model_pca'][0]
+    output = config['output'][0]
+    model_grid_parameters = config['model_grid_parameters'][0]
+    image_dir = os.path.join("../Data", "Satellite", config["satellite_source"][0])  # config["image_dir"][0] is useless
 
-    GRID = RasterGrid(raster,image_dir)
+    print(provider)
+    print(image_dir)
 
-    list_i, list_j = GRID.get_gridcoordinates(file=config["dataset_filename"][0])
+    GRID = RasterGrid(raster, image_dir)
+
+    list_i, list_j = GRID.get_gridcoordinates(dataset)
 
     # # ----------------- #
     # # DOWNLOADING #######
     # # ----------------- #
     print(str(np.datetime64('now')), " INFO: downlaoding images ...")
-    GRID.download_images(list_i, list_j,step=config["satellite_step"][0],provider=config["satellite_source"][0])
+
+    if (start_date is None) or (end_date is None):
+        GRID.download_images(list_i, list_j, step, provider)
+    else:
+        GRID.download_images(list_i, list_j, step, provider, start_date,
+                             end_date)
+
     print(str(np.datetime64('now')), " INFO: images downloaded.")
     # ----------------- #
     # SCORING ###########
@@ -58,37 +77,37 @@ def run(id):
     else:
         from utils import scoring_postprocess
         print(str(np.datetime64('now')), " INFO: initiating network ...")
-        network = NNExtractor(config['satellite_image_dir'][0], config['network_model'][0],config['satellite_step'][0])
+        network = NNExtractor(image_dir, network_model, step)
 
-        if config['custom_weights'][0] != None:
-            network.load_weights(config['custom_weights'][0])
+        if custom_weights is not None:
+            network.load_weights(custom_weights)
 
         print("INFO: extracting features ...")
-        features = network.extract_features(list_i, list_j)
+        features = network.extract_features(list_i, list_j, provider, start_date, end_date)
         features = scoring_postprocess(features)
         # write out
-        features.to_csv("../Data/Features/features_config_id_{}.csv".format(config['id'][0]), index=False)
+        features.to_csv("../Data/Features/features_config_id_{}.csv".format(id), index=False)
 
     # ----------------- #
     # ADD SURVEY DATA ###
     # ----------------- #
-    hh_data = pd.read_csv(config["dataset_filename"][0])
+    hh_data = pd.read_csv(dataset)
 
-    hh_data["i"]=list_i
-    hh_data["j"]=list_j
+    hh_data["i"] = list_i
+    hh_data["j"] = list_j
 
     data = hh_data.merge(features, on=["i", "j"])
 
     # ----------------- #
     # ADD OTHER FEATURES  ###
     # ----------------- #
-    if config["land_use_raster"][0]!=None:
-        raster_file = config["land_use_raster"][0]
-        data["land_use"]=data.apply(getRastervalue,args=(raster_file,),axis=1)
+    if land_use_raster is not None:
+        raster_file = land_use_raster
+        data["land_use"] = data.apply(getRastervalue, args=(raster_file,), axis=1)
 
 
-    data = data.loc[data[config['indicator'][0]] > 0]
-    data = data.sample(frac=1, random_state=1783).reset_index(drop=True) # shuffle data
+    data = data.loc[indicator > 0]
+    data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  #shuffle data
     data_features = data[list(set(data.columns) - set(hh_data.columns) - set(['index']))]  # take only the CNN features
 
     # ----------------- #
@@ -97,16 +116,16 @@ def run(id):
     from evaluation_utils import MAPE, r2_pearson, r2
     from sklearn.model_selection import GridSearchCV, KFold, cross_val_score, cross_val_predict
 
-    y = data[config['indicator'][0]].values
+    y = data[indicator].values
 
     # Log-normal distribution
-    if config['indicator_log'][0] == True:
+    if indicator_log == True:
         y = np.log(y)
 
     # PCA
-    if config['model_pca'][0] > 0:
+    if model_pca > 0:
         from sklearn.decomposition import PCA
-        pca = PCA(n_components=config['model_pca'][0])
+        pca = PCA(n_components=model_pca)
         X = pca.fit_transform(data_features)
     else:
         X = data_features
@@ -115,10 +134,10 @@ def run(id):
     outer_cv = KFold(5, shuffle=True, random_state=75788)
     inner_cv = KFold(5, shuffle=True, random_state=1673)
     print(str(np.datetime64('now')), " INFO: training model ...")
-    if config['output'][0] == 'regression':
+    if output == 'regression':
         from sklearn.linear_model import Ridge
         model = Ridge()
-        clf = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv, scoring=r2_pearson)
+        clf = GridSearchCV(estimator=model, param_grid=model_grid_parameters, cv=inner_cv, scoring=r2_pearson)
 
         score = cross_val_score(clf, X, y, scoring=r2_pearson, cv=outer_cv)
         score_r2 = cross_val_score(clf, X, y, scoring=r2, cv=outer_cv)
@@ -126,19 +145,19 @@ def run(id):
 
         predict = cross_val_predict(clf, X, y, cv=outer_cv)
 
-    elif config['output'][0] == 'classification':
+    elif output == 'classification':
         from sklearn.linear_model import RidgeClassifier
         model = RidgeClassifier()
-        clf = GridSearchCV(estimator=model, param_grid=config['model_grid_parameters'][0], cv=inner_cv)
+        clf = GridSearchCV(estimator=model, param_grid=model_grid_parameters, cv=inner_cv)
 
         score = cross_val_score(clf, X, y, cv=outer_cv)
         predict = cross_val_predict(clf, X, y, cv=outer_cv)
 
     print('INFO: Pearson score: ', score.mean())
     # WRITE FULL RESULTS to FILE SYSTEM
-    if config['output'][0] == 'regression': results_df = pd.DataFrame([predict, y],
+    if output == 'regression': results_df = pd.DataFrame([predict, y],
                                                                       index=["predict", "y"]).T
-    if config['output'][0] == 'classification': results_df = pd.DataFrame([predict, y],
+    if output == 'classification': results_df = pd.DataFrame([predict, y],
                                                                       index=["predict", "y"]).T
 
     # attach coordinates
@@ -162,7 +181,7 @@ def run(id):
     # ------------------ #
     # WRITE SCORES to DB #
     # ------------------ #
-    if config['output'][0] == 'regression':
+    if output == 'regression':
         score_mean, score_var, score_r2_mean, score_r2_var, score_MAPE, score_MAPE_var = \
         score.mean(), score.std() * 2, score_r2.mean(), score_r2.std() * 2, score_MAPE.mean(), score_MAPE.std() * 2
 
@@ -172,13 +191,13 @@ def run(id):
             config['id'][0], score_r2_mean, score_r2_var, score_mean, score_var, score_MAPE, score_MAPE_var)
         engine.execute(query)
 
-    if config['output'][0] == 'classification':
+    if output == 'classification':
         score, score_mean = score.mean(), score.std() * 2
 
         query = """
                 insert into results (run_date, config_id, r2, r2_var)
                 values (current_date, {}, {}, {}) """.format(
-            config['id'][0], score, score_mean)
+                id, score, score_mean)
         engine.execute(query)
 
 

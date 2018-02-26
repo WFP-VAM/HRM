@@ -32,7 +32,7 @@ class NNExtractor:
         print('INFO: loading custom weights ...')
         self.net.load_weights(weights_path, by_name=True)
 
-    def __average_features_dir(self, image_dir, i, j):
+    def __average_features_dir(self, image_dir, i, j, provider,start_date,end_date):
         """
         Private function that takes the average of the features computed for all the images in the cluster into one feature.
         :param image_dir: string with path to the folder with images for one tile.
@@ -58,7 +58,10 @@ class NNExtractor:
             for b in range(-self.step, 1 + self.step):
                 k = i + a
                 l = j + b
-                name = str(k)+'_'+str(l)
+                if provider=="Sentinel":
+                    name = str(k)+'_'+str(l) + "_" + str(start_date)+"_"+str(end_date)
+                else:
+                    name = str(k)+'_'+str(l)
 
                 img_path = os.path.join(image_dir, name +".jpg")
 
@@ -79,7 +82,7 @@ class NNExtractor:
 
 
 
-    def extract_features(self,list_i,list_j):
+    def extract_features(self,list_i,list_j,provider,start_date="2016-01-01",end_date="2017-01-01"):
         """
         Loops over the folders (tiles) and collects the features.
         :return:
@@ -96,7 +99,7 @@ class NNExtractor:
             cnt += 1
             if cnt%10: print("Feature extraction : {} tiles out of {}".format(cnt, total), end='\r')
 
-            Final[name] = self.__average_features_dir(self.output_image_dir, i, j)
+            Final[name] = self.__average_features_dir(self.output_image_dir, i, j, provider, start_date, end_date)
 
         return Final
 
