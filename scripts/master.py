@@ -22,8 +22,6 @@ def run(id):
     # SETUP #############
     # ----------------- #
 
-    id=80
-
     print(str(np.datetime64('now')), " INFO: config id =", id)
 
     with open('../private_config.yml', 'r') as cfgfile:
@@ -53,79 +51,41 @@ def run(id):
     print(provider)
 
     GRID = RasterGrid(raster)
-    list_i, list_j = GRID.get_gridcoordinates(dataset)
+    list_i, list_j = GRID.get_gridcoordinates(dataset)#
 
-    # # ----------------- #
-    # # DOWNLOADING #######
-    # # ----------------- #
+    data = pd.read_csv(dataset)
 
-    hh_data = pd.read_csv(dataset)
-
-    hh_data["i"] = list_i
-    hh_data["j"] = list_j
+    data["i"] = list_i
+    data["j"] = list_j
 
     for sat in provider.split(","):
+
         print(sat)
         image_dir = os.path.join("../Data", "Satellite", sat)
         GRID.output_image_dir = image_dir + "/"
-        # # DOWNLOADING # #
+
+        # # ----------------- #
+        # # DOWNLOADING #######
+        # # ----------------- #
+
         GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
-        # # SCORING # #
 
-        #check if features file already there
-        if os.path.isfile("../Data/Features/features_{}_config_id_{}.csv".format(sat,id)):
-            print(str(np.datetime64('now')), ' INFO: images already scored for id: ', id)
-            features = pd.read_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat,id))
+        # # ----------------- #
+        # # SCORING #######
+        # # ----------------- #
 
-        else:
-            print(str(np.datetime64('now')), " INFO: initiating network ...")
-            network = NNExtractor(image_dir, network_model, step)
-            features = network.extract_features(list_i, list_j, sat, start_date, end_date)
-            features = scoring_postprocess(features)
-            features.to_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat,id), index=False)
-        # # ADD SURVEY DATA # #
-        data = hh_data.merge(features, on=["i", "j"])
+        print(str(np.datetime64('now')), " INFO: initiating network ...")
+        network = NNExtractor(id, sat, image_dir, network_model, step)
+        if custom_weights is not None:
+            network.load_weights(custom_weights)
+        features = network.extract_features(list_i, list_j, sat, start_date, end_date)
+        features.to_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat,id), index=False)
 
+        # # ----------------- #
+        # # ADD SURVEY DATA #######
+        # # ----------------- #
 
-    # print(str(np.datetime64('now')), " INFO: downlaoding images ...")
-    #
-    # if (start_date is None) or (end_date is None):
-    #     GRID.download_images(list_i, list_j, step, provider)
-    # else:
-    #     GRID.download_images(list_i, list_j, step, provider, start_date,
-    #                          end_date)
-    #
-    # print(str(np.datetime64('now')), " INFO: images downloaded.")
-    # # ----------------- #
-    # # SCORING ###########
-    # # ----------------- #
-    # # check if features file already there
-    # if os.path.isfile("../Data/Features/features_config_id_{}.csv".format(id)):
-    #     print(str(np.datetime64('now')), ' INFO: images already scored for id: ', id)
-    #     features = pd.read_csv("../Data/Features/features_config_id_{}.csv".format(id))
-    #
-    # else:
-    #     print(str(np.datetime64('now')), " INFO: initiating network ...")
-    #     network = NNExtractor(image_dir, network_model, step)
-    #
-    #     if custom_weights is not None:
-    #         network.load_weights(custom_weights)
-    #
-    #     print("INFO: extracting features ...")
-    #     features = network.extract_features(list_i, list_j, provider, start_date, end_date)
-    #     features = scoring_postprocess(features)
-    #     # write out
-    #     features.to_csv("../Data/Features/features_config_id_{}.csv".format(id), index=False)
-    #
-    # # ----------------- #
-    # # ADD SURVEY DATA ###
-    # # ----------------- #
-    # hh_data = pd.read_csv(dataset)
-    #
-    # hh_data["i"] = list_i
-    # hh_data["j"] = list_j
-    #
-    # data = hh_data.merge(features, on=["i", "j"])
+        data = data.merge(features, on=["i", "j"])
 
     # ----------------- #
     # ADD OTHER FEATURES  ###
@@ -133,7 +93,6 @@ def run(id):
     if land_use_raster is not None:
         raster_file = land_use_raster
         data["land_use"] = data.apply(getRastervalue, args=(raster_file,), axis=1)
-
 
     data = data.loc[data[indicator] > 0]
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  #shuffle data
