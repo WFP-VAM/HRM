@@ -69,7 +69,7 @@ def run(id):
         # # DOWNLOADING #######
         # # ----------------- #
 
-        GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
+        #GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
 
         # # ----------------- #
         # # SCORING #######
@@ -81,7 +81,6 @@ def run(id):
             network.load_weights(custom_weights)
         features = network.extract_features(list_i, list_j, sat, start_date, end_date)
         features.to_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat,id), index=False)
-        features=scoring_postprocess(features)
 
         # # ----------------- #
         # # ADD SURVEY DATA #######
@@ -98,7 +97,7 @@ def run(id):
 
     data = data.loc[data[indicator] > 0]
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  #shuffle data
-    data_features = data[list(set(data.columns) - set(hh_data.columns) - set(['index']))]  # take only the CNN features
+    data_features = data[list(set(data.columns) - set(hh_data.columns) - set(['index','index_x','index_y']))]  # take only the CNN features
 
     # ----------------- #
     # MODEL #############
