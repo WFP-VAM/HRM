@@ -66,15 +66,23 @@ def run(id):
 
     for sat in provider.split(","):
         print(sat)
-        image_dir = os.path.join("../Data", "Satellite", sat) 
+        image_dir = os.path.join("../Data", "Satellite", sat)
         GRID.output_image_dir = image_dir + "/"
         # # DOWNLOADING # #
         GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
         # # SCORING # #
-        network = NNExtractor(image_dir, network_model, step)
-        features = network.extract_features(list_i, list_j, sat, start_date, end_date)
-        features = scoring_postprocess(features)
-        features.to_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat,id), index=False)
+
+        #check if features file already there
+        if os.path.isfile("../Data/Features/features_{}_config_id_{}.csv".format(sat,id)):
+            print(str(np.datetime64('now')), ' INFO: images already scored for id: ', id)
+            features = pd.read_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat,id))
+
+        else:
+            print(str(np.datetime64('now')), " INFO: initiating network ...")
+            network = NNExtractor(image_dir, network_model, step)
+            features = network.extract_features(list_i, list_j, sat, start_date, end_date)
+            features = scoring_postprocess(features)
+            features.to_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat,id), index=False)
         # # ADD SURVEY DATA # #
         data = hh_data.merge(features, on=["i", "j"])
 
