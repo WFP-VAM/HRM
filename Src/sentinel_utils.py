@@ -32,6 +32,34 @@ def gee_url(geojson,start_date,end_date):
     })
     return path
 
+def gee_maxNDBImaxNDVImaxNDWI_url(geojson,start_date,end_date):
+
+    #Functions to create new bands to add the collection
+    GREEN = 'B3'
+    RED = 'B4'
+    NIR = 'B8'
+    SWIR = 'B11'
+
+    def addIndices(image):
+        ndvi = image.normalizedDifference([NIR, RED])
+        ndbi = image.normalizedDifference([SWIR, NIR])
+        ndwi = image.normalizedDifference([GREEN, NIR])
+        return image.addBands(ndvi.rename('NDVI')).addBands(ndbi.rename('NDBI')).addBands(ndwi.rename('NDWI'))
+
+    sentinel_w_indices = sentinel(year).map(addIndices)
+
+    maxImageSentinel = sentinel_w_indices.select(['NDBI','NDVI','NDWI']).max()
+
+    path = maxImageSentinel.getDownloadUrl({
+        'scale': 10,
+        'crs': 'EPSG:4326',
+        'region':geojson
+    })
+    return path
+
+
+
+
 def download_and_unzip(buffer,a,b,path):
     unzipped=[]
     import urllib

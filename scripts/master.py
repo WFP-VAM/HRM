@@ -87,6 +87,7 @@ def run(id):
         # # ----------------- #
 
         data = data.merge(features, on=["i", "j"])
+        data.to_csv("../Data/Features/features_all_config_id_{}.csv".format(sat,id), index=False)
 
     # ----------------- #
     # ADD OTHER FEATURES  ###

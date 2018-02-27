@@ -182,7 +182,6 @@ class RasterGrid:
                         print("{}{} already downloaded".format(file_path,file_name))
                     else:
                         self.url = self.__produce_url(lon, lat, provider,start_date,end_date)
-                        print(self.url)
                         self.__save_img(file_path, file_name, provider,start_date,end_date)
 
 
