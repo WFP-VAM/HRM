@@ -81,6 +81,7 @@ def run(id):
             network.load_weights(custom_weights)
         features = network.extract_features(list_i, list_j, sat, start_date, end_date)
         features.to_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat,id), index=False)
+        features=scoring_postprocess(features)
 
         # # ----------------- #
         # # ADD SURVEY DATA #######
