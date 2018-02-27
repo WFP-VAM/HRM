@@ -98,8 +98,8 @@ class NNExtractor:
         from utils import scoring_postprocess
 
         if path.isfile("../Data/Features/features_{}_config_id_{}.csv".format(self.sat,self.id)):
-            print(str(datetime64('now')), ' INFO: images already scored for id: ', id)
-            Final = read_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat,id))
+            print(str(datetime64('now')), ' INFO: images already scored for id: ', self.id)
+            Final = read_csv("../Data/Features/features_{}_config_id_{}.csv".format(self.sat,self.id))
         else:
             Final = DataFrame([])
 
