@@ -106,7 +106,7 @@ def run(id):
         data["land_use"] = data.apply(getRastervalue, args=(raster_file,), axis=1)
 
 
-    data = data.loc[indicator > 0]
+    data = data.loc[data[indicator] > 0]
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  #shuffle data
     data_features = data[list(set(data.columns) - set(hh_data.columns) - set(['index']))]  # take only the CNN features
 
