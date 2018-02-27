@@ -182,6 +182,7 @@ class RasterGrid:
                         print("{}{} already downloaded".format(file_path,file_name))
                     else:
                         self.url = self.__produce_url(lon, lat, provider,start_date,end_date)
+                        print(self.url)
                         self.__save_img(file_path, file_name, provider,start_date,end_date)
 
 
@@ -244,7 +245,10 @@ class RasterGrid:
 
             else:
                 image = imread(buffer, mode='RGB')
-                misc.imsave(file_path + file_name, image[50:450, :, :])
+                if (image[:,:,0]==245).sum()>=100000: #Gray image in Bing
+                    print("No image in Bing API")
+                else:
+                    misc.imsave(file_path + file_name, image[50:450, :, :])
                 ## Do not download images in places where Google or Bing does not have any image
                 #if np.array_equal(image[:, :10, :], image[:, 10:20, :]):
                 #print("bad image")
@@ -262,11 +266,8 @@ class RasterGrid:
                     gee_tif=sentinel_utils.download_and_unzip(buffer,3,6,file_path)
                     rgbtiffstojpg(gee_tif,file_path,file_name)
                 else:
-
                     image = imread(buffer, mode='RGB')
-
                 ## Do not download images in places where Google or Bing does not have any image
-
                     if (image[:,:,0]==245).sum()>=100000: #Gray image in Bing
                         print("No image in Bing API")
                     #if np.array_equal(image[:, :10, :], image[:, 10:20, :]):

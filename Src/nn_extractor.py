@@ -67,7 +67,7 @@ class NNExtractor:
 
                 img_path = os.path.join(image_dir, name + ".jpg")
 
-                img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))  # TODO: understand target_size
+                img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))
                 image_preprocess = tf.keras.preprocessing.image.img_to_array(img)
                 image_preprocess = np.expand_dims(image_preprocess, axis=0)
                 image_preprocess = preprocess_input(image_preprocess)

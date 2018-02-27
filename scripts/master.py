@@ -69,7 +69,7 @@ def run(id):
         # # DOWNLOADING #######
         # # ----------------- #
 
-        #GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
+        GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
 
         # # ----------------- #
         # # SCORING #######
