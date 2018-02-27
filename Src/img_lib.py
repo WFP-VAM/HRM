@@ -19,7 +19,7 @@ class RasterGrid:
     from Google Static API.
     """
 
-    def __init__(self, raster, image_dir):
+    def __init__(self, raster):
 
         self.x_size, \
         self.top_left_x_coords, \
@@ -28,7 +28,7 @@ class RasterGrid:
         self.centroid_y_coords, \
         self.bands_data = self.__read_raster(raster)
         self.url = None
-        self.output_image_dir=image_dir+"/"
+        self.output_image_dir=None
 
     def get_gridcoordinates(self, file):
 
@@ -146,8 +146,8 @@ class RasterGrid:
         from joblib import Parallel, delayed
         import multiprocessing
 
-        cnt=0
-        total=len(list_i)*(2*step+1)**2
+        cnt = 0
+        total = len(list_i)*(2*step+1)**2
 
         for i, j in zip(list_i, list_j):
 
@@ -161,7 +161,7 @@ class RasterGrid:
                 for b in range(-step, 1+step):
 
                     print("{} images downloaded out of {}".format(cnt,total),end='\r')
-                    cnt+=1
+                    cnt += 1
 
                     # find available cores
                     #num_cores = multiprocessing.cpu_count()
@@ -173,7 +173,7 @@ class RasterGrid:
                     lon = self.centroid_x_coords[i + a]
                     lat = self.centroid_y_coords[j + b]
 
-                    if provider=="Sentinel":
+                    if provider == "Sentinel":
                         file_name = str(i + a) + '_' + str(j + b) + "_" + str(start_date)+"_"+str(end_date) + '.jpg'
                     else:
                         file_name = str(i + a) + '_' + str(j + b) + '.jpg'
