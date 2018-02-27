@@ -4,11 +4,13 @@ class NNExtractor:
     -----
     Handles the feature extraction from a pre-trained NN.
     """
-    def __init__(self, output_image_dir, model_type, step):
+    def __init__(self, id, sat, output_image_dir, model_type, step):
         """
         Initializes the NNExtractor object where the model to be used is defined.
         :param config: the config file
         """
+        self.id = id
+        self.sat = sat
         self.model_type = model_type
         self.output_image_dir = output_image_dir
         self.step = step
@@ -58,12 +60,12 @@ class NNExtractor:
             for b in range(-self.step, 1 + self.step):
                 k = i + a
                 l = j + b
-                if provider=="Sentinel":
+                if provider == "Sentinel":
                     name = str(k)+'_'+str(l) + "_" + str(start_date)+"_"+str(end_date)
                 else:
                     name = str(k)+'_'+str(l)
 
-                img_path = os.path.join(image_dir, name +".jpg")
+                img_path = os.path.join(image_dir, name + ".jpg")
 
                 img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))  # TODO: understand target_size
                 image_preprocess = tf.keras.preprocessing.image.img_to_array(img)
@@ -82,24 +84,34 @@ class NNExtractor:
 
 
 
-    def extract_features(self,list_i,list_j,provider,start_date="2016-01-01",end_date="2017-01-01"):
+    def extract_features(self, list_i, list_j, provider, start_date="2016-01-01", end_date="2017-01-01"):
         """
         Loops over the folders (tiles) and collects the features.
         :return:
         """
         from pandas import DataFrame
+        from os import path
+        from pandas import read_csv
+        from numpy import datetime64
+        import sys
+        sys.path.append(path.join("..","Src"))
+        from utils import scoring_postprocess
 
-        Final = DataFrame([])
+        if path.isfile("../Data/Features/features_{}_config_id_{}.csv".format(self.sat,self.id)):
+            print(str(datetime64('now')), ' INFO: images already scored for id: ', id)
+            Final = read_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat,id))
+        else:
+            Final = DataFrame([])
 
-        cnt = 0
-        total = len(list_i)
+            cnt = 0
+            total = len(list_i)
 
-        for i, j in zip(list_i, list_j):
-            name = str(i)+'_'+str(j)
-            cnt += 1
-            if cnt%10: print("Feature extraction : {} tiles out of {}".format(cnt, total), end='\r')
-
-            Final[name] = self.__average_features_dir(self.output_image_dir, i, j, provider, start_date, end_date)
+            for i, j in zip(list_i, list_j):
+                name = str(i)+'_'+str(j)
+                cnt += 1
+                if cnt%10: print("Feature extraction : {} tiles out of {}".format(cnt, total), end='\r')
+                Final[name] = self.__average_features_dir(self.output_image_dir, i, j, provider, start_date, end_date)
+            Final = scoring_postprocess(Final)
 
         return Final
 
