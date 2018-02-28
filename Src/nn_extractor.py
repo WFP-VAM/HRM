@@ -60,7 +60,7 @@ class NNExtractor:
             for b in range(-self.step, 1 + self.step):
                 k = i + a
                 l = j + b
-                if provider == "Sentinel":
+                if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
                     name = str(k)+'_'+str(l) + "_" + str(start_date)+"_"+str(end_date)
                 else:
                     name = str(k)+'_'+str(l)

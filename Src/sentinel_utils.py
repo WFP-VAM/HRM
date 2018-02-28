@@ -33,12 +33,35 @@ def gee_url(geojson,start_date,end_date):
     return path
 
 def gee_maxNDBImaxNDVImaxNDWI_url(geojson,start_date,end_date):
-
+    import ee
+    ee.Initialize()
     #Functions to create new bands to add the collection
     GREEN = 'B3'
     RED = 'B4'
     NIR = 'B8'
     SWIR = 'B11'
+
+    sentinel = ee.ImageCollection('COPERNICUS/S2') \
+            .filterDate(start_date, end_date) \
+            .filterBounds(geojson) \
+            .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', 12)
+
+    def addIndices(image):
+        ndvi = image.normalizedDifference([NIR, RED])
+        ndbi = image.normalizedDifference([SWIR, NIR])
+        ndwi = image.normalizedDifference([GREEN, NIR])
+        return image.addBands(ndvi.rename('NDVI')).addBands(ndbi.rename('NDBI')).addBands(ndwi.rename('NDWI'))
+
+    sentinel_w_indices = sentinel.map(addIndices)
+
+    maxImageSentinel = sentinel_w_indices.select(['NDBI','NDVI','NDWI']).max()
+
+    path = maxImageSentinel.getDownloadUrl({
+        'scale': 10,
+        'crs': 'EPSG:4326',
+        'region':geojson
+    })
+    return path
 
     def addIndices(image):
         ndvi = image.normalizedDifference([NIR, RED])
@@ -56,8 +79,6 @@ def gee_maxNDBImaxNDVImaxNDWI_url(geojson,start_date,end_date):
         'region':geojson
     })
     return path
-
-
 
 
 def download_and_unzip(buffer,a,b,path):

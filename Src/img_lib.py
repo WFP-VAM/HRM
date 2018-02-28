@@ -218,6 +218,12 @@ class RasterGrid:
             url=sentinel_utils.gee_url(geojson,str(start_date),str(end_date))
             return url
 
+        elif provider == 'Sentinel_maxNDVI':
+            d=5000
+            geojson=sentinel_utils.squaretogeojson(lon,lat,d)
+            url=sentinel_utils.gee_maxNDBImaxNDVImaxNDWI_url(geojson,str(start_date),str(end_date))
+            return url
+
         else:
             print("ERROR: Wrong API {}".format(provider))
 
@@ -238,7 +244,7 @@ class RasterGrid:
             ur = urllib.request.urlopen(self.url).read()
             buffer = BytesIO(ur)
 
-            if provider == 'Sentinel':
+            if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
                 gee_tif=sentinel_utils.download_and_unzip(buffer,3,6,file_path)
                 sentinel_utils.rgbtiffstojpg(gee_tif,file_path,file_name)
 
@@ -261,7 +267,7 @@ class RasterGrid:
                 ur = urllib.request.urlopen(self.url).read()
                 buffer = BytesIO(ur)
 
-                if provider == 'Sentinel':
+                if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
                     gee_tif=sentinel_utils.download_and_unzip(buffer,3,6,file_path)
                     rgbtiffstojpg(gee_tif,file_path,file_name)
                 else:

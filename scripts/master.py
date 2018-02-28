@@ -59,6 +59,8 @@ def run(id):
     data["i"] = list_i
     data["j"] = list_j
 
+    data=data.groupby(["i","j"], as_index=False).mean()
+
     for sat in provider.split(","):
 
         print(sat)
@@ -87,7 +89,7 @@ def run(id):
         # # ----------------- #
 
         data = data.merge(features, on=["i", "j"])
-        data.to_csv("../Data/Features/features_all_config_id_{}.csv".format(sat,id), index=False)
+        data.to_csv("../Data/Features/features_all_config_id_{}.csv".format(id), index=False)
 
     # ----------------- #
     # ADD OTHER FEATURES  ###
