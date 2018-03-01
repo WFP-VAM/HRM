@@ -59,7 +59,7 @@ def run(id):
     data["i"] = list_i
     data["j"] = list_j
 
-    data=data.groupby(["i","j"], as_index=False).apply(lambda x: np.average(x, weights=x['countbyEA']))
+    #data=data.groupby(["i","j"], as_index=False).apply(lambda x: np.average(x, weights=x['countbyEA']))
 
     for sat in provider.split(","):
 
