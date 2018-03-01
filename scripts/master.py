@@ -59,7 +59,7 @@ def run(id):
     data["i"] = list_i
     data["j"] = list_j
 
-    data=data.groupby(["i","j"], as_index=False).mean()
+    data=data.groupby(["i","j"], as_index=False).apply(lambda x: np.average(x, weights=x['countbyEA']))
 
     for sat in provider.split(","):
 
@@ -72,6 +72,7 @@ def run(id):
         # # ----------------- #
 
         GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
+
 
         # # ----------------- #
         # # SCORING #######

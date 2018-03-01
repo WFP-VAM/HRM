@@ -173,7 +173,7 @@ class RasterGrid:
                     lon = self.centroid_x_coords[i + a]
                     lat = self.centroid_y_coords[j + b]
 
-                    if provider == "Sentinel":
+                    if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
                         file_name = str(i + a) + '_' + str(j + b) + "_" + str(start_date)+"_"+str(end_date) + '.jpg'
                     else:
                         file_name = str(i + a) + '_' + str(j + b) + '.jpg'
