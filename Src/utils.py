@@ -3,8 +3,8 @@ import pandas as pd
 def scoring_postprocess(features):
     # postprocess
     features = features.transpose().reset_index()
-    features["i"] = features["index"].str.slice(0, 5)
-    features["j"] = features["index"].str.slice(6, 10)
+    features["i"] =  features["index"].apply(lambda x: x.split('_')[0])
+    features["j"] =  features["index"].apply(lambda x: x.split('_')[1])
     features["i"] = pd.to_numeric(features["i"])
     features["j"] = pd.to_numeric(features["j"])
 
@@ -98,5 +98,3 @@ def shape2json(fname, outfile="states.json"):
     geojson.write(dumps({"type": "FeatureCollection", \
                          "features": buffer}, indent=2) + "\n")
     geojson.close()
-
-

@@ -14,7 +14,6 @@ import yaml
 import pandas as pd
 from nn_extractor import NNExtractor
 import numpy as np
-from utils import scoring_postprocess
 
 
 def run(id):
@@ -59,7 +58,19 @@ def run(id):
     data["i"] = list_i
     data["j"] = list_j
 
-    #data=data.groupby(["i","j"], as_index=False).apply(lambda x: np.average(x, weights=x['countbyEA']))
+    ## Grouping clusters that belong to the same tile.
+    cluster_N='countbyEA'
+    print("Number of clusters: {} ".format(len(data)))
+
+    try:
+        data=data.groupby(["i","j"]).apply(lambda x: np.average(x[indicator],weights=x[cluster_N])).to_frame(name = indicator).reset_index()
+    except:
+        data=data.groupby(["i","j"]).mean()
+
+    print("Number of unique tiles: {} ".format(len(data)))
+
+    list_i = data["i"]
+    list_j = data["j"]
 
     for sat in provider.split(","):
 
@@ -90,7 +101,8 @@ def run(id):
         # # ----------------- #
 
         data = data.merge(features, on=["i", "j"])
-        data.to_csv("../Data/Features/features_all_config_id_{}.csv".format(id), index=False)
+
+    data.to_csv("../Data/Features/features_all_config_id_{}.csv".format(id), index=False)
 
     # ----------------- #
     # ADD OTHER FEATURES  ###

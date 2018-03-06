@@ -17,10 +17,11 @@ class NNExtractor:
 
         import tensorflow as tf
         from tensorflow.python.keras.applications.vgg16 import VGG16
+        from tensorflow.python.keras.applications.resnet50 import ResNet50
 
         if self.model_type == 'ResNet50':
             print('INFO: loading ResNet50 ...')
-            self.net = tf.keras.applications.ResNet50(weights='imagenet', include_top=False, pooling=None)
+            self.net = ResNet50(weights='imagenet', include_top=False, pooling='avg')
             # self.base_net = ResNet50(weights='imagenet', include_top=False)
             # self.net = Model(inputs=self.base_net.input, outputs=self.base_net.get_layer('block4_pool').output)
 
@@ -84,7 +85,7 @@ class NNExtractor:
 
 
 
-    def extract_features(self, list_i, list_j, provider, start_date="2016-01-01", end_date="2017-01-01"):
+    def extract_features(self, list_i, list_j, provider, start_date="2016-01-01", end_date="2017-01-01", pipeline="evaluation"):
         """
         Loops over the folders (tiles) and collects the features.
         :return:
@@ -97,12 +98,16 @@ class NNExtractor:
         sys.path.append(path.join("..","Src"))
         from utils import scoring_postprocess
 
-        if path.isfile("../Data/Features/features_{}_config_id_{}.csv".format(self.sat,self.id)):
+        if (path.isfile("../Data/Features/features_{}_config_id_{}.csv".format(self.sat,self.id))) and (pipeline=="evaluation"):
             print(str(datetime64('now')), ' INFO: images already scored for id: ', self.id)
             Final = read_csv("../Data/Features/features_{}_config_id_{}.csv".format(self.sat,self.id))
+
+        elif (path.isfile("../Data/Features/scored_{}_config_id_{}.csv".format(self.sat,self.id))) and (pipeline=="prediction"):
+            print(str(datetime64('now')), ' INFO: images already scored for id: ', self.id)
+            Final = read_csv("../Data/Features/scored_{}_config_id_{}.csv".format(self.sat,self.id))
+
         else:
             Final = DataFrame([])
-
             cnt = 0
             total = len(list_i)
 
