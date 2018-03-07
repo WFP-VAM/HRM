@@ -1,5 +1,5 @@
 
-def download_score_merge(data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights):
+def download_score_merge(data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights, pipeline="evaluation"):
     import os
     import numpy as np
     import sys
@@ -27,8 +27,8 @@ def download_score_merge(data, GRID, list_i, list_j, raster, step, sat, start_da
     network = NNExtractor(id, sat, image_dir, network_model, step)
     if custom_weights is not None:
         network.load_weights(custom_weights)
-    features = network.extract_features(list_i, list_j, sat, start_date, end_date)
-    features.to_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat, id), index=False)
+    features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
+    features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
 
     data = data.merge(features, on=["i", "j"])
 

@@ -76,7 +76,7 @@ def run(id):
     for sat in provider.split(","):
         data = download_score_merge(data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights)
 
-    data.to_csv("../Data/Features/features_all_config_id_{}.csv".format(id), index=False)
+    data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id), index=False)
 
     # ----------------- #
     # ADD OTHER FEATURES  ###

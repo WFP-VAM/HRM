@@ -74,7 +74,7 @@ def download_and_unzip(buffer,a,b,path):
     files = zip_file.namelist()
     for i in range(a,b):
         zip_file.extract(files[i],path+"/tiff/")
-        print("{} downloaded and unzippped".format(files[i]))
+        #print("{} downloaded and unzippped".format(files[i]))
         unzipped.append(files[i])
     return unzipped
 

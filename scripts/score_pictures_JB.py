@@ -65,14 +65,18 @@ def run(id):
 
     GRID = RasterGrid(raster)
 
-    for sat in provider.split(","):
-        data = download_score_merge(data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights)
+    data = pd.DataFrame({"i": list_i, "j": list_j})
 
-    X = features.drop(['index', 'i', 'j'], axis=1)
+    for sat in provider.split(","):
+        data = download_score_merge(data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights, pipeline="prediction")
+
+    data.to_csv("../Data/Features/features_all_id_{}_prediction.csv".format(id), index=False)
+
+    X = data.drop(['index', 'i', 'j'], axis=1)
     clf = joblib.load('../Models/ridge_model_config_id_{}.pkl'.format(id))
     y_hat = clf.predict(X)
 
-    outfile="../Data/Outputs/{}.tif".format(id)
+    outfile = "../Data/Outputs/{}.tif".format(id)
 
     ds = gdal.Open(raster)
     band = ds.GetRasterBand(1)
