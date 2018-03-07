@@ -54,7 +54,7 @@ def gee_maxNDBImaxNDVImaxNDWI_url(geojson,start_date,end_date):
 
     sentinel_w_indices = sentinel.map(addIndices)
 
-    maxImageSentinel = sentinel_w_indices.select(['NDBI','NDVI','NDWI']).max()
+    maxImageSentinel = sentinel_w_indices.select(['NDBI', 'NDVI', 'NDWI']).max()
 
     path = maxImageSentinel.getDownloadUrl({
         'scale': 10,
