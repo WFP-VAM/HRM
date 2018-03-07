@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 
 import rasterio
-from rasterio.mask import mask
 import gdal
 
 import sys
@@ -14,7 +13,10 @@ from img_lib import RasterGrid
 from nn_extractor import NNExtractor
 from utils import scoring_postprocess
 
+from master_utils import download_score_merge
+
 from sklearn.externals import joblib
+
 
 def run(id):
 
@@ -23,7 +25,7 @@ def run(id):
 
     engine = create_engine("""postgresql+psycopg2://{}:{}@{}/{}"""
                            .format(private_config['DB']['user'], private_config['DB']['password'],
-                                    private_config['DB']['host'], private_config['DB']['database']))
+                           private_config['DB']['host'], private_config['DB']['database']))
 
     config = pd.read_sql_query("select * from config where id = {}".format(id), engine)
 
@@ -54,7 +56,7 @@ def run(id):
     ## 2. Create list of i,j
 
     #raster="../Data/Geofiles/Rasters/Senegal_raster_nodata.tif"
-    src=rasterio.open(raster)
+    src = rasterio.open(raster)
     list_j, list_i = np.where(src.read()[0] != src.nodata)
 
     src.close()
@@ -64,22 +66,7 @@ def run(id):
     GRID = RasterGrid(raster)
 
     for sat in provider.split(","):
-
-        print(sat)
-        image_dir = os.path.join("../Data", "Satellite", sat)
-        GRID.output_image_dir = image_dir + "/"
-
-
-        GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
-
-
-        print(str(np.datetime64('now')), " INFO: initiating network ...")
-        network = NNExtractor(id, sat, image_dir, network_model, step)
-        if custom_weights is not None:
-            network.load_weights(custom_weights)
-        features = network.extract_features(list_i, list_j, sat, start_date, end_date,pipeline="prediction")
-        features.to_csv("../Data/Features/scored_{}_config_id_{}.csv".format(sat,id), index=False)
-
+        data = download_score_merge(data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights)
 
     X = features.drop(['index', 'i', 'j'], axis=1)
     clf = joblib.load('../Models/ridge_model_config_id_{}.pkl'.format(id))
@@ -92,7 +79,7 @@ def run(id):
     arr = band.ReadAsArray()
     [cols, rows] = arr.shape
     arr_out = np.zeros(arr.shape)-99
-    arr_out[list_j,list_i]=y_hat
+    arr_out[list_j,list_i] = y_hat
     driver = gdal.GetDriverByName("GTiff")
     outdata = driver.Create(outfile, rows, cols, 1, gdal.GDT_Float32)
 
@@ -106,6 +93,7 @@ def run(id):
     outdata = None
     band=None
     ds=None
+
 
 if __name__ == "__main__":
 

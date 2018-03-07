@@ -7,6 +7,7 @@
 import os
 import sys
 sys.path.append(os.path.join("..","Src"))
+from master_utils import download_score_merge
 from img_lib import RasterGrid
 from img_utils import getRastervalue
 from sqlalchemy import create_engine
@@ -58,14 +59,14 @@ def run(id):
     data["i"] = list_i
     data["j"] = list_j
 
-    ## Grouping clusters that belong to the same tile.
-    cluster_N='countbyEA'
+    # Grouping clusters that belong to the same tile.
+    cluster_N = 'countbyEA'
     print("Number of clusters: {} ".format(len(data)))
 
     try:
-        data=data.groupby(["i","j"]).apply(lambda x: np.average(x[indicator],weights=x[cluster_N])).to_frame(name = indicator).reset_index()
+        data = data.groupby(["i", "j"]).apply(lambda x: np.average(x[indicator], weights=x[cluster_N])).to_frame(name=indicator).reset_index()
     except:
-        data=data.groupby(["i","j"]).mean()
+        data = data.groupby(["i", "j"]).mean()
 
     print("Number of unique tiles: {} ".format(len(data)))
 
@@ -73,34 +74,7 @@ def run(id):
     list_j = data["j"]
 
     for sat in provider.split(","):
-
-        print(sat)
-        image_dir = os.path.join("../Data", "Satellite", sat)
-        GRID.output_image_dir = image_dir + "/"
-
-        # # ----------------- #
-        # # DOWNLOADING #######
-        # # ----------------- #
-
-        GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
-
-
-        # # ----------------- #
-        # # SCORING #######
-        # # ----------------- #
-
-        print(str(np.datetime64('now')), " INFO: initiating network ...")
-        network = NNExtractor(id, sat, image_dir, network_model, step)
-        if custom_weights is not None:
-            network.load_weights(custom_weights)
-        features = network.extract_features(list_i, list_j, sat, start_date, end_date)
-        features.to_csv("../Data/Features/features_{}_config_id_{}.csv".format(sat,id), index=False)
-
-        # # ----------------- #
-        # # ADD SURVEY DATA #######
-        # # ----------------- #
-
-        data = data.merge(features, on=["i", "j"])
+        data = download_score_merge(data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights)
 
     data.to_csv("../Data/Features/features_all_config_id_{}.csv".format(id), index=False)
 

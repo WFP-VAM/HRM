@@ -2,9 +2,9 @@ def squaretogeojson(lon,lat,d):
     from math import pi,cos
     from geojson import Polygon
     r_earth=6378000
-    minx  = lon  - ((d/2) / r_earth) * (180 / pi);
+    minx  = lon  - ((d/2) / r_earth) * (180 / pi)
     miny = lat - ((d/2) / r_earth) * (180 / pi) / cos(lon * pi/180)
-    maxx  = lon  + ((d/2) / r_earth) * (180 / pi);
+    maxx  = lon  + ((d/2) / r_earth) * (180 / pi)
     maxy = lat + ((d/2) / r_earth) * (180 / pi) / cos(lon * pi/180)
     #return minx,miny,maxx,maxy
     square=Polygon([[(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy)]])
@@ -53,23 +53,6 @@ def gee_maxNDBImaxNDVImaxNDWI_url(geojson,start_date,end_date):
         return image.addBands(ndvi.rename('NDVI')).addBands(ndbi.rename('NDBI')).addBands(ndwi.rename('NDWI'))
 
     sentinel_w_indices = sentinel.map(addIndices)
-
-    maxImageSentinel = sentinel_w_indices.select(['NDBI','NDVI','NDWI']).max()
-
-    path = maxImageSentinel.getDownloadUrl({
-        'scale': 10,
-        'crs': 'EPSG:4326',
-        'region':geojson
-    })
-    return path
-
-    def addIndices(image):
-        ndvi = image.normalizedDifference([NIR, RED])
-        ndbi = image.normalizedDifference([SWIR, NIR])
-        ndwi = image.normalizedDifference([GREEN, NIR])
-        return image.addBands(ndvi.rename('NDVI')).addBands(ndbi.rename('NDBI')).addBands(ndwi.rename('NDWI'))
-
-    sentinel_w_indices = sentinel(year).map(addIndices)
 
     maxImageSentinel = sentinel_w_indices.select(['NDBI','NDVI','NDWI']).max()
 
