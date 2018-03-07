@@ -68,11 +68,11 @@ def run(id):
     data = pd.DataFrame({"i": list_i, "j": list_j})
 
     for sat in provider.split(","):
-        data = download_score_merge(data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights, pipeline="prediction")
+        data = download_score_merge(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights, pipeline="prediction")
 
     data.to_csv("../Data/Features/features_all_id_{}_prediction.csv".format(id), index=False)
 
-    X = data.drop(['index', 'i', 'j'], axis=1)
+    X = data.drop(['index', 'index_x', 'index_y', 'i', 'j'], axis=1)
     clf = joblib.load('../Models/ridge_model_config_id_{}.pkl'.format(id))
     y_hat = clf.predict(X)
 

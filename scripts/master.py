@@ -55,7 +55,8 @@ def run(id):
 
     hh_data = pd.read_csv(dataset)
 
-    data=hh_data
+    data = hh_data
+
     data["i"] = list_i
     data["j"] = list_j
 
@@ -74,7 +75,7 @@ def run(id):
     list_j = data["j"]
 
     for sat in provider.split(","):
-        data = download_score_merge(data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights)
+        data = download_score_merge(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights)
 
     data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id), index=False)
 
@@ -87,7 +88,7 @@ def run(id):
 
     data = data.loc[data[indicator] > 0]
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  #shuffle data
-    data_features = data[list(set(data.columns) - set(hh_data.columns) - set(['index','index_x','index_y']))]  # take only the CNN features
+    data_features = data[list(set(data.columns) - set(hh_data.columns) - set(['index', 'index_x', 'index_y']))]  # take only the CNN features
 
     # ----------------- #
     # MODEL #############

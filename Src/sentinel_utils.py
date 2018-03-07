@@ -20,7 +20,7 @@ def gee_url(geojson,start_date,end_date):
             .filterBounds(geojson) \
             .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', 5) \
             .sort('GENERATION_TIME') \
-            .sort('CLOUDY_PIXEL_PERCENTAGE',False) #also sort by date
+            .sort('CLOUDY_PIXEL_PERCENTAGE', False) #also sort by date
 
     image1 = sentinel.mosaic()
 
