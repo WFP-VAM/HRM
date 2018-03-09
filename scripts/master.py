@@ -15,6 +15,7 @@ import yaml
 import pandas as pd
 from nn_extractor import NNExtractor
 import numpy as np
+import functools
 
 
 def run(id):
@@ -64,10 +65,17 @@ def run(id):
     cluster_N = 'countbyEA'
     print("Number of clusters: {} ".format(len(data)))
 
+    def wavg(g, df, weight_series):
+        w = df.ix[g.index][weight_series]
+        return (g * w).sum() / w.sum()
+
+    fnc = functools.partial(wavg, df=data, weight_series=cluster_N)
+
     try:
-        data = data.groupby(["i", "j"]).apply(lambda x: np.average(x[indicator], weights=x[cluster_N])).to_frame(name=indicator).reset_index()
+        data=data.groupby(["i", "j"]).agg({indicator: fnc,'gpsLatitude': fnc,'gpsLongitude': fnc}).reset_index()
     except:
-        data = data.groupby(["i", "j"]).mean()
+        print("No weights, taking the average per i and j")
+        data = data[['gpsLatitude','gpsLongitude',indicator]].groupby(["i", "j"]).mean().reset_index()
 
     print("Number of unique tiles: {} ".format(len(data)))
 

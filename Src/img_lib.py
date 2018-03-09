@@ -271,8 +271,8 @@ class RasterGrid:
                 buffer = BytesIO(ur)
 
                 if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
-                    gee_tif=sentinel_utils.download_and_unzip(buffer,3,6,file_path)
-                    sentinel_utils.rgbtiffstojpg(gee_tif,file_path,file_name)
+                    gee_tif = sentinel_utils.download_and_unzip(buffer, 3, 6, file_path)
+                    sentinel_utils.rgbtiffstojpg(gee_tif, file_path, file_name)
                 else:
                     image = imread(buffer, mode='RGB')
                 ## Do not download images in places where Google or Bing does not have any image

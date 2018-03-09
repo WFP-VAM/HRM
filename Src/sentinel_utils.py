@@ -24,7 +24,6 @@ def gee_url(geojson,start_date,end_date):
 
     image1 = sentinel.mosaic()
 
-
     path = image1.getDownloadUrl({
         'scale': 10,
         'crs': 'EPSG:4326',

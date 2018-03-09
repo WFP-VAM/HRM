@@ -72,7 +72,9 @@ def run(id):
 
     data.to_csv("../Data/Features/features_all_id_{}_prediction.csv".format(id), index=False)
 
-    X = data.drop(['index', 'index_x', 'index_y', 'i', 'j'], axis=1)
+
+    X = data[list(set(data.columns) - set(['index', 'index_x', 'index_y', 'i', 'j']))]
+    #X = data.drop(['index', 'index_x', 'index_y', 'i', 'j'], axis=1)
     clf = joblib.load('../Models/ridge_model_config_id_{}.pkl'.format(id))
     y_hat = clf.predict(X)
 
