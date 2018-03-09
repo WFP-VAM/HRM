@@ -2,6 +2,7 @@
 def download_score_merge(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights, pipeline="evaluation"):
     import os
     import numpy as np
+    import pandas as pd
     import sys
     sys.path.append(os.path.join(".." "Src"))
     from nn_extractor import NNExtractor
