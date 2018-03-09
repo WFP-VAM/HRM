@@ -28,10 +28,17 @@ def download_score_merge(id, data, GRID, list_i, list_j, raster, step, sat, star
     network = NNExtractor(id, sat, image_dir, network_model, step)
     if custom_weights is not None:
         network.load_weights(custom_weights)
-    features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
-    features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
 
-    features = features.drop('index', 1)
+    if os.path.exists("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline)):
+        features = features.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline))
+    else:
+        features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
+        features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
+
+    try:
+        features = features.drop('index', 1)
+    except:
+        pass
 
     data = data.merge(features, on=["i", "j"])
 
