@@ -30,7 +30,7 @@ def download_score_merge(id, data, GRID, list_i, list_j, raster, step, sat, star
         network.load_weights(custom_weights)
 
     if os.path.exists("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline)):
-        features = features.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline))
+        features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline))
     else:
         features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
         features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
