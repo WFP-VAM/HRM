@@ -28,15 +28,14 @@ class RasterGrid:
         self.centroid_y_coords, \
         self.bands_data = self.__read_raster(raster)
         self.url = None
-        self.output_image_dir=None
+        self.output_image_dir = None
 
-    def get_gridcoordinates(self, file):
+    def get_gridcoordinates(self, dataset, lon_col='gpsLongitude', lat_col='gpsLatitude'):
 
-        dataset= pd.read_csv(file)
         list_i=[]
         list_j=[]
         for index, row in dataset.iterrows():
-            i,j = get_cell_idx(row['gpsLongitude'],row['gpsLatitude'], self.top_left_x_coords, self.top_left_y_coords)
+            i,j = get_cell_idx(row[lon_col],row[lat_col], self.top_left_x_coords, self.top_left_y_coords)
             list_i.append(i)
             list_j.append(j)
         return (list_i,list_j)
@@ -141,6 +140,7 @@ class RasterGrid:
         Parameters
         ----------
         list_i, list_j: the list of tiles that need an image.
+
 
         """
         from joblib import Parallel, delayed

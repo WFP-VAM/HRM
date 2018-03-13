@@ -51,12 +51,10 @@ def run(id):
 
     print(provider)
 
+    data = pd.read_csv(dataset)
+
     GRID = RasterGrid(raster)
-    list_i, list_j = GRID.get_gridcoordinates(dataset)#
-
-    hh_data = pd.read_csv(dataset)
-
-    data = hh_data
+    list_i, list_j = GRID.get_gridcoordinates(data)#
 
     data["i"] = list_i
     data["j"] = list_j

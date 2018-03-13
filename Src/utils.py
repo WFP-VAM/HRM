@@ -98,3 +98,5 @@ def shape2json(fname, outfile="states.json"):
     geojson.write(dumps({"type": "FeatureCollection", \
                          "features": buffer}, indent=2) + "\n")
     geojson.close()
+
+

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+   <head>
+    <title>VAM Survey Scaler</title>
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  </head>
+
+   <body>
+		<nav class="navbar navbar-default" role="navigation">
+			<ul class="nav navbar-nav">
+				How it works? see the <a href="https://github.com/WFP-VAM/HRM">repository.</a>
+			</ul>
+		</nav>
+
+		<div class="container">
+		<img src="http://www.godan.info/sites/default/files/logos/world_food_programme_un_vulnerability_analysis_mapping_vam.jpg"
+		style="float: right;" width="300" />
+		</div>
+
+		<div class="container">
+			<form class="form" action = "/downscale" method = "POST" enctype = "multipart/form-data">
+
+			 <div class="form-group">
+				<label for="file"> Survey Data:</label>
+				<input type = "file" name = "file" />
+				<small id="file" class="form-text text-muted">comma separated CSV containing columns "gpsLatitude", "gpsLongitude" and "Indicator".</small><br><br>
+				
+				<!--<label for="file"> Shapefile:</label>
+				<input type = "file" name = "file" />
+				<small id="shapefile" class="form-text text-muted">shapefile that will be used to aggregate the results. If no shapefile is provided the results will not be aggregated (i.e. pixel level predicitons)</small><br>
+
+				Survey Date: <input type="text" name="svydate"><br> -->
+
+				<!-- Country: <input type="text" name="country"><br><br>
+				Projection: <input type="text" name="projection"><br><br>
+				Grid Size: <input type="text" name="gsize"><br><br> -->
+			 </div>
+
+
+			 <button type="submit" class="btn btn-default">Submit</button>
+			</form>
+		</div>
+
+   </body>
+</html>
