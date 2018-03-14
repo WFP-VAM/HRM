@@ -31,21 +31,29 @@ def get_cell_idx(lon, lat, top_left_x_coords, top_left_y_coords):
     lat_idx = np.where(top_left_y_coords > lat)[0][-1]
     return lon_idx, lat_idx
 
-def getRastervalue(row,raster_file):
+
+def getRastervalue(row,  raster_file, lat_col="gpsLatitude", lon_col="gpsLongitude"):
+    """
+    when you apply this function to a dataframe with Lat, Long coordinates
+    it returns a vector of the corresponding land use value at theses locations
+
+    use: data["land_use"] = data.apply(getRastervalue, args=(raster_file,), axis=1)
+    """
     from osgeo import gdal,ogr
     import struct
 
-    src_ds=gdal.Open(raster_file)
-    gt=src_ds.GetGeoTransform()
-    rb=src_ds.GetRasterBand(1)
+    src_ds = gdal.Open(raster_file)
+    gt = src_ds.GetGeoTransform()
+    rb = src_ds.GetRasterBand(1)
 
-    mx,my=row["gpsLongitude"],row["gpsLatitude"]  #coord in map units
+    mx, my= row[lon_col], row[lat_col]  #coord in map units
     #Convert from map to pixel coordinates.
     #Only works for geotransforms with no rotation.
     px = int((mx - gt[0]) / gt[1]) #x pixel
     py = int((my - gt[3]) / gt[5]) #y pixel
 
-    structval=rb.ReadRaster(px,py,1,1,buf_type=gdal.GDT_UInt16) #Assumes 16 bit int aka 'short'
+    structval = rb.ReadRaster(px, py, 1, 1, buf_type=gdal.GDT_UInt16) #Assumes 16 bit int aka 'short'
 
     intval = struct.unpack('h' , structval) #use the 'short' format code (2 bytes) not int (4 bytes)
+
     return intval[0] #intval is a tuple, length=1 as we only asked for 1 pixel value

@@ -65,6 +65,15 @@ def master():
     with open('results.txt', 'w') as file:
         file.write(json.dumps(results))
 
+    # landcover --------------------------
+    # need to assign to each ij the classtype
+
+    from img_utils import getRastervalue
+
+    data["land_use"] = data.apply(getRastervalue,
+                                  args=('../Data/Satellite/esa_landcover.tif',),
+                                  axis=1)
+
 
 if __name__ == '__main__':
 
