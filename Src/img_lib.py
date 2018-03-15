@@ -31,7 +31,13 @@ class RasterGrid:
         self.output_image_dir = None
 
     def get_gridcoordinates(self, dataset, lon_col='gpsLongitude', lat_col='gpsLatitude'):
-
+        """
+        takes a dataset with gps coordinates and returns the raster indexes.
+        :param dataset: pandas dataframe
+        :param lon_col: longitude columns (string)
+        :param lat_col: latitude columns (string)
+        :return: i and j lists
+        """
         list_i=[]
         list_j=[]
         for index, row in dataset.iterrows():
@@ -41,16 +47,21 @@ class RasterGrid:
         return (list_i,list_j)
 
     def get_gridcoordinates2(self, list_lat, list_lon):
-
+        """
+        takes gps coordinates and returns the raster indexes.
+        :param list_lon: lsit with longitudes
+        :param list_lat: list with latitudes
+        :return: i and j lists
+        """
         list_i=[]
         list_j=[]
-        for i, j in zip(list_lat, list_lon):
-            i, j = get_cell_idx(j, i, self.top_left_x_coords, self.top_left_y_coords)
-            list_i.append(i)
-            list_j.append(j)
+        for j, i in zip(list_lat, list_lon):
+            ii, jj = get_cell_idx(i, j, self.top_left_x_coords, self.top_left_y_coords)
+            list_i.append(ii)
+            list_j.append(jj)
         return (list_i, list_j)
 
-    def get_gpscoordinates(self, list_i, list_j, step):
+    def get_gpscoordinates(self, list_i, list_j):
         """
         given a set of i and j it returns the lists on longitude and latitude.
         :param list_i: list of i (raster/grid references)
