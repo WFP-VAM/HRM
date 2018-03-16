@@ -32,47 +32,39 @@ def get_cell_idx(lon, lat, top_left_x_coords, top_left_y_coords):
     return lon_idx, lat_idx
 
 
-
-
-def getRastervalue(df, raster_file, lat_col="gpsLatitude", lon_col="gpsLongitude"):
+def getRastervalue(df, esa_raster, lat_col="gpsLatitude", lon_col="gpsLongitude"):
     """
     when you pass dataframe with Lat, Long coordinates
     it returns a vector of the corresponding land use value at theses locations
 
-    use: data["land_use"] = data.apply(getRastervalue, args=(raster_file,), axis=1)
+    It merges on the closest coordinates between the raster and the dataset.
+
+    For now is focused on the ESA landuse raster.
+
+    use: data = getRastervalue(data,path_to_raster)
     """
-    from osgeo import gdal
-    import struct
 
-    src_ds = gdal.Open(raster_file)
-    gt = src_ds.GetGeoTransform()
-    rb = src_ds.GetRasterBand(1)
-    print('-> checking landuse for {} grid points'.format(len(df.index)))
-    for ix, i, j in zip(df.index, df[lon_col], df[lat_col]):
-        if ix%1000 == 0: print(ix)
-        mx, my = i, j  # coord in map units
-        # Convert from map to pixel coordinates.
-        # Only works for geotransforms with no rotation.
-        px = int((mx - gt[0]) / gt[1])  # x pixel
-        py = int((my - gt[3]) / gt[5])  # y pixel
+    import georasters as gr
+    try:
+        esa = gr.from_file(esa_raster)
+    except MemoryError:
+        print('Landuse Raster too big!')
+        raise
 
-        structval = rb.ReadRaster(px, py, 1, 1, buf_type=gdal.GDT_UInt16)  # Assumes 16 bit int aka 'short'
+    esa = esa.to_pandas()
+    esa = esa[esa.value > 0]  # take only buildings
 
-        intval = struct.unpack('h', structval)  # use the 'short' format code (2 bytes) not int (4 bytes)
+    # find the closest match between coordinates
+    esa["gpsLatitude"] = esa.apply(lambda x: df[lat_col][abs(df[lat_col]-x["y"]).idxmin()],axis=1)
+    esa["gpsLongitude"] = esa.apply(lambda x: df[lon_col][abs(df[lon_col]-x["x"]).idxmin()],axis=1)
 
-        df.loc[ix, 'land_use'] = intval[0]
+    # merge on coordinates
+    df = df.merge(esa, on=['gpsLongitude','gpsLatitude'])
+
+    # TODO: use merge_asof faster, however only 1 column at time?
+    # df.sort_values(['gpsLongitude','gpsLatitude'], inplace=True)
+    # esa.sort_values(['x','y'], inplace=True)
+    #
+    # res = pd.merge_asof(df, esa, left_on=['gpsLongitude','gpsLatitude'], right_on=['x','y'] )
 
     return df
-
-    #
-    # mx, my= row[lon_col], row[lat_col]  #coord in map units
-    # #Convert from map to pixel coordinates.
-    # #Only works for geotransforms with no rotation.
-    # px = int((mx - gt[0]) / gt[1]) #x pixel
-    # py = int((my - gt[3]) / gt[5]) #y pixel
-    #
-    # structval = rb.ReadRaster(px, py, 1, 1, buf_type=gdal.GDT_UInt16)  # Assumes 16 bit int aka 'short'
-    #
-    # intval = struct.unpack('h', structval)  # use the 'short' format code (2 bytes) not int (4 bytes)
-    #
-    # return intval[0]  # intval is a tuple, length=1 as we only asked for 1 pixel value
