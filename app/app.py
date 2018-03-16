@@ -1,19 +1,22 @@
 from flask import Flask, render_template, request
-import os
-import sys
-sys.path.append(os.path.join("..","Src"))
 import pandas as pd
-from img_lib import RasterGrid
 import yaml
 import numpy as np
 import datetime
 import json
-
+import os
+import sys
+sys.path.append(os.path.join("..","Src"))
+from img_lib import RasterGrid
 
 app = Flask(__name__, instance_relative_config=True)
 
-with open('../app_config.yml', 'r') as cfgfile:
-    config = yaml.load(cfgfile)
+try:
+    config_file = '../app_config.yml'
+    with open(config_file, 'r') as cfgfile:
+        config = yaml.load(cfgfile)
+except FileNotFoundError:
+    print('config file {} not found.'.format(config_file))
 
 
 @app.route('/')
@@ -28,13 +31,14 @@ def master():
     raster_path = '../Data/Geofiles/Senegal_0.01_4326_1.tif'
     results_path = "../app/data/config_id_KNN.csv"
 
+    # country ----------------------------------------------
+    country_txt = request.form['country']
+
     # load dataset -----------------------------------------
     print('-> loading dataset from input form...')
     data = pd.read_csv(request.files['file'])
 
     # load relative raster
-    #from country2raster import countrytoraster
-    #countrytoraster(request.form['country'], 0.01, raster_path)
 
     print('-> loading raster from disk: ', raster_path)
     GRID = RasterGrid(raster_path)
@@ -103,11 +107,10 @@ def master():
     # ------------------------------------
 
     # landcover --------------------------
-    print('-> getting landuse from ESA')
+    esa_raster = '../Data/Geofiles/esa_landcover_senegal_cmp.tif'
+    print('-> getting landuse from ESA ({})'.format(esa_raster))
     from img_utils import getRastervalue
-    res = getRastervalue(res, '../Data/Geofiles/esa_landcover.tif')
-    # drop where no buildings (class 8)
-    res = res[res.land_use == 8]
+    res = getRastervalue(res, esa_raster)
     # ------------------------------------
 
     # predictions for all data left -------
@@ -118,8 +121,9 @@ def master():
     # ------------------------------------
 
     # saves to disk ---------------------
+    # no idea how this works
     import gdal
-    outfile = "../app/data/config_{}_KNN.tif".format(request.form['country'])
+    outfile = "../app/data/scalerout_{}_KNN.tif".format(request.form['country'])
     print('-> writing: ', outfile)
     # create empty raster from the original one
     ds = gdal.Open(raster_path)
@@ -127,18 +131,6 @@ def master():
     arr = band.ReadAsArray()
     [cols, rows] = arr.shape
     arr_out = np.zeros(arr.shape) - 99
-
-    # fill in with nodata values
-    # print('there are yhats: ', len(res['yhat']))
-    # # fill in with results output
-    # c = 0
-    # for i, j, yh in zip(list_i, list_j, res['yhat']):
-    #     arr_out[j, i] = yh
-    #     c = c+1
-    # print('-> filled in {} values'.format(c))
-    #
-    # print('spaces in matrix: ', arr_out[list_j, list_i].shape)
-
     arr_out[res['j'], res['i']] = res['yhat']
     driver = gdal.GetDriverByName("GTiff")
     outdata = driver.Create(outfile, rows, cols, 1, gdal.GDT_Float32)
