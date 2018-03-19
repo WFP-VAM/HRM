@@ -91,8 +91,8 @@ def master():
     # predictions for all data left -------
     print('-> running predictions...')
     res['yhat'] = model.model.predict(res[['i', 'j']])
-    print('-> writing results to: ', config_file['results_path'])
-    res.to_csv(config_file['results_path'], index=False)
+    print('-> writing results to: ', config['results_path'])
+    res.to_csv(config['results_path'], index=False)
     # ------------------------------------
 
     # saves to disk ---------------------
