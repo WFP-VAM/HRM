@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 import pandas as pd
 import yaml
 import numpy as np
@@ -11,7 +11,7 @@ from img_lib import RasterGrid
 app = Flask(__name__, instance_relative_config=True)
 
 try:
-    config_file = '../app_config.yml'
+    config_file = '../app/app_config.yml'
     with open(config_file, 'r') as cfgfile:
         config = yaml.load(cfgfile)
 except FileNotFoundError:
@@ -26,12 +26,9 @@ def home():
 @app.route('/downscale', methods=['POST'])
 def master():
 
-    # parameters
-    results_path = "../app/data/config_id_KNN.csv"
-
     # country ----------------------------------------------
     raster_path = '../Data/Geofiles/'
-    if request.form['country'] == 'Nigeria':
+    if request.form['country'] == 'Senegal':
         raster_path = raster_path + 'Senegal_0.01_4326_1.tif'
     elif request.form['country'] == 'Nigeria':
         raster_path = raster_path + 'Nigeria_0.01_4326_1.tif'
@@ -101,11 +98,15 @@ def master():
     # saves to disk ---------------------
     # no idea how this works
     from exporter import tifgenerator
-    tifgenerator(outfile="../app/data/scalerout_{}_KNN.tif".format(request.form['country']),
+    outfile = "../app/data/scalerout_{}_KNN.tif".format(request.form['country'])
+    tifgenerator(outfile=outfile,
                  raster_path=raster_path,
                  df=res)
     # -------------------------------------
-    return '-> DONE.'
+    return send_file(outfile,
+                     mimetype='image/tiff',
+                     as_attachment=True,
+                     attachment_filename=request.form['country']+".tif")
 
 
 if __name__ == '__main__':
