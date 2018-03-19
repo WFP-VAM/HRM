@@ -28,14 +28,19 @@
 			 <div class="form-group">
 				<label for="file"> Survey Data:</label>
 				<input type = "file" name = "file" />
-				<small id="file" class="form-text text-muted">comma separated CSV containing columns "gpsLatitude", "gpsLongitude" and "Indicator".</small><br><br>
+				<small class="form-text text-muted">comma separated CSV containing columns "gpsLatitude", "gpsLongitude" and "Indicator".</small><br><br>
 				
 				<!--<label for="file"> Shapefile:</label>
 				<input type = "file" name = "file" />
 				<small id="shapefile" class="form-text text-muted">shapefile that will be used to aggregate the results. If no shapefile is provided the results will not be aggregated (i.e. pixel level predicitons)</small><br>
 				-->
 
-				Country: <input type="text" name="country"><br>
+				 <select name="country" required>
+					<option value="Senegal">Senegal</option>
+					<option value="Nigeria">Nigeria</option>
+				 </select>
+				 <small class="form-text text-muted">Select in which country is the dataset located.</small><br><br>
+				<br>
 				<!-- Country: <input type="text" name="country"><br><br>
 				Projection: <input type="text" name="projection"><br><br>
 				Grid Size: <input type="text" name="gsize"><br><br> -->
