@@ -44,27 +44,32 @@ def getRastervalue(df, esa_raster, lat_col="gpsLatitude", lon_col="gpsLongitude"
     use: data = getRastervalue(data,path_to_raster)
     """
 
+    print('-> finding landuse for {} points'.format(df.shape[0]))
+
     import georasters as gr
     try:
-        esa = gr.from_file(esa_raster)
+        esa = gr.load_tiff(esa_raster)
     except MemoryError:
         print('Landuse Raster too big!')
         raise
 
-    esa = esa.to_pandas()
-    esa = esa[esa.value > 0]  # take only buildings
+    # Find location of point (x,y) on raster, e.g. to extract info at that location
+    NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(esa_raster)
 
-    # find the closest match between coordinates
-    esa["gpsLatitude"] = esa.apply(lambda x: df[lat_col][abs(df[lat_col]-x["y"]).idxmin()],axis=1)
-    esa["gpsLongitude"] = esa.apply(lambda x: df[lon_col][abs(df[lon_col]-x["x"]).idxmin()],axis=1)
+    def lu_extract(row):
+        try:
+            c, r = gr.map_pixel(row[lon_col], row[lat_col], GeoT[1], GeoT[-1], GeoT[0], GeoT[3])
+            lu = esa[r, c]
+            return lu
+            print('landuse -> {}'.format(lu))
+        except IndexError:
+            pass
 
-    # merge on coordinates
-    df = df.merge(esa, on=['gpsLongitude','gpsLatitude'])
+    df['landuse'] = df.apply(lu_extract, axis=1)
 
-    # TODO: use merge_asof faster, however only 1 column at time?
-    # df.sort_values(['gpsLongitude','gpsLatitude'], inplace=True)
-    # esa.sort_values(['x','y'], inplace=True)
-    #
-    # res = pd.merge_asof(df, esa, left_on=['gpsLongitude','gpsLatitude'], right_on=['x','y'] )
+    df = df[df.landuse == 8]
 
     return df
+
+
+

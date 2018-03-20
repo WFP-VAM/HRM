@@ -23,17 +23,13 @@ def home():
     return render_template('index.html')
 
 
+# downscale endpoint
 @app.route('/downscale', methods=['POST'])
 def master():
 
     # country ----------------------------------------------
-    raster_path = '../Data/Geofiles/'
-    if request.form['country'] == 'Senegal':
-        raster_path = raster_path + 'Senegal_0.01_4326_1.tif'
-    elif request.form['country'] == 'Nigeria':
-        raster_path = raster_path + 'Nigeria_0.01_4326_1.tif'
-    else:
-        raise print('Country not implemented')
+    raster_path = config['raster_path']
+    raster = raster_path + '{}_0.01_4326_1.tif'.format(request.form['country'])
 
     # load dataset -----------------------------------------
     print('-> loading dataset from input form...')
@@ -41,7 +37,7 @@ def master():
 
     # load relative raster
     print('-> loading raster from disk: ', raster_path)
-    GRID = RasterGrid(raster_path)
+    GRID = RasterGrid(raster)
     try:
         data['i'], data['j'] = GRID.get_gridcoordinates(data)
     except IndexError:
@@ -49,9 +45,7 @@ def master():
         raise
     # ------------------------------------
 
-    # group stuff, but is ugly
-
-    # train KNN---------------------------------------
+    # train model ------------------------------------
     X = pd.DataFrame({"i": data["i"], "j": data["j"]})
     y = data.Indicator.values
 
@@ -59,11 +53,10 @@ def master():
 
     model = IndicatorScaler('kNN', X, y)
 
-
     # all country predictions ------------
     print('-> loading all grid points in the country')
     import rasterio
-    src = rasterio.open(raster_path)
+    src = rasterio.open(raster)
     list_j, list_i = np.where(src.read()[0] > 0)
     src.close()
 
@@ -76,12 +69,7 @@ def master():
     # ------------------------------------
 
     # landcover --------------------------
-    esa_raster = '../Data/Geofiles/'
-    if request.form['country'] == 'Nigeria':
-        esa_raster = esa_raster + 'esa_landcover_nigeria_cmp.tif'
-    elif request.form['country'] == 'Senegal':
-        esa_raster = esa_raster + 'esa_landcover_senegal_cmp.tif'
-
+    esa_raster = raster_path + 'esa_landcover_{}.tif'.format(request.form['country'])
 
     print('-> getting landuse from ESA ({})'.format(esa_raster))
     from img_utils import getRastervalue
@@ -100,7 +88,7 @@ def master():
     from exporter import tifgenerator
     outfile = "../app/data/scalerout_{}_KNN.tif".format(request.form['country'])
     tifgenerator(outfile=outfile,
-                 raster_path=raster_path,
+                 raster_path=raster,
                  df=res)
     # -------------------------------------
     return send_file(outfile,
