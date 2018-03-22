@@ -27,9 +27,12 @@ def home():
 @app.route('/downscale', methods=['POST'])
 def master():
 
+    country = request.form['country']
+    algorithm = request.form['algorithm']
+
     # country ----------------------------------------------
     raster_path = config['raster_path']
-    raster = raster_path + '{}_0.01_4326_1.tif'.format(request.form['country'])
+    raster = raster_path + '{}_0.01_4326_1.tif'.format(country)
 
     # load dataset -----------------------------------------
     print('-> loading dataset from input form...')
@@ -51,7 +54,7 @@ def master():
 
     from model import IndicatorScaler
 
-    model = IndicatorScaler('kNN', X, y)
+    model = IndicatorScaler(algorithm, X, y)
 
     # all country predictions ------------
     print('-> loading all grid points in the country')
@@ -66,10 +69,11 @@ def master():
                         "j": list_j,
                         "gpsLongitude": coords_i,
                         "gpsLatitude": coords_j})
+
     # ------------------------------------
 
     # landcover --------------------------
-    esa_raster = raster_path + 'esa_landcover_{}.tif'.format(request.form['country'])
+    esa_raster = raster_path + 'esa_landcover_{}.tif'.format(country)
 
     print('-> getting landuse from ESA ({})'.format(esa_raster))
     from img_utils import getRastervalue
@@ -86,7 +90,7 @@ def master():
     # saves to disk ---------------------
     # no idea how this works
     from exporter import tifgenerator
-    outfile = "../app/data/scalerout_{}_KNN.tif".format(request.form['country'])
+    outfile = "../app/data/scalerout_{}_{}.tif".format(country, algorithm)
     tifgenerator(outfile=outfile,
                  raster_path=raster,
                  df=res)
@@ -94,7 +98,7 @@ def master():
     return send_file(outfile,
                      mimetype='image/tiff',
                      as_attachment=True,
-                     attachment_filename=request.form['country']+".tif")
+                     attachment_filename=country + "_" + algorithm + ".tif")
 
 
 if __name__ == '__main__':

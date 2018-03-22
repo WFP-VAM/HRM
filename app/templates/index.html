@@ -29,7 +29,7 @@
 				<label for="file"> Survey Data:</label>
 				<input type = "file" name = "file" />
 				<small class="form-text text-muted">comma separated CSV containing columns "gpsLatitude", "gpsLongitude" and "Indicator".</small><br><br>
-				
+
 				<!--<label for="file"> Shapefile:</label>
 				<input type = "file" name = "file" />
 				<small id="shapefile" class="form-text text-muted">shapefile that will be used to aggregate the results. If no shapefile is provided the results will not be aggregated (i.e. pixel level predicitons)</small><br>
@@ -39,6 +39,14 @@
 					<option value="Senegal">Senegal</option>
 					<option value="Nigeria">Nigeria</option>
 				 </select>
+         
+         <br><br>
+
+         <select name="algorithm" required>
+         <option value="kNN">k Nearest Neighbour</option>
+         <option value="Kriging">Kriging</option>
+        </select>
+
 				 <small class="form-text text-muted">Select in which country is the dataset located.</small><br><br>
 				<br>
 				<!-- Country: <input type="text" name="country"><br><br>

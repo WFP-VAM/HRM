@@ -1,0 +1,2 @@
+raster_path: '../Data/Geofiles/Rasters/'
+results_path: '../app/data/results_KNN.csv'

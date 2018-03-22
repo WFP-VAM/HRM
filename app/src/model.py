@@ -17,45 +17,49 @@ class IndicatorScaler:
         self.selector = selector
         self.model = None
 
+        from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
+        from evaluation_utils import MAPE, r2
+
         if self.selector == 'kNN':
 
             from sklearn.neighbors import KNeighborsRegressor
-            from sklearn.model_selection import GridSearchCV, KFold
-            from evaluation_utils import r2_pearson
-
-            print('-> 5 folds cross validation and grid searching...')
-
-            inner_cv = KFold(5, shuffle=True, random_state=1673)
 
             parameters = {'n_neighbors': range(1, 20)}
-
             model = KNeighborsRegressor(weights='distance')
-            clf = GridSearchCV(estimator=model, param_grid=parameters, cv=inner_cv, scoring=r2_pearson)
 
-            self.model = clf
+        elif self.selector == 'Kriging':
+
+            from sklearn.gaussian_process import GaussianProcessRegressor
+            from sklearn.gaussian_process.kernels import RBF
+            parameters = {"kernel": [RBF(l) for l in [[5, 20]]]}
+            model = GaussianProcessRegressor(alpha=0.1, n_restarts_optimizer=0)
+
+
+
+        inner_cv = KFold(5, shuffle=True, random_state=1673)
+        print('-> 5 folds cross validation and grid searching...')
+
+        clf = GridSearchCV(estimator=model, param_grid=parameters, cv=inner_cv, scoring=r2)
+        self.model = clf
             # ------------------------------------
 
-            from sklearn.model_selection import cross_val_score, KFold
-            from evaluation_utils import MAPE, r2_pearson
 
-            # evaluate ---------------------------
-            outer_cv = KFold(5, shuffle=True, random_state=75788)
-            score = cross_val_score(self.model, X, y, scoring=r2_pearson, cv=outer_cv)
-            score_MAPE = cross_val_score(self.model, X, y, scoring=MAPE, cv=outer_cv)
+        # evaluate ---------------------------
+        outer_cv = KFold(5, shuffle=True, random_state=75788)
+        score = cross_val_score(self.model, X, y, scoring=r2, cv=outer_cv)
+        score_MAPE = cross_val_score(self.model, X, y, scoring=MAPE, cv=outer_cv)
 
-            print('-> scores: ', score)
-            # score
-            results = {
-                'score': score.mean(),
-                'MAPE': score_MAPE.mean(),
-                'time': str(datetime.datetime.now())
-            }
+        print('-> scores: ', score)
+        # score
+        results = {
+            'score': score.mean(),
+            'MAPE': score_MAPE.mean(),
+            'time': str(datetime.datetime.now())
+        }
 
-            with open('../app/logs/results.txt', 'w') as file:
-                file.write(json.dumps(results))
+        with open('../app/logs/results.txt', 'w') as file:
+            file.write(json.dumps(results))
 
-            self.model.fit(X, y)
+        self.model.fit(X, y)
 
-            print('-> scores written to disk. Best parameters:', self.model.best_params_)
-
-
+        print('-> scores written to disk. Best parameters:', self.model.best_params_)
