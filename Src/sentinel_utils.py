@@ -14,13 +14,27 @@ def gee_url(geojson,start_date,end_date):
     import ee
     ee.Initialize()
 
-    sentinel = ee.ImageCollection('COPERNICUS/S2') \
-            .filterDate(start_date, end_date) \
-            .select('B2', 'B3', 'B4') \
-            .filterBounds(geojson) \
-            .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', 5) \
-            .sort('GENERATION_TIME') \
-            .sort('CLOUDY_PIXEL_PERCENTAGE', False) #also sort by date
+    lock =0
+    cloud_cover = 10
+    while lock == 0:
+        sentinel = ee.ImageCollection('COPERNICUS/S2') \
+                        .filterDate(start_date, end_date) \
+                        .select('B2', 'B3', 'B4') \
+                        .filterBounds(geojson) \
+                        .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', cloud_cover) \
+                        .sort('GENERATION_TIME') \
+                        .sort('CLOUDY_PIXEL_PERCENTAGE', False) #also sort by date
+
+        # check if there are images, otherwise increase accepteable cloud cover
+        collectionList = sentinel.toList(sentinel.size())
+
+        try:  # if it has zero images this line will return an EEException
+            collectionList.size().getInfo()
+            lock = 1
+            print('found images with {} cloud cover.'.format(cloud_cover))
+        except ee.ee_exception.EEException:
+            print('found no images with {} cloud cover. Going to 10+'.format(cloud_cover))
+            cloud_cover = cloud_cover + 10
 
     image1 = sentinel.mosaic()
 

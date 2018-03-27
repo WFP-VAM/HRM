@@ -57,7 +57,7 @@ class IndicatorScaler:
             'time': str(datetime.datetime.now())
         }
 
-        with open('../app/logs/results.txt', 'w') as file:
+        with open('logs/results.txt', 'w') as file:
             file.write(json.dumps(results))
 
         self.model.fit(X, y)
