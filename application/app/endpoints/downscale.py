@@ -1,47 +1,34 @@
-from flask import Flask, render_template, request, send_file
-import pandas as pd
-import yaml
-import numpy as np
-import os
-import sys
-sys.path.append(os.path.join("..","Src"))
-sys.path.append(os.path.join("..","app/src"))
 from img_lib import RasterGrid
-
-app = Flask(__name__, instance_relative_config=True)
-
-try:
-    config_file = '../app/app_config.yml'
-    with open(config_file, 'r') as cfgfile:
-        config = yaml.load(cfgfile)
-except FileNotFoundError:
-    print('config file {} not found.'.format(config_file))
+import pandas as pd
+import numpy as np
+from flask import send_file
+import os
 
 
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-
-# downscale endpoint
-@app.route('/downscale', methods=['POST'])
-def master():
+def downscale(config, request):
 
     country = request.form['country']
     algorithm = request.form['algorithm']
     file = request.files['file']
 
     # country ----------------------------------------------
-    raster_path = config['raster_path']
-    raster = raster_path + '{}_0.01_4326_1.tif'.format(country)
+    raster = '{}_0.01_4326_1.tif'.format(country)
+    local_raster = 'data/'+raster
+    print('-> getting raster ', raster)
+    # download from AWS S3
+    import boto3
+    bucket_name = config['rasters_bucket']
+    s3 = boto3.resource('s3')
+    s3.Bucket(bucket_name).download_file(raster, local_raster)
+    print('raster loaded.')
 
     # load dataset -----------------------------------------
     print('-> loading dataset from input form...')
     data = pd.read_csv(file)
 
     # load relative raster
-    print('-> loading raster from disk: ', raster_path)
-    GRID = RasterGrid(raster)
+    print('-> loading raster ', local_raster)
+    GRID = RasterGrid(local_raster)
     try:
         data['i'], data['j'] = GRID.get_gridcoordinates(data)
     except IndexError:
@@ -79,7 +66,7 @@ def master():
     # all country predictions ------------
     print('-> loading all grid points in the country')
     import rasterio
-    src = rasterio.open(raster)
+    src = rasterio.open(local_raster)
     list_j, list_i = np.where(src.read()[0] > 0)
     src.close()
 
@@ -93,39 +80,31 @@ def master():
     # ------------------------------------
 
     # landcover --------------------------
-    #esa_raster = raster_path + 'esa_landcover_{}.tif'.format(country)
+    esa_raster = 'esa_landcover_{}.tif'.format(country)
+    local_esa_raster = 'data/'+esa_raster
+    s3.Bucket(bucket_name).download_file(esa_raster, local_esa_raster)
 
-    #print('-> getting landuse from ESA ({})'.format(esa_raster))
-    #from img_utils import getRastervalue
-    #res = getRastervalue(res, esa_raster)
+    print('-> getting landuse from ESA ({})'.format(local_esa_raster))
+    from img_utils import getRastervalue
+    res = getRastervalue(res, local_esa_raster)
     # ------------------------------------
 
     # predictions for all data left -------
     print('-> running predictions...')
     res['yhat'] = model.model.predict(res[['i', 'j']])
-    print('-> writing results to: ', config['results_path'])
-    res.to_csv(config['results_path'], index=False)
     # ------------------------------------
 
     # saves to disk ---------------------
     # no idea how this works
     from exporter import tifgenerator
-    outfile = "../app/data/scalerout_all2_{}_{}.tif".format(country, algorithm)
+    outfile = os.path.join("../data", "scalerout_{}_{}.tif".format(country, algorithm))
     tifgenerator(outfile=outfile,
-                 raster_path=raster,
+                 raster_path=local_raster,
                  df=res)
     # -------------------------------------
+
+    print('-> return file to client.')
     return send_file(outfile,
                      mimetype='image/tiff',
                      as_attachment=True,
                      attachment_filename=country + "_" + algorithm + ".tif")
-
-
-if __name__ == '__main__':
-
-    # Preload our model
-    print("* Flask starting server...")
-
-    # Bind to PORT if defined, otherwise default to 5000.
-    port = int(os.environ.get('PORT', 5001))
-    app.run(host='0.0.0.0', port=port)
