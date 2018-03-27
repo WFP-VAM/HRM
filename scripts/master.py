@@ -7,7 +7,7 @@
 import os
 import sys
 sys.path.append(os.path.join("..","Src"))
-from master_utils import download_score_merge
+from master_utils import download, score_merge
 from img_lib import RasterGrid
 from img_utils import getRastervalue
 from sqlalchemy import create_engine
@@ -52,9 +52,10 @@ def run(id):
     print(provider)
 
     data = pd.read_csv(dataset)
+    data = data.loc[data[indicator] > 0]
 
     GRID = RasterGrid(raster)
-    list_i, list_j = GRID.get_gridcoordinates(data)#
+    list_i, list_j = GRID.get_gridcoordinates(data)
 
     data["i"] = list_i
     data["j"] = list_j
@@ -70,18 +71,22 @@ def run(id):
     fnc = functools.partial(wavg, df=data, weight_series=cluster_N)
 
     try:
-        data=data.groupby(["i", "j"]).agg({indicator: fnc,'gpsLatitude': fnc,'gpsLongitude': fnc}).reset_index()
+        data = data.groupby(["i", "j"]).agg({indicator: fnc, 'gpsLatitude': fnc, 'gpsLongitude': fnc}).reset_index()
     except:
         print("No weights, taking the average per i and j")
-        data = data[['gpsLatitude','gpsLongitude',indicator]].groupby(["i", "j"]).mean().reset_index()
+        data = data[['i', 'j', 'gpsLatitude', 'gpsLongitude', indicator]].groupby(["i", "j"]).mean().reset_index()
 
     print("Number of unique tiles: {} ".format(len(data)))
+
+    data["j_lat"] = GRID.centroid_y_coords[data["j"]]
+    data["i_long"] = GRID.centroid_x_coords[data["i"]]
 
     list_i = data["i"]
     list_j = data["j"]
 
     for sat in provider.split(","):
-        data = download_score_merge(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights)
+        download(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date)
+        data = score_merge(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights, pipeline="evaluation")
 
     data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id), index=False)
 
@@ -92,7 +97,6 @@ def run(id):
         raster_file = land_use_raster
         data["land_use"] = data.apply(getRastervalue, args=(raster_file,), axis=1)
 
-    data = data.loc[data[indicator] > 0]
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  #shuffle data
     data_features = data[list(set(data.columns) - set(hh_data.columns) - set(['index', 'index_x', 'index_y']))]  # take only the CNN features
 

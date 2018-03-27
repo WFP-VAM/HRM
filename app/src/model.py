@@ -31,7 +31,7 @@ class IndicatorScaler:
 
             from sklearn.gaussian_process import GaussianProcessRegressor
             from sklearn.gaussian_process.kernels import RBF
-            parameters = {"kernel": [RBF(l) for l in [[5, 20]]]}
+            parameters = {"kernel": [RBF(l) for l in [[1, 1]]]}
             model = GaussianProcessRegressor(alpha=0.1, n_restarts_optimizer=0)
 
 
