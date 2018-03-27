@@ -41,7 +41,10 @@ class RasterGrid:
         list_i=[]
         list_j=[]
         for index, row in dataset.iterrows():
-            i,j = get_cell_idx(row[lon_col],row[lat_col], self.top_left_x_coords, self.top_left_y_coords)
+            try:
+                i, j = get_cell_idx(row[lon_col], row[lat_col], self.top_left_x_coords, self.top_left_y_coords)
+            except IndexError:
+                print("Corrdinates {},{} out of Country bounds".format(row[lon_col],row[lat_col]))
             list_i.append(i)
             list_j.append(j)
         return (list_i,list_j)
@@ -131,6 +134,7 @@ class RasterGrid:
 
         # Get location of each pixel
         x_size = 1.0 / int(round(1 / float(x_size)))
+        #x_size = float(x_size)
         y_size = - x_size
         y_index = np.arange(bands_data.shape[0])
         x_index = np.arange(bands_data.shape[1])

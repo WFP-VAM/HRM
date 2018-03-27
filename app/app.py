@@ -29,6 +29,7 @@ def master():
 
     country = request.form['country']
     algorithm = request.form['algorithm']
+    file = request.files['file']
 
     # country ----------------------------------------------
     raster_path = config['raster_path']
@@ -36,7 +37,7 @@ def master():
 
     # load dataset -----------------------------------------
     print('-> loading dataset from input form...')
-    data = pd.read_csv(request.files['file'])
+    data = pd.read_csv(file)
 
     # load relative raster
     print('-> loading raster from disk: ', raster_path)
@@ -47,6 +48,25 @@ def master():
         print('ERROR: raster and data are not from the same country!')
         raise
     # ------------------------------------
+
+    # Grouping clusters that belong to the same tile.
+    cluster_N = 'countbyEA'
+    print("Number of clusters: {} ".format(len(data)))
+
+    def wavg(g, df, weight_series):
+        w = df.ix[g.index][weight_series]
+        return (g * w).sum() / w.sum()
+
+    import functools
+    fnc = functools.partial(wavg, df=data, weight_series=cluster_N)
+
+    try:
+        data = data.groupby(["i", "j"]).agg({'Indicator': fnc, 'gpsLatitude': fnc, 'gpsLongitude': fnc}).reset_index()
+    except:
+        print("No weights, taking the average per i and j")
+        data = data[['gpsLatitude', 'gpsLongitude', 'Indicator']].groupby(["i", "j"]).mean().reset_index()
+
+    print("Number of unique tiles: {} ".format(len(data)))
 
     # train model ------------------------------------
     X = pd.DataFrame({"i": data["i"], "j": data["j"]})
@@ -73,11 +93,11 @@ def master():
     # ------------------------------------
 
     # landcover --------------------------
-    esa_raster = raster_path + 'esa_landcover_{}.tif'.format(country)
+    #esa_raster = raster_path + 'esa_landcover_{}.tif'.format(country)
 
-    print('-> getting landuse from ESA ({})'.format(esa_raster))
-    from img_utils import getRastervalue
-    res = getRastervalue(res, esa_raster)
+    #print('-> getting landuse from ESA ({})'.format(esa_raster))
+    #from img_utils import getRastervalue
+    #res = getRastervalue(res, esa_raster)
     # ------------------------------------
 
     # predictions for all data left -------
@@ -90,7 +110,7 @@ def master():
     # saves to disk ---------------------
     # no idea how this works
     from exporter import tifgenerator
-    outfile = "../app/data/scalerout_{}_{}.tif".format(country, algorithm)
+    outfile = "../app/data/scalerout_all2_{}_{}.tif".format(country, algorithm)
     tifgenerator(outfile=outfile,
                  raster_path=raster,
                  df=res)

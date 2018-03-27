@@ -1,15 +1,8 @@
 
-def download_score_merge(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights, pipeline="evaluation"):
+def download(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date):
     import os
-    import numpy as np
-    import pandas as pd
-    import sys
-    sys.path.append(os.path.join(".." "Src"))
-    from nn_extractor import NNExtractor
 
     print("Starting pipeline for: {}".format(sat))
-
-    image_dir = os.path.join("../Data", "Satellite", sat)
 
     if raster == "../Data/Satellite/F182013.v4c_web.stable_lights.avg_vis.tif":
         image_dir = os.path.join("../Data", "Satellite", sat)
@@ -24,7 +17,18 @@ def download_score_merge(id, data, GRID, list_i, list_j, raster, step, sat, star
 
     GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
 
+
+def score_merge(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights, pipeline="evaluation"):
+    import os
+    import numpy as np
+    import pandas as pd
+    import sys
+    sys.path.append(os.path.join(".." "Src"))
+    from nn_extractor import NNExtractor
+
     print(str(np.datetime64('now')), " INFO: initiating network ...")
+
+    image_dir = GRID.output_image_dir
 
     network = NNExtractor(id, sat, image_dir, network_model, step)
     if custom_weights is not None:
