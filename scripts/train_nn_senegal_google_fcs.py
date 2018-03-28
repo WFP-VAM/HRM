@@ -18,9 +18,10 @@ from sklearn.model_selection import train_test_split
 
 from keras.models import Sequential
 from keras.layers import Input, Convolution2D, MaxPooling2D, Dense, Dropout, Activation, Flatten
+
 preprocess_input = keras.applications.resnet50.preprocess_input
 
-dataset = "../Data/Datasets/WFP_ENSAN_Senegal_2013_individual.csv"
+dataset = "../Data/datasets/WFP_ENSAN_Senegal_2013_individual.csv"
 indicator = "FCS"
 raster = "../Data/Geofiles/Rasters/Senegal_0005_4326_1.tif"
 step = 0
@@ -32,7 +33,6 @@ end_date = None
 data = pd.read_csv(dataset)
 data = data.loc[data[indicator] > 0]
 data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  # shuffle data
-
 
 GRID = RasterGrid(raster)
 list_i, list_j = GRID.get_gridcoordinates(data)
@@ -59,7 +59,7 @@ list_i = data["i"]
 list_j = data["j"]
 
 for sat in provider.split(","):
-    #download(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date)
+    download(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date)
     image_dir = os.path.join("../Data", "Satellite", sat, os.path.splitext(os.path.basename(raster))[0])
     print(image_dir)
 
@@ -126,54 +126,54 @@ model.add(Dropout(0.5))
 model.add(Dense(3))  # Number of classes
 model.add(Activation('softmax'))
 
-# # Compile model
-# model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
-#
-# # Fit the model
-# history = model.fit(X, y, validation_split=0.2, epochs=10, batch_size=10)
-#
-# # list all data in history
-# print(history.history.keys())
-# # summarize history for accuracy
-# plt.figure()
-# plt.plot(history.history['categorical_accuracy'])
-# plt.plot(history.history['val_categorical_accuracy'])
-# plt.title('model accuracy')
-# plt.ylabel('accuracy')
-# plt.xlabel('epoch')
-# plt.legend(['train', 'test'], loc='upper left')
-# plt.savefig('accuracy_plot.png')
-# # summarize history for loss
-# plt.figure()
-# plt.plot(history.history['loss'])
-# plt.plot(history.history['val_loss'])
-# plt.title('model loss')
-# plt.ylabel('loss')
-# plt.xlabel('epoch')
-# plt.legend(['train', 'test'], loc='upper left')
-# plt.savefig('training_plot.png')
-#
-#
-# # serialize model to JSON
-# model_json = model.to_json()
-# with open("model.json", "w") as json_file:
-#     json_file.write(model_json)
-# # serialize weights to HDF5
-# model.save_weights("model.h5")
-# print("Saved model to disk")
+# Compile model
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
+
+# Fit the model
+history = model.fit(X, y, validation_split=0.2, epochs=200, batch_size=10)
+
+# list all data in history
+print(history.history.keys())
+# summarize history for accuracy
+plt.figure()
+plt.plot(history.history['categorical_accuracy'])
+plt.plot(history.history['val_categorical_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('accuracy_plot.png')
+# summarize history for loss
+plt.figure()
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('training_plot.png')
+
+
+# serialize model to JSON
+model_json = model.to_json()
+with open("model.json", "w") as json_file:
+    json_file.write(model_json)
+# serialize weights to HDF5
+model.save_weights("model.h5")
+print("Saved model to disk")
 
 # load json and create model
-json_file = open('model.json', 'r')
-loaded_model_json = json_file.read()
-json_file.close()
-
-from keras.models import model_from_json
-
-loaded_model = model_from_json(loaded_model_json)
-# load weights into new model
-loaded_model.load_weights("model.h5")
-print("Loaded model from disk")
-
-# evaluate loaded model on test data
-loaded_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
-print(loaded_model.predict(X))
+# json_file = open('model.json', 'r')
+# loaded_model_json = json_file.read()
+# json_file.close()
+#
+# from keras.models import model_from_json
+#
+# loaded_model = model_from_json(loaded_model_json)
+# # load weights into new model
+# loaded_model.load_weights("model.h5")
+# print("Loaded model from disk")
+#
+# # evaluate loaded model on test data
+# loaded_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
+# print(loaded_model.predict(X))
