@@ -31,13 +31,11 @@ def gee_url(geojson,start_date,end_date):
         try:  # if it has zero images this line will return an EEException
             collectionList.size().getInfo()
             lock = 1
-            print('found images with {} cloud cover.'.format(cloud_cover))
         except ee.ee_exception.EEException:
-            print('found no images with {} cloud cover. Going to 10+'.format(cloud_cover))
+            print('found no images with {}% cloud cover. Going to {}%'.format(cloud_cover+10))
             cloud_cover = cloud_cover + 10
 
     image1 = sentinel.mosaic()
-
     path = image1.getDownloadUrl({
         'scale': 10,
         'crs': 'EPSG:4326',
