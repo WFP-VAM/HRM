@@ -3,8 +3,8 @@ import pandas as pd
 def scoring_postprocess(features):
     # postprocess
     features = features.transpose().reset_index()
-    features["i"] =  features["index"].apply(lambda x: x.split('_')[0])
-    features["j"] =  features["index"].apply(lambda x: x.split('_')[1])
+    features["i"] = features["index"].apply(lambda x: x.split('_')[0])
+    features["j"] = features["index"].apply(lambda x: x.split('_')[1])
     features["i"] = pd.to_numeric(features["i"])
     features["j"] = pd.to_numeric(features["j"])
 
@@ -100,3 +100,26 @@ def shape2json(fname, outfile="states.json"):
     geojson.close()
 
 
+    def get_coordinates_of_country(self, country):
+        """
+        given the name of a country (or a list of countries), it returns all the coordinates within that country.
+        Based on geocoder library.
+        :return:
+        """
+        import geocoder
+
+        list_lat = []
+        list_lon = []
+
+        for lat in range(-35, 60, 1):
+            if lat % 10 == 0: print('INFO: getting latitudes ', lat)
+
+            for lon in range(-120, 150, 1):
+                g = geocoder.osm([lat, lon], method='reverse')
+                try:
+                    if g.country == country:
+                        list_lat.append(lat)
+                        list_lon.append(lon)
+                except TypeError:
+                    pass
+        return list_lat, list_lon

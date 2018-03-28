@@ -4,7 +4,7 @@ class NNExtractor:
     -----
     Handles the feature extraction from a pre-trained NN.
     """
-    def __init__(self, id, sat, output_image_dir, model_type, step):
+    def __init__(self, id, sat, image_dir, model_type, step, GRID):
         """
         Initializes the NNExtractor object where the model to be used is defined.
         :param config: the config file
@@ -12,18 +12,16 @@ class NNExtractor:
         self.id = id
         self.sat = sat
         self.model_type = model_type
-        self.output_image_dir = output_image_dir
+        self.image_dir = image_dir
         self.step = step
+        self.GRID = GRID
 
-        import tensorflow as tf
         from tensorflow.python.keras.applications.vgg16 import VGG16
         from tensorflow.python.keras.applications.resnet50 import ResNet50
 
         if self.model_type == 'ResNet50':
             print('INFO: loading ResNet50 ...')
             self.net = ResNet50(weights='imagenet', include_top=False, pooling='avg')
-            # self.base_net = ResNet50(weights='imagenet', include_top=False)
-            # self.net = Model(inputs=self.base_net.input, outputs=self.base_net.get_layer('block4_pool').output)
 
         elif self.model_type == 'VGG16':
             print('INFO: loading VGG16 ...')
@@ -35,16 +33,15 @@ class NNExtractor:
         print('INFO: loading custom weights ...')
         self.net.load_weights(weights_path, by_name=True)
 
-    def __average_features_dir(self, image_dir, i, j, provider,start_date,end_date):
+    def __average_features_dir(self, i, j, provider,start_date,end_date):
         """
         Private function that takes the average of the features computed for all the images in the cluster into one feature.
         :param image_dir: string with path to the folder with images for one tile.
         :return: a list with the averages for each feature extracted from the images in the tile.
         """
-        from pandas import DataFrame
-        import tensorflow as tf
         import os
         import numpy as np
+        import tensorflow as tf
         if self.model_type == 'ResNet50':
             preprocess_input = tf.keras.applications.resnet50.preprocess_input
         elif self.model_type == 'VGG16':
@@ -53,20 +50,22 @@ class NNExtractor:
         else:
             print('ERROR: only ResNet50 and VGG16 implemented so far')
 
-        features_df = DataFrame([])
-
         batch_list = []
         c = 0
         for a in range(-self.step, 1 + self.step):
             for b in range(-self.step, 1 + self.step):
                 k = i + a
                 l = j + b
-                if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
-                    name = str(k)+'_'+str(l) + "_" + str(start_date)+"_"+str(end_date)
-                else:
-                    name = str(k)+'_'+str(l)
 
-                img_path = os.path.join(image_dir, name + ".jpg")
+                lon = np.round(self.GRID.centroid_x_coords[k], 5)
+                lat = np.round(self.GRID.centroid_y_coords[l], 5)
+
+                if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
+                    file_name = str(lon) + '_' + str(lat) + "_" + str(start_date) + "_" + str(end_date) + '.jpg'
+                else:
+                    file_name = str(lon) + '_' + str(lat) + '_' + str(16) + '.jpg'
+
+                img_path = os.path.join(self.image_dir, file_name)
 
                 img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))
                 image_preprocess = tf.keras.preprocessing.image.img_to_array(img)
@@ -83,8 +82,6 @@ class NNExtractor:
 
         return avg_features
 
-
-
     def extract_features(self, list_i, list_j, provider, start_date="2016-01-01", end_date="2017-01-01", pipeline="evaluation"):
         """
         Loops over the folders (tiles) and collects the features.
@@ -92,33 +89,26 @@ class NNExtractor:
         """
         from pandas import DataFrame
         from os import path
-        from pandas import read_csv
-        from numpy import datetime64
         import sys
         sys.path.append(path.join("..","Src"))
         from utils import scoring_postprocess
 
-        if (path.isfile("../Data/Features/features_{}_config_id_{}.csv".format(self.sat,self.id))) and (pipeline=="evaluation"):
-            print(str(datetime64('now')), ' INFO: images already scored for id: ', self.id)
-            Final = read_csv("../Data/Features/features_{}_config_id_{}.csv".format(self.sat,self.id))
+        final = DataFrame([])
+        cnt = 0
+        total = len(list_i)
 
-        elif (path.isfile("../Data/Features/scored_{}_config_id_{}.csv".format(self.sat,self.id))) and (pipeline=="prediction"):
-            print(str(datetime64('now')), ' INFO: images already scored for id: ', self.id)
-            Final = read_csv("../Data/Features/scored_{}_config_id_{}.csv".format(self.sat,self.id))
+        for i, j in zip(list_i, list_j):
 
-        else:
-            Final = DataFrame([])
-            cnt = 0
-            total = len(list_i)
+            name = str(i) + '_' + str(j)
+            cnt += 1
 
-            for i, j in zip(list_i, list_j):
-                name = str(i)+'_'+str(j)
-                cnt += 1
-                if cnt%10: print("Feature extraction : {} tiles out of {}".format(cnt, total), end='\r')
-                Final[name] = self.__average_features_dir(self.output_image_dir, i, j, provider, start_date, end_date)
-            Final = scoring_postprocess(Final)
+            if cnt%10: print("Feature extraction : {} tiles out of {}".format(cnt, total), end='\r')
 
-        return Final
+            final[name] = self.__average_features_dir(i, j, provider, start_date, end_date)
+
+        final = scoring_postprocess(final)
+
+        return final
 
     def get_layers(self):
         for layer in self.net.layers:

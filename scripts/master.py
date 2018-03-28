@@ -7,7 +7,7 @@
 import os
 import sys
 sys.path.append(os.path.join("..","Src"))
-from master_utils import download, score_merge
+#from master_utils import download, score_merge
 from img_lib import RasterGrid
 from img_utils import getRastervalue
 from sqlalchemy import create_engine
@@ -39,8 +39,15 @@ def run(id):
     raster = config["satellite_grid"][0]
     step = config["satellite_step"][0]
     provider = config["satellite_source"][0]
-    start_date = config["sentinel_start"][0]
-    end_date = config["sentinel_end"][0]
+    if config["sentinel_start"][0]:
+        start_date = config["sentinel_start"][0]
+    else:
+        start_date = "2017-01-01"
+    if config["sentinel_end"][0]:
+        end_date = config["sentinel_end"][0]
+    else:
+        end_date = "2018-01-01"
+
     land_use_raster = config["land_use_raster"][0]
     network_model = config['network_model'][0]
     custom_weights = config['custom_weights'][0]
@@ -52,6 +59,7 @@ def run(id):
     print(provider)
 
     data = pd.read_csv(dataset)
+    data_cols = data.columns.values
     data = data.loc[data[indicator] > 0]
 
     GRID = RasterGrid(raster)
@@ -78,27 +86,48 @@ def run(id):
 
     print("Number of unique tiles: {} ".format(len(data)))
 
-    data["j_lat"] = GRID.centroid_y_coords[data["j"]]
-    data["i_long"] = GRID.centroid_x_coords[data["i"]]
-
     list_i = data["i"]
     list_j = data["j"]
+    pipeline = 'evaluation'
 
+    # loop over the specified satellite image providers
     for sat in provider.split(","):
-        download(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date)
-        data = score_merge(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date, network_model, custom_weights, pipeline="evaluation")
+        print('INFO: routine for provider: ', sat)
+        # dopwnlaod the images from the relevant API
+        GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
+        print('INFO: images downloaded.')
+
+        if os.path.exists("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline)):
+            print('INFO: already scored.')
+            features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline))
+        else:
+            print('INFO: scoring ...')
+            # extarct the features
+            network = NNExtractor(id, sat, GRID.image_dir, network_model, step, GRID)
+            print('INFO: extractor instantiated.')
+            # load custom weights
+            if custom_weights is not None:
+                network.load_weights(custom_weights)
+
+            features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
+            features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
+
+        features = features.drop('index', 1)
+        data = data.merge(features, on=["i", "j"])
 
     data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id), index=False)
+
+    print('INFO: features extracted.')
 
     # ----------------- #
     # ADD OTHER FEATURES  ###
     # ----------------- #
     if land_use_raster is not None:
-        raster_file = land_use_raster
-        data["land_use"] = data.apply(getRastervalue, args=(raster_file,), axis=1)
+        print("INFO: adding land use.")
+        data["land_use"] = getRastervalue(data, land_use_raster)
 
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  #shuffle data
-    data_features = data[list(set(data.columns) - set(hh_data.columns) - set(['index', 'index_x', 'index_y']))]  # take only the CNN features
+    data_features = data[list(set(data.columns) - set(data_cols) - set(['i', 'j']))]  # take only the CNN features
 
     # ----------------- #
     # MODEL #############
