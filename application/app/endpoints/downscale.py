@@ -13,7 +13,7 @@ def downscale(config, request):
 
     # country ----------------------------------------------
     raster = '{}_0.01_4326_1.tif'.format(country)
-    local_raster = 'data/'+raster
+    local_raster = 'temp/'+raster
     print('-> getting raster ', raster)
     # download from AWS S3
     import boto3
@@ -81,7 +81,7 @@ def downscale(config, request):
 
     # landcover --------------------------
     esa_raster = 'esa_landcover_{}.tif'.format(country)
-    local_esa_raster = 'data/'+esa_raster
+    local_esa_raster = 'temp/'+esa_raster
     s3.Bucket(bucket_name).download_file(esa_raster, local_esa_raster)
 
     print('-> getting landuse from ESA ({})'.format(local_esa_raster))
@@ -97,14 +97,14 @@ def downscale(config, request):
     # saves to disk ---------------------
     # no idea how this works
     from exporter import tifgenerator
-    outfile = os.path.join("../data", "scalerout_{}_{}.tif".format(country, algorithm))
+    outfile = "temp/scalerout_{}_{}.tif".format(country, algorithm)
     tifgenerator(outfile=outfile,
                  raster_path=local_raster,
                  df=res)
     # -------------------------------------
 
     print('-> return file to client.')
-    return send_file(outfile,
+    return send_file('../'+outfile,
                      mimetype='image/tiff',
                      as_attachment=True,
                      attachment_filename=country + "_" + algorithm + ".tif")
