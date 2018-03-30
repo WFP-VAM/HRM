@@ -1,7 +1,6 @@
 import os
 import sys
 sys.path.append(os.path.join("..","Src"))
-from master_utils import download, score_merge
 from img_lib import RasterGrid
 from img_utils import getRastervalue
 from sqlalchemy import create_engine
@@ -12,12 +11,20 @@ import numpy as np
 import functools
 import keras
 
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
+
 from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
 
 from keras.models import Sequential
 from keras.layers import Input, Convolution2D, MaxPooling2D, Dense, Dropout, Activation, Flatten
+
+from keras.preprocessing import image
+from keras import optimizers
+
 
 preprocess_input = keras.applications.resnet50.preprocess_input
 
@@ -59,10 +66,13 @@ list_i = data["i"]
 list_j = data["j"]
 
 for sat in provider.split(","):
-    download(id, data, GRID, list_i, list_j, raster, step, sat, start_date, end_date)
-    image_dir = os.path.join("../Data", "Satellite", sat, os.path.splitext(os.path.basename(raster))[0])
-    print(image_dir)
+    print('INFO: routine for provider: ', sat)
+    # dopwnlaod the images from the relevant API
+    GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
+    print('INFO: images downloaded.')
 
+
+GRID.image_dir = os.path.join("../Data", "Satellite", provider + '/')
 # Pre-process the images
 
 X = []
@@ -70,12 +80,13 @@ y = []
 img_rows = 128
 img_cols = 128
 
-
-from keras.preprocessing import image
-
 for i, j in zip(list_i, list_j):
     name = str(i) + '_' + str(j)
-    img_path = os.path.join(image_dir, name + ".jpg")
+    lon = np.round(GRID.centroid_x_coords[i], 5)
+    lat = np.round(GRID.centroid_y_coords[j], 5)
+    file_name = str(lon) + '_' + str(lat) + '_' + str(16) + '.jpg'
+
+    img_path = os.path.join(GRID.image_dir, file_name)
     if os.path.exists(img_path):
         img = image.load_img(img_path, target_size=(img_rows, img_cols))
         image_preprocess = image.img_to_array(img)
@@ -90,8 +101,7 @@ for i, j in zip(list_i, list_j):
 X = np.array(X)
 y = keras.utils.np_utils.to_categorical(y)
 
-from sklearn.utils import shuffle
-X, y = shuffle(X, y, random_state=0)
+X, y = shuffle(X, y, random_state=7)
 
 # split into 80% for train and 20% for test
 seed = 7
@@ -109,14 +119,17 @@ np.random.seed(7)
 model = Sequential()
 model.add(Convolution2D(32, (3, 3), input_shape=(img_rows, img_cols, 3)))
 model.add(Activation('relu'))
+#model.add(Dropout(0.2))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Convolution2D(32, (3, 3)))
 model.add(Activation('relu'))
+#model.add(Dropout(0.2))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Convolution2D(64, (3, 3)))
 model.add(Activation('relu'))
+#model.add(Dropout(0.2))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
@@ -127,10 +140,48 @@ model.add(Dense(3))  # Number of classes
 model.add(Activation('softmax'))
 
 # Compile model
-model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
+opt = optimizers.SGD(lr=0.001)
+model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['categorical_accuracy'])
 
 # Fit the model
-history = model.fit(X, y, validation_split=0.2, epochs=200, batch_size=10)
+#history = model.fit(X, y, validation_split=0.2, epochs=200, batch_size=10)
+
+
+from keras.preprocessing.image import ImageDataGenerator
+
+datagen = ImageDataGenerator(rotation_range=40,
+                             width_shift_range=0.2,
+                             height_shift_range=0.2,
+                             rescale=1. / 255,
+                             shear_range=0.2,
+                             zoom_range=0.2,
+                             horizontal_flip=True,
+                             fill_mode='nearest',
+                             validation_split=0.2)
+
+batch_size = 10
+epochs = 100
+nb_train_samples = int(len(y) * 0.8)
+nb_validation_samples = int(len(y) * 0.2)
+
+steps_per_epoch = nb_train_samples // batch_size
+validation_steps = nb_validation_samples // batch_size
+
+print("steps_per_epoch: {} validation_steps: {}".format(steps_per_epoch, validation_steps))
+
+#image_generator = datagen.flow(X, y, batch_size)
+
+train_iterator = datagen.flow(X, y, subset='training')
+val_iterator = datagen.flow(X, y, subset='validation')
+
+history = model.fit_generator(
+    train_iterator,
+    steps_per_epoch=nb_train_samples // batch_size,
+    epochs=epochs,
+    validation_data=val_iterator,
+    validation_steps=nb_validation_samples // batch_size)
+
+model.save_weights("model.h5")
 
 # list all data in history
 print(history.history.keys())
@@ -159,7 +210,7 @@ model_json = model.to_json()
 with open("model.json", "w") as json_file:
     json_file.write(model_json)
 # serialize weights to HDF5
-model.save_weights("model.h5")
+
 print("Saved model to disk")
 
 # load json and create model
