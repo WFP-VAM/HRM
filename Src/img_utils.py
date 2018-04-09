@@ -67,8 +67,6 @@ def getRastervalue(df, esa_raster, lat_col="gpsLatitude", lon_col="gpsLongitude"
             pass
 
     df['landuse'] = df.apply(lu_extract, axis=1)
-
-    print(df.landuse.unique())
     df = df[df.landuse == 1]
 
     return df

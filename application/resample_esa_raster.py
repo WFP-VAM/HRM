@@ -5,8 +5,13 @@ from skimage.measure import block_reduce
 # create a landcover raster for a country from ESA landcover
 # gdalwarp -srcnodata 0 -dstnodata -99 -crop_to_cutline -cutline C:\Users\lorenzo.riches\Downloads\SEN_adm_shp\SEN_adm0.shp esa_landcover.tif esa_landcover_Senegal_full.tif
 
-input_raster = '../HRM/Data/Geofiles/esa_landcover_Senegal_full.tif'
-outfile = '../HRM/Data/Geofiles/esa_landcover_Senegal_b_10.tif'
+#'../HRM/Data/Geofiles/esa_landcover_Senegal_full.tif'
+#'../HRM/Data/Geofiles/esa_landcover_Nigeria_full.tif'
+input_raster = '../HRM/Data/Geofiles/esa_landcover_Uganda_full.tif'
+
+# '../HRM/Data/Geofiles/esa_landcover_Senegal_b_10.tif'
+# '../HRM/Data/Geofiles/esa_landcover_Nigeria_b_10.tif'
+outfile = '../HRM/Data/Geofiles/esa_landcover_Uganda_b_10.tif'
 
 # load raster ---------
 raster = gdal.Open(input_raster)

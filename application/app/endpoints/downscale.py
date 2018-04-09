@@ -20,7 +20,7 @@ def downscale(config, request):
     bucket_name = config['rasters_bucket']
     s3 = boto3.resource('s3')
     s3.Bucket(bucket_name).download_file(raster, local_raster)
-    print('raster loaded.')
+    print('-> raster loaded.')
 
     # load dataset -----------------------------------------
     print('-> loading dataset from input form...')
@@ -70,7 +70,7 @@ def downscale(config, request):
     list_j, list_i = np.where(src.read()[0] > 0)
     src.close()
 
-    # also add the coordinates to the data for later use
+    # also add the gps coordinates to the data for later use
     coords_i, coords_j = GRID.get_gpscoordinates(list_i, list_j)
     res = pd.DataFrame({"i": list_i,
                         "j": list_j,
