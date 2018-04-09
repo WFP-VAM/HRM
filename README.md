@@ -1,21 +1,28 @@
-# HRM
+# High Resolution Mapping of Food Security
 
-High Resolution Mapping of Food Security
+To understand the food security situation of vulnerable populations, the World Food Programme is continuously conducting household surveys. The difficulties of collecting face-to-face data in remote or unsafe areas mean that the estimates are only representative at a low resolution - usually regional or district level aggregation - for a reasonable cost. However, WFP and other humanitarian actors need more detailed maps in order to allocate resources more efficiently. At the same time, geographic coordinates are increasingly being recorded in household surveys thanks to digital data collection tools. 
 
-The first step consists in replicating the Science paper *Combining satellite imagery and machine learning to predict poverty* in Uganda with LSMS 2011 data. 
+The main aim of our initiative is to leverage the high resolution mapping techniques developed in academia for use in WFP and  the humanitarian sector, and to make it accessible for a broad range of users. Another objective is to get the most accurate fine-scale maps on food security indicators. Our work was mostly inspired by the [WorldPop/Flowminder “bottom-up” approach to population mapping](http://www.worldpop.org.uk/about_our_work/case_studies/) and by [transfer learning techniques developed by Stanford University to poverty mapping](http://science.sciencemag.org/content/353/6301/790).
 
-Jean, N., Burke, M., Xie, M., Davis, W. M., Lobell, D. B., & Ermon, S. (2016). Combining satellite imagery and machine learning to predict poverty. Science, 353(6301), 790-794.
-
-This is done through the following Notebooks:
-
-  1. Extracting Indicators from LSMS 2011-12 Uganda
-  2. Download Images from Google Static API
-  3. Generating features from fine-tuned CNN on nightlights (caffe).ipynb
-  4. Predicting HH indicators with CNN features.ipynb
+The code-base is able to:
+  - read in geo-referenced survey data.
+  - downlaod relevant satellite images from a number of sources (Google Maps, Bing Maps, Sentinel).
+  - extract features from the images using pre-trained neural netowrks.
+  - use ridge regression to infer indicator's value from the extarcted features. 
   
- The code is following closely the one shared on Neal Jean's Guthub repo: https://github.com/nealjean/predicting-poverty
+The trained models can then be used for making predicitons in areas where no data is available. Work is in progress in the `application` directory for taking the method to produciton. 
+  
+### How to run the code:
+#### Set-up
+Set up the necessary parameters in the ```config``` table. (WIP) and copy your dataset to the ```Data/datasets``` folder. Don't forget to populate the table with information about:
+* The dataset you are using and the filename. Check the data structure to see where to save the survey data.
+* The source of high-resolution satellite imageries, the number of tiles per point you are using and the tiff file you are using to define your gris coordinate system. Check the data structure to see where to save this tiff file.
+* The CNN network and the layer you are using to extract features.
 
-### Automation (HOW TO RUN):
+Don't forget to populate the private_config.yml with information about:
+* You bing and/or API keys 
+
+#### Train Model
 ```
 python master.py args
 ```
@@ -31,61 +38,40 @@ This will:
 * save the trained model.
 
   
-#### Config file
-
-Don't forget to populate the public_config.yml with information about:
-* The dataset you are using and the filename. Check the data structure to see where to save the survey data.
-* The source of high-resolution satellite imageries, the number of tiles per point you are using and the tiff file you are using to define your gris coordinate system. Check the data structure to see where to save this tiff file.
-* The CNN network and the layer you are using to extract features
-
-Don't forget to populate the private_config.yml with information about:
-* You bing and/or API keys 
-
-#### Data Structure
+### Data Structure
   
  ```
  
 Data
-├── Datasets
-│   ├── Raw
+├── datasets
 │   └── processed_survey.csv
-├── Network
-├── Outputs
+├── Features
+│   └── features_config_id_1.csv
 └── Satellite
     ├── raster_of_the_world.tif
     ├── Bing
-    │   ├── 25161_9138
-    │   │   └── 25161_9138.jpg
+    │   └── 5.166666_13.34166_16.jpg
     └── Google
-        ├── 8866_8866
-        │   └── 8866_8866.jpg
-        ├── 8869_8869
-        │   └── 8869_8869.jpg
-        └── 9169_9169
-            └── 9169_9169.jpg
+    │   └── 5.166666_13.34166_16.jpg
+    ├── Sentinel
+    │   └── 5.16666_13.34166_2016-01-01_2017-01-01.jpg
   ```
   
-  processed_survey.csv should contain at least 3 columns: "gpsLongitude","gpsLatitude" and one indicator. You can either work with individual survey data or aggregate the surveys to some geographic level. The Raw folder can be used to store the raw data as well as complementary files such as the questionnaire.
+`processed_survey.csv` should contain at least 3 columns: "gpsLongitude","gpsLatitude" and one indicator. You can either work with individual survey data or aggregate the surveys to some geographic level. 
   
-  raster_of_the_world.tif is a raster file that associated GRID coordinates to the areas of interest. We are currently working with a global raster at a 1km resolution taken from the NOAA nightlights "F182013.v4c_web.stable_lights.avg_vis.tif" and available at https://ngdc.noaa.gov/eog/dmsp/downloadV4composites.html. This raster can also be used to fine-tune the CNN.
+`raster_of_the_world.tif` is a raster file that associated GRID coordinates to the areas of interest. We are currently working with a global raster at a 1km resolution taken from the NOAA nightlights "F182013.v4c_web.stable_lights.avg_vis.tif" and available at https://ngdc.noaa.gov/eog/dmsp/downloadV4composites.html. This raster can also be used to fine-tune the CNN.
  
-  ### Work in progress
+ ### Work in progress
   
  The next steps are (work in progress):
-+ Applying the same methods in WFP assessments
-  + Uganda Karamoja 2016 Assessment to begin with
-  + Try Food Security indicators and Wealth indicators
-+ Trying with different sources of imageries
-  + Use less images per cluster (as for WFP assessments we know precisely the location of clusters)
-  + Landsat/Sentinel data : lower resolution but more frequent and consistency of collection period 
-  + Other sources of very high resolution imageries
-+ Trying with different Neural Networks 
-  + Comparing scores With/Whithout the transfer learning step
-  + Trying with Networks available on Keras
-  + Extract features from previous layers in the network
++ App development (can be found in the `application` directory.
++ Better fine tuning for each data source. 
++ Validation on more datasets and usecases.
 + Adding features coming from other sources 
   + Ex: conflict GIS maps or CDR data (WorldPop approach) 
   
 ### Ridge Regression
 ![coefficientsa as a function of the L2 parameter Alpha for VGG16 features](https://github.com/WFP-VAM/HRM/blob/master/Plots/alpha_for_VGG16_features.png)
 
+### Contacts
+For more info to collaborate, use or just to know more reach us at jeanbaptiste.pasquier@wfp.org and lorenzo.riches@wfp.org or submit an issue.

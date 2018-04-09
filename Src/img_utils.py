@@ -57,16 +57,18 @@ def getRastervalue(df, esa_raster, lat_col="gpsLatitude", lon_col="gpsLongitude"
     NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(esa_raster)
 
     def lu_extract(row):
+
         try:
             c, r = gr.map_pixel(row[lon_col], row[lat_col], GeoT[1], GeoT[-1], GeoT[0], GeoT[3])
             lu = esa[c, r]
             return lu
-            print('landuse -> {}'.format(lu))
+
         except IndexError:
             pass
 
     df['landuse'] = df.apply(lu_extract, axis=1)
 
-    df = df[df.landuse == 8]
+    print(df.landuse.unique())
+    df = df[df.landuse == 1]
 
     return df
