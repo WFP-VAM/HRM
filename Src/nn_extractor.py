@@ -1,3 +1,6 @@
+import tensorflow as tf
+
+
 class NNExtractor:
     """
     Class
@@ -16,22 +19,23 @@ class NNExtractor:
         self.step = step
         self.GRID = GRID
 
-        from tensorflow.python.keras.applications.vgg16 import VGG16
-        from tensorflow.python.keras.applications.resnet50 import ResNet50
+        if self.model_type == 'Google':
+            print('INFO: loading VGG16 for Google Images ...')  # TODO: JB load your model here
+            from tensorflow.python.keras.applications.vgg16 import VGG16
 
-        if self.model_type == 'ResNet50':
-            print('INFO: loading ResNet50 ...')
-            self.net = ResNet50(weights='imagenet', include_top=False, pooling='avg')
-
-        elif self.model_type == 'VGG16':
-            print('INFO: loading VGG16 ...')
             self.net = VGG16(weights='imagenet', include_top=False, pooling='avg')
-        else:
-            print("ERROR: Only ResNet50 and VGG16 implemented so far")
 
-    def load_weights(self, weights_path):
-        print('INFO: loading custom weights ...')
-        self.net.load_weights(weights_path, by_name=True)
+        elif self.model_type == 'Sentinel':
+            print("INFO: loading model for Sentinel images.")
+            from tensorflow.python.keras.models import load_model
+            self.net = load_model('../Models/nightSent.h5', compile=False)
+            self.net.layers.pop()
+            self.net.layers.pop()
+            self.net.layers.pop()
+
+            x = tf.keras.layers.MaxPooling2D(name='output_maxpool')(self.net.layers[-1].output)
+            self.net= tf.keras.models.Model(inputs=self.net.input, outputs=x)
+
 
     def __average_features_dir(self, i, j, provider,start_date,end_date):
         """
@@ -42,13 +46,6 @@ class NNExtractor:
         import os
         import numpy as np
         import tensorflow as tf
-        if self.model_type == 'ResNet50':
-            preprocess_input = tf.keras.applications.resnet50.preprocess_input
-        elif self.model_type == 'VGG16':
-            preprocess_input = tf.keras.applications.vgg16.preprocess_input
-
-        else:
-            print('ERROR: only ResNet50 and VGG16 implemented so far')
 
         batch_list = []
         c = 0
@@ -60,7 +57,7 @@ class NNExtractor:
                 lon = np.round(self.GRID.centroid_x_coords[k], 5)
                 lat = np.round(self.GRID.centroid_y_coords[l], 5)
 
-                if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
+                if provider == 'Sentinel':
                     file_name = str(lon) + '_' + str(lat) + "_" + str(start_date) + "_" + str(end_date) + '.jpg'
                 else:
                     file_name = str(lon) + '_' + str(lat) + '_' + str(16) + '.jpg'
@@ -70,15 +67,14 @@ class NNExtractor:
                 img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))
                 image_preprocess = tf.keras.preprocessing.image.img_to_array(img)
                 image_preprocess = np.expand_dims(image_preprocess, axis=0)
-                image_preprocess = preprocess_input(image_preprocess)
+                image_preprocess = tf.keras.applications.vgg16.preprocess_input(image_preprocess)
 
                 batch_list.append(image_preprocess)
 
                 c += 1
 
         features = self.net.predict(np.array(batch_list).reshape(c, 400, 400,3))
-
-        avg_features = np.mean(features, axis=0)
+        avg_features = np.mean(features, axis=(0,1,2))  # take the mean
 
         return avg_features
 
@@ -102,7 +98,7 @@ class NNExtractor:
             name = str(i) + '_' + str(j)
             cnt += 1
 
-            if cnt%10: print("Feature extraction : {} tiles out of {}".format(cnt, total), end='\r')
+            if cnt % 10 == 0: print("Feature extraction : {} tiles out of {}".format(cnt, total), end='\r')
 
             final[name] = self.__average_features_dir(i, j, provider, start_date, end_date)
 
@@ -110,6 +106,3 @@ class NNExtractor:
 
         return final
 
-    def get_layers(self):
-        for layer in self.net.layers:
-            print(layer.output)

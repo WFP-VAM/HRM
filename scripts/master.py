@@ -7,7 +7,6 @@
 import os
 import sys
 sys.path.append(os.path.join("..","Src"))
-#from master_utils import download, score_merge
 from img_lib import RasterGrid
 from img_utils import getRastervalue
 from sqlalchemy import create_engine
@@ -32,43 +31,28 @@ def run(id):
                            .format(private_config['DB']['user'], private_config['DB']['password'],
                                     private_config['DB']['host'], private_config['DB']['database']))
 
-    config = pd.read_sql_query("select * from config where id = {}".format(id), engine)
-
+    config = pd.read_sql_query("select * from config_new where id = {}".format(id), engine)  # TODO: reading from config_new
     dataset = config["dataset_filename"][0]
     indicator = config["indicator"][0]
     raster = config["satellite_grid"][0]
     step = config["satellite_step"][0]
-    provider = config["satellite_source"][0]
-    if config["sentinel_start"][0]:
-        start_date = config["sentinel_start"][0]
-    else:
-        start_date = "2017-01-01"
-    if config["sentinel_end"][0]:
-        end_date = config["sentinel_end"][0]
-    else:
-        end_date = "2018-01-01"
-
+    start_date = config["sentinel_config"][0]["start_date"]
+    end_date = config["sentinel_config"][0]["end_date"]
     land_use_raster = config["land_use_raster"][0]
-    network_model = config['network_model'][0]
-    custom_weights = config['custom_weights'][0]
-    indicator_log = config['indicator_log'][0]
-    model_pca = config['model_pca'][0]
     output = config['output'][0]
     model_grid_parameters = config['model_grid_parameters'][0]
 
-    print(provider)
-
+    # dataset
     data = pd.read_csv(dataset)
     data_cols = data.columns.values
-    data = data.loc[data[indicator] > 0]
 
+    # grid
     GRID = RasterGrid(raster)
     list_i, list_j = GRID.get_gridcoordinates(data)
 
-    data["i"] = list_i
-    data["j"] = list_j
+    data["i"], data["j"] = list_i, list_j
 
-    # Grouping clusters that belong to the same tile.
+    # Grouping clusters that belong to the same tile. # TODO: looks like shit
     cluster_N = 'countbyEA'
     print("Number of clusters: {} ".format(len(data)))
 
@@ -86,12 +70,10 @@ def run(id):
 
     print("Number of unique tiles: {} ".format(len(data)))
 
-    list_i = data["i"]
-    list_j = data["j"]
-    pipeline = 'evaluation'
+    list_i, list_j, pipeline = data["i"], data["j"], 'evaluation'
 
-    # loop over the specified satellite image providers
-    for sat in provider.split(","):
+    # download images from Google and Sentinel
+    for sat in ['Google', 'Sentinel']:
         print('INFO: routine for provider: ', sat)
         # dopwnlaod the images from the relevant API
         GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
@@ -103,11 +85,8 @@ def run(id):
         else:
             print('INFO: scoring ...')
             # extarct the features
-            network = NNExtractor(id, sat, GRID.image_dir, network_model, step, GRID)
+            network = NNExtractor(id, sat, GRID.image_dir, sat, step, GRID)
             print('INFO: extractor instantiated.')
-            # load custom weights
-            if custom_weights is not None:
-                network.load_weights(custom_weights)
 
             features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
             features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
@@ -126,28 +105,17 @@ def run(id):
         print("INFO: adding land use.")
         data["land_use"] = getRastervalue(data, land_use_raster)
 
-    data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  #shuffle data
-    data_features = data[list(set(data.columns) - set(data_cols) - set(['i', 'j']))]  # take only the CNN features
-
     # ----------------- #
     # MODEL #############
     # ----------------- #
+    data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  # shuffle data
+    data_features = data[list(set(data.columns) - set(data_cols) - set(['i', 'j']))]  # take only the CNN features
+
     from evaluation_utils import MAPE, r2_pearson, r2
     from sklearn.model_selection import GridSearchCV, KFold, cross_val_score, cross_val_predict
 
     y = data[indicator].values
-
-    # Log-normal distribution
-    if indicator_log == True:
-        y = np.log(y)
-
-    # PCA
-    if model_pca > 0:
-        from sklearn.decomposition import PCA
-        pca = PCA(n_components=model_pca)
-        X = pca.fit_transform(data_features)
-    else:
-        X = data_features
+    X = data_features
 
     # TRAIN MODEL
     outer_cv = KFold(5, shuffle=True, random_state=75788)
