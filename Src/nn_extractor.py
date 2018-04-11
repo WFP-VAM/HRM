@@ -32,9 +32,11 @@ class NNExtractor:
             self.net.layers.pop()
             self.net.layers.pop()
             self.net.layers.pop()
+            self.net.layers.pop()
+            self.net.layers.pop()
 
-            x = tf.keras.layers.MaxPooling2D(name='output_maxpool')(self.net.layers[-1].output)
-            self.net= tf.keras.models.Model(inputs=self.net.input, outputs=x)
+            x = tf.keras.layers.GlobalAveragePooling2D(name='output_maxpool')(self.net.layers[-1].output)
+            self.net = tf.keras.models.Model(inputs=self.net.input, outputs=x)
 
 
     def __average_features_dir(self, i, j, provider,start_date,end_date):
@@ -67,15 +69,15 @@ class NNExtractor:
                 img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))
                 image_preprocess = tf.keras.preprocessing.image.img_to_array(img)
                 image_preprocess = np.expand_dims(image_preprocess, axis=0)
-                image_preprocess = tf.keras.applications.vgg16.preprocess_input(image_preprocess)
+                if provider == 'Google': image_preprocess = tf.keras.applications.vgg16.preprocess_input(image_preprocess)
+                if provider == 'Sentinel': image_preprocess = np.divide(image_preprocess, 255.)
 
                 batch_list.append(image_preprocess)
 
                 c += 1
 
-        features = self.net.predict(np.divide(np.array(batch_list).reshape(c, 400, 400,3), 255.))
-        if provider == 'Sentinel': avg_features = np.mean(features, axis=(0,1,2))  # take the mean
-        if provider == 'Google': avg_features = np.mean(features, axis=0)  # take the mean
+        features = self.net.predict(np.array(batch_list).reshape(c, 400, 400, 3))
+        avg_features = np.mean(features, axis=0)  # take the mean
 
         return avg_features
 
