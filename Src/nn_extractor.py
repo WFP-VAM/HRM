@@ -73,7 +73,7 @@ class NNExtractor:
 
                 c += 1
 
-        features = self.net.predict(np.array(batch_list).reshape(c, 400, 400,3))
+        features = self.net.predict(np.divide(np.array(batch_list).reshape(c, 400, 400,3), 255.))
         if provider == 'Sentinel': avg_features = np.mean(features, axis=(0,1,2))  # take the mean
         if provider == 'Google': avg_features = np.mean(features, axis=0)  # take the mean
 
