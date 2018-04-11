@@ -24,6 +24,7 @@ class NNExtractor:
             from tensorflow.python.keras.applications.vgg16 import VGG16
 
             self.net = VGG16(weights='imagenet', include_top=False, pooling='avg')
+            self.net.load_weights('../Models/weights/nigeria-fine-tuned.20170910-160027.lr-1e-07.h5', by_name=True)
 
         elif self.model_type == 'Sentinel':
             print("INFO: loading model for Sentinel images.")

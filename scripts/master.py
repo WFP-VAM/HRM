@@ -142,10 +142,8 @@ def run(id):
 
     print('INFO: Pearson score: ', score.mean())
     # WRITE FULL RESULTS to FILE SYSTEM
-    if output == 'regression': results_df = pd.DataFrame([predict, y],
-                                                                      index=["predict", "y"]).T
-    if output == 'classification': results_df = pd.DataFrame([predict, y],
-                                                                      index=["predict", "y"]).T
+    if output == 'regression': results_df = pd.DataFrame([predict, y], index=["predict", "y"]).T
+    if output == 'classification': results_df = pd.DataFrame([predict, y], index=["predict", "y"]).T
 
     # attach coordinates
     results_df['i'], results_df['j'] = data.i, data.j
