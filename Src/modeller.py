@@ -23,7 +23,7 @@ class Modeller:
         if 'kNN' in self.model_list:
             from sklearn.neighbors import KNeighborsRegressor
 
-            parameters = {'n_neighbors': range(1, 20, 2)}
+            parameters = {'n_neighbors': range(1, 18, 2)}
             model = KNeighborsRegressor(weights='distance')
             self.kNN = GridSearchCV(estimator=model, param_grid=parameters, cv=inner_cv, scoring=r2)
             score = cross_val_score(self.kNN, X, y, scoring=r2, cv=outer_cv)
@@ -51,12 +51,21 @@ class Modeller:
             self.scores['RmSense'], self.vars['RmSense'] = score.mean(), score.var()
             print('INFO: remote sensing score ', score.mean())
 
-        # combine kNN and RmSense
-        prd_int = self.kNN.fit(X, y).predict(X)
-        prd_rms = self.RmSense.fit(self.sat_features, y).predict(self.sat_features)
+
+        # combine kNN and RmSense - 2 cross-validation loops
+        import numpy as np
+        k = int(np.floor(len(X)/3))
+        print('k: ', k)
 
         from evaluation_utils import R2
-        self.scores['combined'] = R2(y, (prd_int+prd_rms)/2)
+        prd_int = self.kNN.fit(X.loc[:2*k,:], y[:2*k+1]).predict(X.loc[:2*k,:])
+        prd_rms = self.RmSense.fit(self.sat_features.loc[:2*k,:], y[:2*k+1]).predict(self.sat_features.loc[:2*k,:])
+        self.scores['combined'] = R2(y[:2*k+1], (prd_int + prd_rms) / 2)
+
+        prd_int = self.kNN.fit(X.loc[k:3*k, :], y[k:3*k+1]).predict(X.loc[k:3*k,:])
+        prd_rms = self.RmSense.fit(self.sat_features.loc[k:3*k, :], y[k:3*k+1]).predict(self.sat_features.loc[:2*k,:])
+        self.scores['combined'] = (self.scores['combined'] + R2(y[:2*k+1], (prd_int + prd_rms) / 2))/2
+
         print('score combined: ', self.scores['combined'].mean())
 
 
