@@ -1,3 +1,7 @@
+from evaluation_utils import r2, R2
+import numpy as np
+
+
 class Modeller:
     """
     class to handles the ensambling of models that use satellite and other features to predict indicator.
@@ -14,7 +18,6 @@ class Modeller:
 
     def compute(self, X, y):
         from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
-        from evaluation_utils import r2
 
         inner_cv = KFold(5, shuffle=True, random_state=1673)
         outer_cv = KFold(5, shuffle=True, random_state=75788)
@@ -51,23 +54,25 @@ class Modeller:
             self.scores['RmSense'], self.vars['RmSense'] = score.mean(), score.var()
             print('INFO: remote sensing score ', score.mean())
 
+        # combine kNN and RmSense - custom cross_val
+        def k_fold_cross_validation(X, K):
+            for k in range(K):
+                training = [x for i, x in enumerate(X) if i % K != k]
+                validation = [x for i, x in enumerate(X) if i % K == k]
+                yield training, validation, K
+        tmp_scores = []
+        for training, validation, K in k_fold_cross_validation(X.index, K=4):
 
-        # combine kNN and RmSense - 2 cross-validation loops
-        import numpy as np
-        k = int(np.floor(len(X)/3))
-        print('k: ', k)
+            prd_int = self.kNN.fit(X.loc[training, :], y[training]).predict(X.loc[validation, :])
+            prd_rms = self.RmSense.fit(self.sat_features.loc[training, :], y[training]).predict(self.sat_features.loc[validation, :])
 
-        from evaluation_utils import R2
-        prd_int = self.kNN.fit(X.loc[:2*k,:], y[:2*k+1]).predict(X.loc[:2*k,:])
-        prd_rms = self.RmSense.fit(self.sat_features.loc[:2*k,:], y[:2*k+1]).predict(self.sat_features.loc[:2*k,:])
-        self.scores['combined'] = R2(y[:2*k+1], (prd_int + prd_rms) / 2)
+            tmp_scores.append(R2(y[validation], (prd_int + prd_rms) / 2))
 
-        prd_int = self.kNN.fit(X.loc[k:3*k, :], y[k:3*k+1]).predict(X.loc[k:3*k,:])
-        prd_rms = self.RmSense.fit(self.sat_features.loc[k:3*k, :], y[k:3*k+1]).predict(self.sat_features.loc[:2*k,:])
-        self.scores['combined'] = (self.scores['combined'] + R2(y[:2*k+1], (prd_int + prd_rms) / 2))/2
+        self.scores['combined'] = np.array(tmp_scores).mean()
+        self.vars['combined'] = np.array(tmp_scores).var()
+        print(self.scores['combined'])
 
         print('score combined: ', self.scores['combined'].mean())
-
 
     def save_models(self, id):
         from sklearn.externals import joblib
