@@ -130,9 +130,12 @@ def run(id):
     # write scored to DB #
     # ------------------ #
     query = """
-    insert into results_new (run_date, config_id, r2, r2_var)
-    values (current_date, {}, {}, {}) """.format(
-        config['id'][0], md.scores['combined'].mean(), md.scores['combined'].var())
+    insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense)
+    values (current_date, {}, {}, {}, {}, {}, {}, {}) """.format(
+        config['id'][0],
+        md.scores['combined'].mean(), md.scores['combined'].var(),
+        md.scores['kNN'].mean(), md.scores['kNN'].var(),
+        md.scores['RmSense'].mean(), md.scores['RmSense'].var())
     engine.execute(query)
 
 
