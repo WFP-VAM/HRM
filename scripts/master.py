@@ -42,7 +42,9 @@ def run(id):
     output = config['output'][0]
     model_grid_parameters = config['model_grid_parameters'][0]
 
-    # dataset
+    # -------- #
+    # DATAPREP #
+    # -------- #
     data = pd.read_csv(dataset)
     data_cols = data.columns.values
 
@@ -72,7 +74,9 @@ def run(id):
 
     list_i, list_j, pipeline = data["i"], data["j"], 'evaluation'
 
-    # download images from Google and Sentinel
+    # ---------------------------------------- #
+    # download images from Google and Sentinel #
+    # ---------------------------------------- #
     for sat in ['Google', 'Sentinel']:
         print('INFO: routine for provider: ', sat)
         # dopwnlaod the images from the relevant API
@@ -98,92 +102,38 @@ def run(id):
 
     print('INFO: features extracted.')
 
-    # ----------------- #
-    # ADD OTHER FEATURES  ###
-    # ----------------- #
+    # ----------- #
+    # add landuse #
+    # ----------- #
     if land_use_raster is not None:
         print("INFO: adding land use.")
         data["land_use"] = getRastervalue(data, land_use_raster)
 
-    # ----------------- #
-    # MODEL #############
-    # ----------------- #
+    # --------------- #
+    # model indicator #
+    # --------------- #
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  # shuffle data
     data_features = data[list(set(data.columns) - set(data_cols) - set(['i', 'j']))]  # take only the CNN features
-
-    from evaluation_utils import MAPE, r2_pearson, r2
-    from sklearn.model_selection import GridSearchCV, KFold, cross_val_score, cross_val_predict
 
     y = data[indicator].values
     X = data_features
 
-    # TRAIN MODEL
-    outer_cv = KFold(5, shuffle=True, random_state=75788)
-    inner_cv = KFold(5, shuffle=True, random_state=1673)
-    print(str(np.datetime64('now')), " INFO: training model ...")
-    if output == 'regression':
-        from sklearn.linear_model import Ridge
-        model = Ridge()
-        clf = GridSearchCV(estimator=model, param_grid=model_grid_parameters, cv=inner_cv, scoring=r2_pearson)
+    from modeller import Modeller
+    md = Modeller(['kNN', 'Kriging', 'RmSense'], X)
+    md.compute(data[['i', 'j']], y)
 
-        score = cross_val_score(clf, X, y, scoring=r2_pearson, cv=outer_cv)
-        score_r2 = cross_val_score(clf, X, y, scoring=r2, cv=outer_cv)
-        score_MAPE = cross_val_score(clf, X, y, scoring=MAPE, cv=outer_cv)
-
-        predict = cross_val_predict(clf, X, y, cv=outer_cv)
-
-    elif output == 'classification':
-        from sklearn.linear_model import RidgeClassifier
-        model = RidgeClassifier()
-        clf = GridSearchCV(estimator=model, param_grid=model_grid_parameters, cv=inner_cv)
-
-        score = cross_val_score(clf, X, y, cv=outer_cv)
-        predict = cross_val_predict(clf, X, y, cv=outer_cv)
-
-    print('INFO: Pearson score: ', score.mean())
-    # WRITE FULL RESULTS to FILE SYSTEM
-    if output == 'regression': results_df = pd.DataFrame([predict, y], index=["predict", "y"]).T
-    if output == 'classification': results_df = pd.DataFrame([predict, y], index=["predict", "y"]).T
-
-    # attach coordinates
-    results_df['i'], results_df['j'] = data.i, data.j
-
-    if not os.path.exists('../Data/Results'):
-        os.makedirs('../Data/Results')
-    results_df.to_csv(os.path.join("../Data/Results", "confi_"+str(id)+"_results.csv"), index=False)
-
-    # SAVE MODEL FOR PRODUCTION
-    from sklearn.externals import joblib
-    prod_cv = clf.fit(X, y)
-    print('INFO: best parameter: ', prod_cv.best_params_)
-    model_prod = Ridge(alpha=prod_cv.best_params_['alpha'])
-    model_prod.fit(X, y)
-    if not os.path.exists('../Models'):
-        os.makedirs('../Models')
-    joblib.dump(model_prod, '../Models/ridge_model_config_id_{}.pkl'.format(id))
+    # save model for production
+    md.save_models(id)
     print(str(np.datetime64('now')), 'INFO: model saved.')
 
     # ------------------ #
-    # WRITE SCORES to DB #
+    # write scored to DB #
     # ------------------ #
-    if output == 'regression':
-        score_mean, score_var, score_r2_mean, score_r2_var, score_MAPE, score_MAPE_var = \
-        score.mean(), score.std() * 2, score_r2.mean(), score_r2.std() * 2, score_MAPE.mean(), score_MAPE.std() * 2
-
-        query = """
-        insert into results_new (run_date, config_id, r2, r2_var, r2pearson, r2pearson_var, mape, mape_var)
-        values (current_date, {}, {}, {}, {}, {}, {},{}) """.format(
-            config['id'][0], score_r2_mean, score_r2_var, score_mean, score_var, score_MAPE, score_MAPE_var)
-        engine.execute(query)
-
-    if output == 'classification':
-        score, score_mean = score.mean(), score.std() * 2
-
-        query = """
-                insert into results (run_date, config_id, r2, r2_var)
-                values (current_date, {}, {}, {}) """.format(
-                id, score, score_mean)
-        engine.execute(query)
+    query = """
+    insert into results_new (run_date, config_id, r2, r2_var)
+    values (current_date, {}, {}, {}) """.format(
+        config['id'][0], md.scores['combined'].mean(), md.scores['combined'].var())
+    engine.execute(query)
 
 
 if __name__ == "__main__":
