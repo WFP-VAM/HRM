@@ -14,7 +14,7 @@ def gee_url(geojson,start_date,end_date):
     import ee
     ee.Initialize()
 
-    lock =0
+    lock = 0
     cloud_cover = 10
     while lock == 0:
         sentinel = ee.ImageCollection('COPERNICUS/S2') \
@@ -23,16 +23,15 @@ def gee_url(geojson,start_date,end_date):
                         .filterBounds(geojson) \
                         .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', cloud_cover) \
                         .sort('GENERATION_TIME') \
-                        .sort('CLOUDY_PIXEL_PERCENTAGE', False) #also sort by date
+                        .sort('CLOUDY_PIXEL_PERCENTAGE', False)
 
-        # check if there are images, otherwise increase accepteable cloud cover
         collectionList = sentinel.toList(sentinel.size())
-
+        # check if there are images, otherwise increase accepteable cloud cover
         try:  # if it has zero images this line will return an EEException
             collectionList.size().getInfo()
             lock = 1
-        except ee.ee_exception.EEException:
-            print('found no images with {}% cloud cover. Going to {}%'.format(cloud_cover+10))
+        except:  # ee.ee_exception.EEException:
+            print('INFO: found no images with {}% cloud cover. Going to {}%'.format(cloud_cover, cloud_cover+10))
             cloud_cover = cloud_cover + 10
 
     image1 = sentinel.mosaic()
@@ -42,6 +41,7 @@ def gee_url(geojson,start_date,end_date):
         'region':geojson
     })
     return path
+
 
 def gee_maxNDBImaxNDVImaxNDWI_url(geojson,start_date,end_date):
     import ee
