@@ -62,7 +62,8 @@ class RasterGrid:
             ii, jj = get_cell_idx(i, j, self.top_left_x_coords, self.top_left_y_coords)
             list_i.append(ii)
             list_j.append(jj)
-        return (list_i, list_j)
+
+        yield list_i, list_j
 
     def get_gpscoordinates(self, list_i, list_j):
         """
@@ -162,7 +163,7 @@ class RasterGrid:
             for a in range(-step, 1+step):
                 for b in range(-step, 1+step):
 
-                    print("INFO: {} images downloaded out of {}".format(cnt,total),end='\r')
+                    print("INFO: {} images downloaded out of {}".format(cnt, total), end='\r')
                     cnt += 1
 
                     lon = np.round(self.centroid_x_coords[i + a], 5)
@@ -174,7 +175,7 @@ class RasterGrid:
                         file_name = str(lon) + '_' + str(lat) + '_' + str(16) + '.jpg'
 
                     if os.path.exists(self.image_dir + file_name):
-                        print("INFO: {} already downloaded".format(file_name))
+                        print("INFO: {} already downloaded".format(file_name), end='\r')
                     else:
                         url = self._produce_url(lon, lat, provider, start_date, end_date)
                         self._save_img(url, self.image_dir, file_name, provider)
@@ -196,13 +197,13 @@ class RasterGrid:
                     "/" + zoom_level + "?mapSize=" + map_size + "&key=" + tokens['Bing'])
 
         elif provider == 'Sentinel':
-            d=5000
+            d = 5000
             geojson=sentinel_utils.squaretogeojson(lon,lat,d)
             url=sentinel_utils.gee_url(geojson,str(start_date),str(end_date))
             return url
 
         elif provider == 'Sentinel_maxNDVI':
-            d=5000
+            d = 5000
             geojson=sentinel_utils.squaretogeojson(lon,lat,d)
             url=sentinel_utils.gee_maxNDBImaxNDVImaxNDWI_url(geojson,str(start_date),str(end_date))
             return url
@@ -229,7 +230,7 @@ class RasterGrid:
             gee_tif = sentinel_utils.download_and_unzip(buffer, 3, 6, file_path)
             try:
                 sentinel_utils.rgbtiffstojpg(gee_tif, file_path, file_name)
-            except:
+            except:  # TODO: JB specify which exception
                 print("GEE error with :{}".format(file_name))
 
         else:
