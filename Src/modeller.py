@@ -41,7 +41,7 @@ class Modeller:
             self.kNN = GridSearchCV(estimator=model, param_grid=parameters, cv=inner_cv, scoring=r2)
             score = cross_val_score(self.kNN, X, y, scoring=r2, cv=outer_cv)
             self.scores['kNN'], self.vars['kNN'] = score.mean(), score.var()
-            print('INFO: kNN score ', score.mean())
+            print('INFO: kNN score ', score.mean(), score.var())
 
         if 'Kriging' in self.model_list:
 
@@ -50,7 +50,7 @@ class Modeller:
             self.Kriging = GridSearchCV(estimator=model, param_grid=parameters, cv=inner_cv, scoring=r2)
             score = cross_val_score(self.Kriging, X, y, scoring=r2, cv=outer_cv)
             self.scores['Kriging'], self.vars['Kriging'] = score.mean(), score.var()
-            print('INFO: Kriging score ', score.mean())
+            print('INFO: Kriging score ', score.mean(), score.var())
 
         if 'RmSense' in self.model_list:
 
@@ -60,7 +60,7 @@ class Modeller:
             score = cross_val_score(self.RmSense, self.sat_features, y, scoring=r2, cv=outer_cv)
             print('INFO: best alpha - ', self.RmSense.fit(X, y).best_params_)
             self.scores['RmSense'], self.vars['RmSense'] = score.mean(), score.var()
-            print('INFO: remote sensing score ', score.mean())
+            print('INFO: remote sensing score ', score.mean(), score.var())
 
         # combine kNN and RmSense - custom cross_val
         def _k_fold_cross_validation(X, K):
@@ -81,7 +81,7 @@ class Modeller:
         self.vars['combined'] = np.array(tmp_scores).var()
         print(self.scores['combined'])
 
-        print('score combined: ', self.scores['combined'].mean())
+        print('score combined: ', self.scores['combined'], self.vars['combined'])
 
     def save_models(self, id):
         from sklearn.externals import joblib

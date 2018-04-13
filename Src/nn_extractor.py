@@ -19,23 +19,29 @@ class NNExtractor:
         self.step = step
         self.GRID = GRID
 
+        from tensorflow.python.keras.models import load_model
         if self.model_type == 'Google':
-            print('INFO: loading VGG16 for Google Images ...')  # TODO: JB load your model here
+            # print("INFO: loading JB's crappy model for Google Images ...")  # TODO: JB load your model here
+            # self.net = load_model('../Models/predfcsvhr.h5', compile=False)
+            # self.net.layers.pop()
+            # self.net.layers.pop()
+            # self.net.layers.pop()
+            # self.net.layers.pop()
+            # self.net.layers.pop()
+            # x = tf.keras.layers.GlobalAveragePooling2D(name='output_maxpool')(self.net.layers[-1].output)
+            # self.net = tf.keras.models.Model(inputs=self.net.input, outputs=x)
             from tensorflow.python.keras.applications.vgg16 import VGG16
-
             self.net = VGG16(weights='imagenet', include_top=False, pooling='avg')
             self.net.load_weights('../Models/weights/nigeria-fine-tuned.20170910-160027.lr-1e-07.h5', by_name=True)
 
         elif self.model_type == 'Sentinel':
             print("INFO: loading model for Sentinel images.")
-            from tensorflow.python.keras.models import load_model
             self.net = load_model('../Models/nightSent.h5', compile=False)
             self.net.layers.pop()
             self.net.layers.pop()
             self.net.layers.pop()
             self.net.layers.pop()
             self.net.layers.pop()
-
             x = tf.keras.layers.GlobalAveragePooling2D(name='output_maxpool')(self.net.layers[-1].output)
             self.net = tf.keras.models.Model(inputs=self.net.input, outputs=x)
 
