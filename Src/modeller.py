@@ -55,7 +55,7 @@ class Modeller:
         if 'RmSense' in self.model_list:
 
             model = Ridge()
-            self.RmSense = GridSearchCV(estimator=model, param_grid={"alpha":[0.001,0.01,0.1,1,10,100,100]},
+            self.RmSense = GridSearchCV(estimator=model, param_grid={"alpha":[0.001,0.01,0.1,1,10,100,1000]},
                                         cv=inner_cv, scoring=r2)
             score = cross_val_score(self.RmSense, self.sat_features, y, scoring=r2, cv=outer_cv)
             print('INFO: best alpha - ', self.RmSense.fit(X, y).best_params_)
