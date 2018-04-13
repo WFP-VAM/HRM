@@ -21,18 +21,16 @@ class NNExtractor:
 
         from tensorflow.python.keras.models import load_model
         if self.model_type == 'Google':
-            # print("INFO: loading JB's crappy model for Google Images ...")  # TODO: JB load your model here
-            # self.net = load_model('../Models/predfcsvhr.h5', compile=False)
-            # self.net.layers.pop()
-            # self.net.layers.pop()
-            # self.net.layers.pop()
-            # self.net.layers.pop()
-            # self.net.layers.pop()
-            # x = tf.keras.layers.GlobalAveragePooling2D(name='output_maxpool')(self.net.layers[-1].output)
-            # self.net = tf.keras.models.Model(inputs=self.net.input, outputs=x)
-            from tensorflow.python.keras.applications.vgg16 import VGG16
-            self.net = VGG16(weights='imagenet', include_top=False, pooling='avg')
-            self.net.load_weights('../Models/weights/nigeria-fine-tuned.20170910-160027.lr-1e-07.h5', by_name=True)
+            print("INFO: loading JB's crappy model for Google Images ...")  # TODO: JB load your model here
+            self.net = load_model('../Models/predfcsvhr.h5', compile=False)
+            self.net.layers.pop()
+            self.net.layers.pop()
+            self.net.layers.pop()
+            self.net.layers.pop()
+
+            # from tensorflow.python.keras.applications.vgg16 import VGG16
+            # self.net = VGG16(weights='imagenet', include_top=False, pooling='avg')
+            # self.net.load_weights('../Models/weights/nigeria-fine-tuned.20170910-160027.lr-1e-07.h5', by_name=True)
 
         elif self.model_type == 'Sentinel':
             print("INFO: loading model for Sentinel images.")
@@ -73,7 +71,8 @@ class NNExtractor:
 
                 img_path = os.path.join(self.image_dir, file_name)
 
-                img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))
+                if provider == 'Sentinel': img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))
+                if provider == 'Google': img = tf.keras.preprocessing.image.load_img(img_path, target_size=(350, 350))
                 image_preprocess = tf.keras.preprocessing.image.img_to_array(img)
                 image_preprocess = np.expand_dims(image_preprocess, axis=0)
                 if provider == 'Google': image_preprocess = tf.keras.applications.vgg16.preprocess_input(image_preprocess)
@@ -83,7 +82,8 @@ class NNExtractor:
 
                 c += 1
 
-        features = self.net.predict(np.array(batch_list).reshape(c, 400, 400, 3))
+        if provider == 'Sentinel': features = self.net.predict(np.array(batch_list).reshape(c, 400, 400, 3))
+        if provider == 'Google': features = self.net.predict(np.array(batch_list).reshape(c, 350, 350, 3))
         avg_features = np.mean(features, axis=0)  # take the mean
 
         return avg_features
