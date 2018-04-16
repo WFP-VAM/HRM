@@ -72,7 +72,7 @@ class NNExtractor:
                 img_path = os.path.join(self.image_dir, file_name)
 
                 if provider == 'Sentinel': img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))
-                if provider == 'Google': img = tf.keras.preprocessing.image.load_img(img_path, target_size=(350, 350))
+                if provider == 'Google': img = tf.keras.preprocessing.image.load_img(img_path, target_size=(100, 100))
                 image_preprocess = tf.keras.preprocessing.image.img_to_array(img)
                 image_preprocess = np.expand_dims(image_preprocess, axis=0)
                 if provider == 'Google': image_preprocess = tf.keras.applications.vgg16.preprocess_input(image_preprocess)
