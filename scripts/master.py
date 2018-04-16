@@ -115,19 +115,16 @@ def run(id):
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  # shuffle data
     data_features = data[list(set(data.columns) - set(data_cols) - set(['i', 'j']))]  # take only the CNN features
 
-    y = data[indicator].values
-    X = data_features
-
     from modeller import Modeller
-    md = Modeller(['kNN', 'Kriging', 'RmSense'], X)
-    md.compute(data[['i', 'j']], y)
+    md = Modeller(['kNN', 'Kriging', 'RmSense'], data_features)
+    md.compute(data[['i', 'j']], data[indicator].values)
 
     # save model for production
     md.save_models(id)
     print(str(np.datetime64('now')), 'INFO: model saved.')
 
     # ------------------ #
-    # write scored to DB #
+    # write scores to DB #
     # ------------------ #
     query = """
     insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense)
@@ -137,6 +134,18 @@ def run(id):
         md.scores['kNN'], md.vars['kNN'],
         md.scores['RmSense'], md.vars['RmSense'])
     engine.execute(query)
+
+    # ------------------------- #
+    # write predictions to file #
+    # ------------------------- #
+    print('INFO: writing predictions to disk ...')
+    results = pd.DataFrame({
+        'yhat': (md.RmSense.predict(data_features) + md.kNN.predict(data[['i', 'j']])) / 2.,
+        'y': data[indicator].values,
+        'lat': data['gpsLatitude'],
+        'lon': data['gpsLongitude']})
+    results.to_csv('../Data/Results/config_{}.csv'.format(id), index=False)
+
 
 
 if __name__ == "__main__":

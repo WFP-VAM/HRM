@@ -58,7 +58,7 @@ class Modeller:
             self.RmSense = GridSearchCV(estimator=model, param_grid={"alpha":[0.001,0.01,0.1,1,10,100,1000]},
                                         cv=inner_cv, scoring=r2)
             score = cross_val_score(self.RmSense, self.sat_features, y, scoring=r2, cv=outer_cv)
-            print('INFO: best alpha - ', self.RmSense.fit(X, y).best_params_)
+            print('INFO: best alpha - ', self.RmSense.fit(self.sat_features, y).best_params_)
             self.scores['RmSense'], self.vars['RmSense'] = score.mean(), score.var()
             print('INFO: remote sensing score ', score.mean(), score.var())
 
