@@ -22,11 +22,11 @@ class NNExtractor:
         from tensorflow.python.keras.models import load_model
         if self.model_type == 'Google':
             print("INFO: loading JB's crappy model for Google Images ...")  # TODO: JB load your model here
-            self.net = load_model('../Models/predfcsvhr.h5', compile=False)
+            self.net = load_model('../Models/predfcsvhr2.h5', compile=False)
             self.net.layers.pop()
             self.net.layers.pop()
             self.net.layers.pop()
-            self.net.layers.pop()
+            #self.net.layers.pop()
 
             # from tensorflow.python.keras.applications.vgg16 import VGG16
             # self.net = VGG16(weights='imagenet', include_top=False, pooling='avg')
@@ -115,4 +115,3 @@ class NNExtractor:
         final = scoring_postprocess(final)
 
         return final
-
