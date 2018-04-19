@@ -116,7 +116,7 @@ def run(id):
     data_features = data[list(set(data.columns) - set(data_cols) - set(['i', 'j']))]  # take only the CNN features
 
     from modeller import Modeller
-    md = Modeller(['kNN', 'Kriging', 'RmSense'], data_features)
+    md = Modeller(['kNN', 'Kriging', 'RmSense', 'Ensamble'], data_features)
     md.compute(data[['i', 'j']], data[indicator].values)
 
     # save model for production
@@ -126,13 +126,24 @@ def run(id):
     # ------------------ #
     # write scores to DB #
     # ------------------ #
+    def default_dict_ops(d):
+        r = []
+        for s in d.values():
+            r.append(s)
+        return np.mean(r), np.var(r)
+
+    sc_en, var_en = default_dict_ops(md.scores['Ensamble'])
+    sc_kn, var_kn = default_dict_ops(md.scores['kNN'])
+    sc_rm, var_rm = default_dict_ops(md.scores['RmSense'])
+
     query = """
     insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense)
     values (current_date, {}, {}, {}, {}, {}, {}, {}) """.format(
         config['id'][0],
-        md.scores['combined'], md.vars['combined'],
-        md.scores['kNN'], md.vars['kNN'],
-        md.scores['RmSense'], md.vars['RmSense'])
+        sc_en, var_en,
+        sc_kn, var_kn,
+        sc_rm, var_rm
+        )
     engine.execute(query)
 
     # ------------------------- #
@@ -140,12 +151,11 @@ def run(id):
     # ------------------------- #
     print('INFO: writing predictions to disk ...')
     results = pd.DataFrame({
-        'yhat': (md.RmSense.predict(data_features) + md.kNN.predict(data[['i', 'j']])) / 2.,
+        'yhat': [item for sublist in md.results['kNN'] for item in sublist],
         'y': data[indicator].values,
         'lat': data['gpsLatitude'],
         'lon': data['gpsLongitude']})
     results.to_csv('../Data/Results/config_{}.csv'.format(id), index=False)
-
 
 
 if __name__ == "__main__":
