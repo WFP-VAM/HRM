@@ -1,4 +1,12 @@
 import tensorflow as tf
+from tensorflow.python.keras.models import load_model
+from pandas import DataFrame
+from os import path
+import sys
+import os
+import numpy as np
+sys.path.append(path.join("..","Src"))
+from utils import scoring_postprocess
 
 
 class NNExtractor:
@@ -19,7 +27,6 @@ class NNExtractor:
         self.step = step
         self.GRID = GRID
 
-        from tensorflow.python.keras.models import load_model
         if self.model_type == 'Google':
             print("INFO: loading JB's crappy model for Google Images ...")  # TODO: JB load your model here
             self.net = load_model('../Models/predfcsvhr2.h5', compile=False)
@@ -43,17 +50,12 @@ class NNExtractor:
             x = tf.keras.layers.GlobalAveragePooling2D(name='output_maxpool')(self.net.layers[-1].output)
             self.net = tf.keras.models.Model(inputs=self.net.input, outputs=x)
 
-
     def __average_features_dir(self, i, j, provider,start_date,end_date):
         """
         Private function that takes the average of the features computed for all the images in the cluster into one feature.
         :param image_dir: string with path to the folder with images for one tile.
         :return: a list with the averages for each feature extracted from the images in the tile.
         """
-        import os
-        import numpy as np
-        import tensorflow as tf
-
         batch_list = []
         c = 0
         for a in range(-self.step, 1 + self.step):
@@ -93,12 +95,6 @@ class NNExtractor:
         Loops over the folders (tiles) and collects the features.
         :return:
         """
-        from pandas import DataFrame
-        from os import path
-        import sys
-        sys.path.append(path.join("..","Src"))
-        from utils import scoring_postprocess
-
         final = DataFrame([])
         cnt = 0
         total = len(list_i)

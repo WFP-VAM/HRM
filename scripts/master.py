@@ -39,8 +39,6 @@ def run(id):
     start_date = config["sentinel_config"][0]["start_date"]
     end_date = config["sentinel_config"][0]["end_date"]
     land_use_raster = config["land_use_raster"][0]
-    output = config['output'][0]
-    model_grid_parameters = config['model_grid_parameters'][0]
 
     # -------- #
     # DATAPREP #
@@ -115,6 +113,7 @@ def run(id):
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  # shuffle data
     data_features = data[list(set(data.columns) - set(data_cols) - set(['i', 'j']))]  # take only the CNN features
 
+    if config['log'][0]: data[indicator] = np.log(data[indicator])
     from modeller import Modeller
     md = Modeller(['kNN', 'Kriging', 'RmSense', 'Ensamble'], data_features)
     md.compute(data[['i', 'j']], data[indicator].values)
@@ -132,17 +131,15 @@ def run(id):
             r.append(s)
         return np.mean(r), np.var(r)
 
-    sc_en, var_en = default_dict_ops(md.scores['Ensamble'])
-    sc_kn, var_kn = default_dict_ops(md.scores['kNN'])
-    sc_rm, var_rm = default_dict_ops(md.scores['RmSense'])
+    r2, r2_var =default_dict_ops(md.scores['Ensamble'])
+    r2_knn, r2_var_knn = default_dict_ops(md.scores['kNN'])
+    r2_rmsense, r2_var_rmsense = default_dict_ops(md.scores['RmSense'])
 
     query = """
     insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense)
     values (current_date, {}, {}, {}, {}, {}, {}, {}) """.format(
         config['id'][0],
-        sc_en, var_en,
-        sc_kn, var_kn,
-        sc_rm, var_rm
+        r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense
         )
     engine.execute(query)
 

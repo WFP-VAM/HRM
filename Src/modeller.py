@@ -23,7 +23,8 @@ class Modeller:
         self.RmSense = None
         self.sat_features = sat_features
 
-    def _k_fold_cross_validation(self, X, K):
+    @staticmethod
+    def _k_fold_cross_validation(X, K):
         for k in range(K):
             training = [x for i, x in enumerate(X) if i % K != k]
             validation = [x for i, x in enumerate(X) if i % K == k]

@@ -70,15 +70,13 @@ def gee_maxNDBImaxNDVImaxNDWI_url(geojson,start_date,end_date):
     path = maxImageSentinel.getDownloadUrl({
         'scale': 10,
         'crs': 'EPSG:4326',
-        'region':geojson
+        'region': geojson
     })
     return path
 
 
-def download_and_unzip(buffer,a,b,path):
-    unzipped=[]
-    import urllib
-    from io import BytesIO
+def download_and_unzip(buffer, a, b, path):
+    unzipped = []
     from zipfile import ZipFile
 
     zip_file = ZipFile(buffer)
