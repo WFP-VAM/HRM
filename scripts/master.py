@@ -72,9 +72,9 @@ def run(id):
 
     list_i, list_j, pipeline = data["i"], data["j"], 'evaluation'
 
-    # ---------------------------------------- #
-    # download images from Google and Sentinel #
-    # ---------------------------------------- #
+    # ------------------------------------------------------------- #
+    # download images from Google and Sentinel and Extract Features #
+    # ------------------------------------------------------------- #
     for sat in ['Google', 'Sentinel']:
         print('INFO: routine for provider: ', sat)
         # dopwnlaod the images from the relevant API
@@ -91,6 +91,8 @@ def run(id):
             print('INFO: extractor instantiated.')
 
             features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
+            # normalize the features
+
             features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
 
         features = features.drop('index', 1)

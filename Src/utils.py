@@ -1,14 +1,24 @@
 import pandas as pd
 
-def scoring_postprocess(features):
-    # postprocess
-    features = features.transpose().reset_index()
-    features["i"] = features["index"].apply(lambda x: x.split('_')[0])
-    features["j"] = features["index"].apply(lambda x: x.split('_')[1])
-    features["i"] = pd.to_numeric(features["i"])
-    features["j"] = pd.to_numeric(features["j"])
 
-    return features
+def scoring_postprocess(features):
+
+    features = features.transpose().reset_index()
+
+    # normalize the features
+    from sklearn import preprocessing
+    min_max_scaler = preprocessing.MinMaxScaler()
+    scaled = pd.DataFrame(min_max_scaler.fit_transform(features.drop('index', axis=1)))
+    scaled['index'] = features['index']
+    print('\n colum names: {} \n'.format(scaled.columns))
+
+    # retrieve i and j
+    scaled["i"] = scaled["index"].apply(lambda x: x.split('_')[0])
+    scaled["j"] = scaled["index"].apply(lambda x: x.split('_')[1])
+    scaled["i"] = pd.to_numeric(scaled["i"])
+    scaled["j"] = pd.to_numeric(scaled["j"])
+
+    return scaled
 
 
 # get all coordinates for country

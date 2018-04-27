@@ -33,7 +33,8 @@ class NNExtractor:
             self.net.layers.pop()
             self.net.layers.pop()
             self.net.layers.pop()
-            #self.net.layers.pop()
+            x = tf.keras.layers.GlobalAveragePooling2D(name='output_maxpool')(self.net.layers[-1].output)
+            self.net = tf.keras.models.Model(inputs=self.net.input, outputs=x)
 
             # from tensorflow.python.keras.applications.vgg16 import VGG16
             # self.net = VGG16(weights='imagenet', include_top=False, pooling='avg')
@@ -42,7 +43,6 @@ class NNExtractor:
         elif self.model_type == 'Sentinel':
             print("INFO: loading model for Sentinel images.")
             self.net = load_model('../Models/nightSent.h5', compile=False)
-            self.net.layers.pop()
             self.net.layers.pop()
             self.net.layers.pop()
             self.net.layers.pop()
