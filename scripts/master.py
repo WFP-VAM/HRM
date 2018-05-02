@@ -64,7 +64,7 @@ def run(id):
 
     try:
         data = data.groupby(["i", "j"]).agg({indicator: fnc, 'gpsLatitude': fnc, 'gpsLongitude': fnc}).reset_index()
-    except:
+    except KeyError:
         print("No weights, taking the average per i and j")
         data = data[['i', 'j', 'gpsLatitude', 'gpsLongitude', indicator]].groupby(["i", "j"]).mean().reset_index()
 
@@ -115,6 +115,7 @@ def run(id):
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  # shuffle data
     data_features = data[list(set(data.columns) - set(data_cols) - set(['i', 'j']))]  # take only the CNN features
 
+    # if take log of indicator
     if config['log'][0]: data[indicator] = np.log(data[indicator])
     from modeller import Modeller
     md = Modeller(['kNN', 'Kriging', 'RmSense', 'Ensamble'], data_features)
@@ -136,12 +137,13 @@ def run(id):
     r2, r2_var =default_dict_ops(md.scores['Ensamble'])
     r2_knn, r2_var_knn = default_dict_ops(md.scores['kNN'])
     r2_rmsense, r2_var_rmsense = default_dict_ops(md.scores['RmSense'])
+    mape_rmsense = np.mean(np.abs([item for sublist in md.results['RmSense'] for item in sublist] - data[indicator])/ data[indicator])
 
     query = """
-    insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense)
-    values (current_date, {}, {}, {}, {}, {}, {}, {}) """.format(
+    insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense, mape_rmsense)
+    values (current_date, {}, {}, {}, {}, {}, {}, {}, {}) """.format(
         config['id'][0],
-        r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense
+        r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense, mape_rmsense
         )
     engine.execute(query)
 

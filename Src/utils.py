@@ -7,11 +7,9 @@ def scoring_postprocess(features):
 
     # normalize the features
     from sklearn import preprocessing
-    min_max_scaler = preprocessing.MinMaxScaler()
+    min_max_scaler = preprocessing.StandardScaler()
     scaled = pd.DataFrame(min_max_scaler.fit_transform(features.drop('index', axis=1)))
     scaled['index'] = features['index']
-    print('\n colum names: {} \n'.format(scaled.columns))
-
     # retrieve i and j
     scaled["i"] = scaled["index"].apply(lambda x: x.split('_')[0])
     scaled["j"] = scaled["index"].apply(lambda x: x.split('_')[1])
