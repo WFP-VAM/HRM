@@ -138,6 +138,7 @@ def run(id):
     r2_knn, r2_var_knn = default_dict_ops(md.scores['kNN'])
     r2_rmsense, r2_var_rmsense = default_dict_ops(md.scores['RmSense'])
     mape_rmsense = np.mean(np.abs([item for sublist in md.results['RmSense'] for item in sublist] - data[indicator])/ data[indicator])
+    if mape_rmsense == float("inf") or mape_rmsense == float("-inf"): mape_rmsense = 0
 
     query = """
     insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense, mape_rmsense)
