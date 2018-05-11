@@ -66,7 +66,7 @@ def run(id):
         data = data.groupby(["i", "j"]).agg({indicator: fnc, 'gpsLatitude': fnc, 'gpsLongitude': fnc}).reset_index()
     except KeyError:
         print("No weights, taking the average per i and j")
-        data = data[['i', 'j', 'gpsLatitude', 'gpsLongitude', indicator]].groupby(["i", "j"]).mean().reset_index()
+        data = data[['i', 'j', 'n', 'gpsLatitude', 'gpsLongitude', indicator]].groupby(["i", "j"]).mean().reset_index()
 
     print("Number of unique tiles: {} ".format(len(data)))
 

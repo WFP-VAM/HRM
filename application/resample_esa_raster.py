@@ -7,11 +7,13 @@ from skimage.measure import block_reduce
 
 #'../HRM/Data/Geofiles/esa_landcover_Senegal_full.tif'
 #'../HRM/Data/Geofiles/esa_landcover_Nigeria_full.tif'
-input_raster = '../HRM/Data/Geofiles/esa_landcover_Uganda_full.tif'
+#'../HRM/Data/Geofiles/esa_landcover_Uganda_full.tif'
+input_raster = '../HRM/Data/Geofiles/esa_landcover_Zimbawe_full.tif'
 
 # '../HRM/Data/Geofiles/esa_landcover_Senegal_b_10.tif'
 # '../HRM/Data/Geofiles/esa_landcover_Nigeria_b_10.tif'
-outfile = '../HRM/Data/Geofiles/esa_landcover_Uganda_b_10.tif'
+#'../HRM/Data/Geofiles/esa_landcover_Uganda_b_10.tif'
+outfile = '../HRM/Data/Geofiles/esa_landcover_Zimbawe_b_10.tif'
 
 # load raster ---------
 raster = gdal.Open(input_raster)
