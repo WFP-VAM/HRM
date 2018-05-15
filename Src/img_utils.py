@@ -32,23 +32,32 @@ def get_cell_idx(lon, lat, top_left_x_coords, top_left_y_coords):
     return lon_idx, lat_idx
 
 
-def getRastervalue(df, esa_raster, lat_col="gpsLatitude", lon_col="gpsLongitude"):
+def getRastervalue(df, pop_raster, lat_col="gpsLatitude", lon_col="gpsLongitude", filter=1):
     """
     when you pass dataframe with Lat, Long coordinates
-    it returns a vector of the corresponding land use value at theses locations
+    it returns a vector of the corresponding to the population value at theses locations
 
     It merges on the closest coordinates between the raster and the dataset.
 
-    For now is focused on the ESA landuse raster.
+    Using the WorldPop Populaiton layers: http://www.worldpop.org.uk/data/data_sources/
 
     use: data = getRastervalue(data,path_to_raster)
+
+    Parameters
+    ----------
+    df : dataframe
+    pop_raster : string
+        filapath to the population raster
+    lat_col, lon_col : str
+        column names for the coordinates
+    filter : what treshold to consider valid population.
     """
 
     print('-> finding landuse for {} points'.format(df.shape[0]))
 
     import georasters as gr
     try:
-        esa = gr.load_tiff(esa_raster)
+        pop = gr.load_tiff(pop_raster)
     except MemoryError:
         print('Landuse Raster too big!')
         raise
@@ -60,13 +69,15 @@ def getRastervalue(df, esa_raster, lat_col="gpsLatitude", lon_col="gpsLongitude"
 
         try:
             c, r = gr.map_pixel(row[lon_col], row[lat_col], GeoT[1], GeoT[-1], GeoT[0], GeoT[3])
-            lu = esa[c, r]
+            lu = pop[c, r]
             return lu
 
         except IndexError:
             pass
 
     df['landuse'] = df.apply(lu_extract, axis=1)
-    df = df[df.landuse == 1]
+
+    # filter on population densities greater than filter
+    df = df[df.landuse > filter]
 
     return df

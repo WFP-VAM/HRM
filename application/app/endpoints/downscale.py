@@ -9,9 +9,9 @@ def downscale(config, request):
 
     country = request.form['country']
     algorithm = request.form['algorithm']
-    file = request.files['file']
 
-    # country ----------------------------------------------
+    # country raster --------------------------------------
+    # use the country 2 raster app to generate new ones: https://countrytoraster.herokuapp.com/
     raster = '{}_0.01_4326_1.tif'.format(country)
     local_raster = 'temp/'+raster
     print('-> getting raster ', raster)
@@ -22,9 +22,9 @@ def downscale(config, request):
     s3.Bucket(bucket_name).download_file(raster, local_raster)
     print('-> raster loaded.')
 
-    # load dataset -----------------------------------------
+    # load dataset from input -------------------------------
     print('-> loading dataset from input form...')
-    data = pd.read_csv(file)
+    data = pd.read_csv(request.files['file'])
 
     # load relative raster
     print('-> loading raster ', local_raster)
@@ -79,14 +79,16 @@ def downscale(config, request):
 
     # ------------------------------------
 
-    # landcover --------------------------
-    esa_raster = 'esa_landcover_{}.tif'.format(country)
-    local_esa_raster = 'temp/'+esa_raster
-    s3.Bucket(bucket_name).download_file(esa_raster, local_esa_raster)
+    # filter on built areas -------------
+    # use WorlPop layer to filter on inhabited locations.
+    pop_raster = '{}_worldpop.tif'.format(country)
+    local_pop_raster = 'temp/'+pop_raster
+    print('-> getting population from WorldPop ({})'.format(local_pop_raster))
+    if not os.path.exists(local_pop_raster):
+        s3.Bucket(bucket_name).download_file(pop_raster, local_pop_raster)
 
-    print('-> getting landuse from ESA ({})'.format(local_esa_raster))
     from img_utils import getRastervalue
-    res = getRastervalue(res, local_esa_raster)
+    res = getRastervalue(res, local_pop_raster)
     # ------------------------------------
 
     # predictions for all data left -------
