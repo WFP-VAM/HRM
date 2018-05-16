@@ -93,10 +93,5 @@ class Modeller:
         if not os.path.exists('../Models'):
             os.makedirs('../Models')
 
-        for model in self.model_list:
-
-            try:
-                joblib.dump(exec("self." + model), '../Models/{}_model_config_id_{}.pkl'.format(model, id))
-            except AttributeError:
-                pass
-
+        for model in list(set(self.model_list) - set(['Ensamble'])):  # TODO: merge ensamble models into 1 class with fit and predict.
+            joblib.dump(eval("self." + model), '../Models/{}_model_config_id_{}.pkl'.format(model, id))

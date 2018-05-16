@@ -49,21 +49,18 @@ class RasterGrid:
 
         return (list_i, list_j)
 
-    def get_gridcoordinates2(self, list_lat, list_lon):
+    def get_points(self):
         """
-        takes gps coordinates and returns the raster indexes.
-        :param list_lon: lsit with longitudes
-        :param list_lat: list with latitudes
-        :return: i and j lists
+        returns the list of the grid centroids.
         """
         list_i=[]
         list_j=[]
-        for j, i in zip(list_lat, list_lon):
+        for j, i in zip(self.centroid_y_coords, self.centroid_x_coords):
             ii, jj = get_cell_idx(i, j, self.top_left_x_coords, self.top_left_y_coords)
             list_i.append(ii)
             list_j.append(jj)
 
-        yield list_i, list_j
+        return (list_i, list_j)
 
     def get_gpscoordinates(self, list_i, list_j):
         """

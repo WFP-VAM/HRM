@@ -106,6 +106,7 @@ class NNExtractor:
 
             final[name] = self.__average_features_dir(i, j, provider, start_date, end_date)
 
+        # normalize features
         final = scoring_postprocess(final)
 
         return final
