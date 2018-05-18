@@ -35,7 +35,7 @@ def get_cell_idx(lon, lat, top_left_x_coords, top_left_y_coords):
 def getRastervalue(df, pop_raster, lat_col="gpsLatitude", lon_col="gpsLongitude", filter=1):
     """
     when you pass dataframe with Lat, Long coordinates
-    it returns a vector of the corresponding to the population value at theses locations
+    it returns a vector of the corresponding population value at theses locations
 
     It merges on the closest coordinates between the raster and the dataset.
 
@@ -63,7 +63,7 @@ def getRastervalue(df, pop_raster, lat_col="gpsLatitude", lon_col="gpsLongitude"
         raise
 
     # Find location of point (x,y) on raster, e.g. to extract info at that location
-    NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(esa_raster)
+    NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(pop_raster)
 
     def lu_extract(row):
 

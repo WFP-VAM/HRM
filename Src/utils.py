@@ -1,4 +1,8 @@
 import pandas as pd
+import gdal
+import shapefile
+from shapely.geometry import shape, Point
+import numpy as np
 
 
 def scoring_postprocess(features):
@@ -18,38 +22,6 @@ def scoring_postprocess(features):
 
     return scaled
 
-
-# get all coordinates for country
-import shapefile
-from shapely.geometry import shape, Point
-import numpy as np
-
-def get_coordinates_from_shp(path_to_shape_file, spacing=1):
-    """
-    function that given a shapefile it return all the coordinates within the boundary. You can chose the coordinates
-    steps over which it  checks (ex. integers -> spacings=1)
-    :param path_to_shape_file: string
-    :param spacing: float or int. Default to 1
-    :return: two lists of latitudes and longitudes
-    """
-
-    shapes = shapefile.Reader(path_to_shape_file).shapes()
-    polygon = shape(shapes[0])
-
-    def check(lon, lat):
-        # build a shapely point from your geopoint
-        point = Point(lon, lat)
-        # the contains function checks that
-        return polygon.contains(point)
-
-    list_lat = []
-    list_lon = []
-    for lat in np.arange(-35, 60, spacing):
-        for lon in np.arange(-120, 150, spacing):
-            if check(lon, lat):
-                list_lon.append(lon)
-                list_lat.append(lat)
-    return list_lat, list_lon
 
 def zonal_stats(path_to_shape_file, lon, lat, val):
     """
@@ -78,56 +50,54 @@ def zonal_stats(path_to_shape_file, lon, lat, val):
     return value_means
 
 
-def shape2json(fname, outfile="states.json"):
+def tifgenerator(outfile, raster_path, df):
     """
-    function to convert a shapefile to GeoJSON.
-    Similar to: http://geospatialpython.com/2013/07/shapefile-to-geojson.html
-    :param fname: shp file path
-    :param outfile: json file path
+    Given a filepath (.tif), a raster for reference and a dataset with i, j and yhat
+    it generates a raster.
+    :param outfile:
+    :param raster_path:
+    :param df:
+    :return:
     """
-    # read the shapefile
-    reader = shapefile.Reader(fname)
-    fields = reader.fields[1:]
-    field_names = [field[0] for field in fields]
-    buffer = []
-    for sr in reader.shapeRecords():
-        atr = dict(zip(field_names, sr.record))
-        geom = sr.shape.__geo_interface__
-        try:
-            buffer.append(dict(id=str(atr['ID_0'])+'_'+str(atr['ID_1'])+'_'+str(atr['ID_2']), type="Feature", \
-                           geometry=geom, properties=atr))
-        except KeyError:
-            buffer.append(dict(id=str(atr['ID_0']) + '_' + str(atr['ID_1']), type="Feature", \
-                               geometry=geom, properties=atr))
 
-    # write the GeoJSON file
-    from json import dumps
-    geojson = open(outfile, "w")
-    geojson.write(dumps({"type": "FeatureCollection", \
-                         "features": buffer}, indent=2) + "\n")
-    geojson.close()
+    print('-> writing: ', outfile)
+    # create empty raster from the original one
+    ds = gdal.Open(raster_path)
+    band = ds.GetRasterBand(1)
+    arr = band.ReadAsArray()
+    [cols, rows] = arr.shape
+    arr_out = np.zeros(arr.shape) - 99
+    arr_out[df['j'], df['i']] = df['yhat']
+    driver = gdal.GetDriverByName("GTiff")
+    outdata = driver.Create(outfile, rows, cols, 1, gdal.GDT_Float32)
+
+    outdata.SetGeoTransform(ds.GetGeoTransform())  # sets same geotransform as input
+    outdata.SetProjection(ds.GetProjection())  # sets same projection as input
+
+    outdata.GetRasterBand(1).SetNoDataValue(-99)
+    outdata.GetRasterBand(1).WriteArray(arr_out)
+
+    outdata.FlushCache()  # saves to disk!!
 
 
-    def get_coordinates_of_country(self, country):
-        """
-        given the name of a country (or a list of countries), it returns all the coordinates within that country.
-        Based on geocoder library.
-        :return:
-        """
-        import geocoder
+def aggregate(input_rst, output_rst, scale):
+    """
+    Downsample (upscale) a raster by a given factor and replace no_data value with 0.
+    Args:
+        input_rst: path to the input raster in a format supported by georaster
+        output_rst: path to the scaled output raster in a format supported by georaster
+        scale: The scale (integer) by which the raster in upsampeld.
+    Returns:
+        Save the output raster to disk.
+    # https://github.com/pasquierjb/GIS_RS_utils/blob/master/aggregate_results.py
+    """
+    import georasters as gr
+    input_gr = gr.from_file(input_rst)
 
-        list_lat = []
-        list_lon = []
+    # No data values are replaced with 0 to prevent summing them in each block.
+    input_gr.raster.data[input_gr.raster.data == input_gr.nodata_value] = 0
+    input_gr.nodata_value = 0
 
-        for lat in range(-35, 60, 1):
-            if lat % 10 == 0: print('INFO: getting latitudes ', lat)
+    output_gr = input_gr.aggregate(block_size=(scale, scale))
 
-            for lon in range(-120, 150, 1):
-                g = geocoder.osm([lat, lon], method='reverse')
-                try:
-                    if g.country == country:
-                        list_lat.append(lat)
-                        list_lon.append(lon)
-                except TypeError:
-                    pass
-        return list_lat, list_lon
+    output_gr.to_tiff(output_rst.replace(".tif", ""))
