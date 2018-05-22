@@ -6,15 +6,18 @@
 """
 import os
 import sys
-sys.path.append(os.path.join("..","Src"))
-from img_lib import RasterGrid
-from img_utils import getRastervalue
 from sqlalchemy import create_engine
 import yaml
 import pandas as pd
-from nn_extractor import NNExtractor
 import numpy as np
 import functools
+try:
+    os.chdir('scripts')
+except FileNotFoundError:
+    pass
+sys.path.append(os.path.join("..","Src"))
+from img_lib import RasterGrid
+from nn_extractor import NNExtractor
 
 
 def run(id):
@@ -31,14 +34,14 @@ def run(id):
                            .format(private_config['DB']['user'], private_config['DB']['password'],
                                     private_config['DB']['host'], private_config['DB']['database']))
 
-    config = pd.read_sql_query("select * from config_new where id = {}".format(id), engine)  # TODO: reading from config_new
-    dataset = config["dataset_filename"][0]
+    config = pd.read_sql_query("select * from config_new where id = {}".format(id), engine)
+    dataset = config.get("dataset_filename")[0]
     indicator = config["indicator"][0]
     raster = config["satellite_grid"][0]
-    step = config["satellite_step"][0]
-    start_date = config["sentinel_config"][0]["start_date"]
-    end_date = config["sentinel_config"][0]["end_date"]
-    land_use_raster = config["land_use_raster"][0]
+    nightlights_date = config.get("nightlights_date")[0]
+    if config['satellite_config'][0].get('satellite_images') == 'Y':
+        step = config['satellite_config'][0].get("satellite_step")
+
 
     # -------- #
     # DATAPREP #
@@ -49,10 +52,12 @@ def run(id):
     # grid
     GRID = RasterGrid(raster)
     list_i, list_j = GRID.get_gridcoordinates(data)
-
     data["i"], data["j"] = list_i, list_j
 
-    # Grouping clusters that belong to the same tile. # TODO: looks like shit
+    # --------------------------- #
+    # GROUP CLUSTERS IN SAME TILE #
+    # --------------------------- #
+    # TODO: looks like shit
     cluster_N = 'countbyEA'
     print("Number of clusters: {} ".format(len(data)))
 
@@ -75,39 +80,62 @@ def run(id):
     # ------------------------------------------------------------- #
     # download images from Google and Sentinel and Extract Features #
     # ------------------------------------------------------------- #
-    for sat in ['Google', 'Sentinel']:
-        print('INFO: routine for provider: ', sat)
-        # dopwnlaod the images from the relevant API
-        GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
-        print('INFO: images downloaded.')
+    if config["satellite_config"][0]["satellite_images"] != 'N':
 
-        if os.path.exists("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline)):
-            print('INFO: already scored.')
-            features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline))
-        else:
-            print('INFO: scoring ...')
-            # extarct the features
-            network = NNExtractor(id, sat, GRID.image_dir, sat, step, GRID)
-            print('INFO: extractor instantiated.')
+        start_date = config["satellite_config"][0]["start_date"]
+        end_date = config["satellite_config"][0]["end_date"]
 
-            features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
-            # normalize the features
+        for sat in ['Google', 'Sentinel']:
+            print('INFO: routine for provider: ', sat)
+            # downlaod the images from the relevant API
+            GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
+            print('INFO: images downloaded.')
 
-            features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
+            if os.path.exists("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline)):
+                print('INFO: already scored.')
+                features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline))
+            else:
+                print('INFO: scoring ...')
+                # extract the features
+                network = NNExtractor(id, sat, GRID.image_dir, sat, step, GRID)
+                print('INFO: extractor instantiated.')
 
-        features = features.drop('index', 1)
-        data = data.merge(features, on=["i", "j"])
+                features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
+                # normalize the features
+
+                features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
+
+            features = features.drop('index', 1)
+            data = data.merge(features, on=["i", "j"])
+
+        data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id), index=False)
+
+        print('INFO: features extracted.')
+
+    # --------------- #
+    # add nightlights #
+    # --------------- #
+    from geojson import Polygon
+    from nightlights import Nightlights
+    from sklearn import preprocessing
+
+    area = Polygon([[(max(data.gpsLongitude), max(data.gpsLatitude)),
+                     (max(data.gpsLongitude), min(data.gpsLatitude)),
+                     (min(data.gpsLongitude), min(data.gpsLatitude)),
+                     (min(data.gpsLongitude), max(data.gpsLatitude))]])
+
+    print('INFO: adding nightlights')
+    NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date)
+    scaler = preprocessing.StandardScaler()
+    data['nightlights'] = scaler.fit_transform(NGT.nightlights_values(data).reshape(-1, 1))
+
+    print('INFO: nightlights correlation: ', data[indicator].corr(data['nightlights']))
 
     data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id), index=False)
-
-    print('INFO: features extracted.')
-
-    # ----------- #
-    # add landuse #
-    # ----------- #
-    if land_use_raster is not None:
-        print("INFO: adding land use.")
-        data["land_use"] = getRastervalue(data, land_use_raster)
+    # ---------------- #
+    # add OSM features #
+    # ---------------- #
+    # TODO: JB
 
     # --------------- #
     # model indicator #

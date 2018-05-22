@@ -1,15 +1,3 @@
-def squaretogeojson(lon,lat,d):
-    from math import pi,cos
-    from geojson import Polygon
-    r_earth=6378000
-    minx  = lon  - ((d/2) / r_earth) * (180 / pi)
-    miny = lat - ((d/2) / r_earth) * (180 / pi) / cos(lon * pi/180)
-    maxx  = lon  + ((d/2) / r_earth) * (180 / pi)
-    maxy = lat + ((d/2) / r_earth) * (180 / pi) / cos(lon * pi/180)
-    #return minx,miny,maxx,maxy
-    square=Polygon([[(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy)]])
-    return square
-
 def gee_url(geojson,start_date,end_date):
     import ee
     ee.Initialize()

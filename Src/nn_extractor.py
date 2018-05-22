@@ -5,8 +5,8 @@ from os import path
 import sys
 import os
 import numpy as np
+import pandas as pd
 sys.path.append(path.join("..","Src"))
-from utils import scoring_postprocess
 
 
 class NNExtractor:
@@ -107,6 +107,29 @@ class NNExtractor:
             final[name] = self.__average_features_dir(i, j, provider, start_date, end_date)
 
         # normalize features
-        final = scoring_postprocess(final)
+        final = self.scoring_postprocess(final)
 
         return final
+
+    @staticmethod
+    def scoring_postprocess(features):
+
+        features = features.transpose().reset_index()
+
+        # reduce dimensionality
+        from sklearn.decomposition import PCA
+        pca = PCA(n_components=10)
+        out = pd.DataFrame(pca.fit_transform(features.drop('index', axis=1)))
+
+        # normalize the features
+        from sklearn import preprocessing
+        scaler = preprocessing.StandardScaler()
+        out = pd.DataFrame(scaler.fit_transform(out))
+        out['index'] = features['index']
+        # retrieve i and j
+        out["i"] = out["index"].apply(lambda x: x.split('_')[0])
+        out["j"] = out["index"].apply(lambda x: x.split('_')[1])
+        out["i"] = pd.to_numeric(out["i"])
+        out["j"] = pd.to_numeric(out["j"])
+
+        return out

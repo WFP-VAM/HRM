@@ -5,24 +5,6 @@ from shapely.geometry import shape, Point
 import numpy as np
 
 
-def scoring_postprocess(features):
-
-    features = features.transpose().reset_index()
-
-    # normalize the features
-    from sklearn import preprocessing
-    scaler = preprocessing.StandardScaler()
-    scaled = pd.DataFrame(scaler.fit_transform(features.drop('index', axis=1)))
-    scaled['index'] = features['index']
-    # retrieve i and j
-    scaled["i"] = scaled["index"].apply(lambda x: x.split('_')[0])
-    scaled["j"] = scaled["index"].apply(lambda x: x.split('_')[1])
-    scaled["i"] = pd.to_numeric(scaled["i"])
-    scaled["j"] = pd.to_numeric(scaled["j"])
-
-    return scaled
-
-
 def zonal_stats(path_to_shape_file, lon, lat, val):
     """
     given a shapefile and a list of coordinates and values, it returns the mean of the values for
@@ -101,3 +83,16 @@ def aggregate(input_rst, output_rst, scale):
     output_gr = input_gr.aggregate(block_size=(scale, scale))
 
     output_gr.to_tiff(output_rst.replace(".tif", ""))
+
+
+def squaretogeojson(lon, lat, d):
+    from math import pi,cos
+    from geojson import Polygon
+    r_earth=6378000
+    minx  = lon  - ((d/2) / r_earth) * (180 / pi)
+    miny = lat - ((d/2) / r_earth) * (180 / pi) / cos(lon * pi/180)
+    maxx  = lon  + ((d/2) / r_earth) * (180 / pi)
+    maxy = lat + ((d/2) / r_earth) * (180 / pi) / cos(lon * pi/180)
+    #return minx,miny,maxx,maxy
+    square=Polygon([[(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy)]])
+    return square
