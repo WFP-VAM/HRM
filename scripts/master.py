@@ -11,6 +11,8 @@ import yaml
 import pandas as pd
 import numpy as np
 import functools
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import KFold, cross_val_score
 try:
     os.chdir('scripts')
 except FileNotFoundError:
@@ -18,6 +20,7 @@ except FileNotFoundError:
 sys.path.append(os.path.join("..","Src"))
 from img_lib import RasterGrid
 from nn_extractor import NNExtractor
+from osm import OSM_extractor
 
 
 def run(id):
@@ -129,13 +132,36 @@ def run(id):
     scaler = preprocessing.StandardScaler()
     data['nightlights'] = scaler.fit_transform(NGT.nightlights_values(data).reshape(-1, 1))
 
-    print('INFO: nightlights correlation: ', data[indicator].corr(data['nightlights']))
+    shuffle = KFold(n_splits=5, shuffle=True, random_state=0)
+    scores = cross_val_score(LinearRegression(), data[['nightlights']], data[indicator], cv=shuffle, scoring='r2')
+    print('INFO: nightlights R2: ', scores.mean())
 
     data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id), index=False)
     # ---------------- #
     # add OSM features #
     # ---------------- #
-    # TODO: JB
+    OSM = OSM_extractor(data)
+    schools_json = OSM.download("amenity", "school")  # TODO: Import parameters  from DB
+    schools_gdf = OSM.to_gdf(schools_json)  # TODO: Laure: Precompute some rasters
+    hospitals_json = OSM.download("amenity", "hospital")
+    hospitals_gdf = OSM.to_gdf(hospitals_json)
+    trees_json = OSM.download("natural", "tree")
+    trees_gdf = OSM.to_gdf(trees_json)
+    data['distance_school'] = data.apply(OSM.distance_to_nearest, args=(schools_gdf,), axis=1)
+    data['distance_hospital'] = data.apply(OSM.distance_to_nearest, args=(hospitals_gdf,), axis=1)
+    data['distance_tree'] = data.apply(OSM.distance_to_nearest, args=(trees_gdf,), axis=1)
+    data['density_trees'] = data.apply(OSM.density, args=(trees_gdf,), axis=1)
+
+    # Take the log of the features
+    data["density_trees"] = data["density_trees"].apply(lambda x: np.log(0.0001 + x))
+    data["distance_school"] = data["distance_school"].apply(lambda x: np.log(0.0001 + x))
+    data["distance_hospital"] = data["distance_hospital"].apply(lambda x: np.log(0.0001 + x))
+    data["distance_tree"] = data["distance_tree"].apply(lambda x: np.log(0.0001 + x))
+
+    X_osm = data[["distance_school", "distance_hospital", "distance_tree", "density_trees"]]
+    shuffle = KFold(n_splits=5, shuffle=True, random_state=0)
+    scores = cross_val_score(LinearRegression(), X_osm, data[indicator], cv=shuffle, scoring='r2')
+    print('INFO: OSM R2: ', scores.mean())
 
     # --------------- #
     # model indicator #
@@ -162,7 +188,7 @@ def run(id):
             r.append(s)
         return np.mean(r), np.var(r)
 
-    r2, r2_var =default_dict_ops(md.scores['Ensamble'])
+    r2, r2_var = default_dict_ops(md.scores['Ensamble'])
     r2_knn, r2_var_knn = default_dict_ops(md.scores['kNN'])
     r2_rmsense, r2_var_rmsense = default_dict_ops(md.scores['RmSense'])
     mape_rmsense = np.mean(np.abs([item for sublist in md.results['RmSense'] for item in sublist] - data[indicator])/ data[indicator])
