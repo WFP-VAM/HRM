@@ -23,32 +23,31 @@ class OSM_extractor:
 
         return minlat, maxlat, minlon, maxlon
 
-    def download(self, tag_key='amenity', tag_value='school', result_type='center'):
+    def download(self, tag_key='amenity', tag_value='school'):
         '''
         Get the json of coordinates (or the number of items) within a bbox for a specific osm tag.
         https://taginfo.openstreetmap.org/
         https://wiki.openstreetmap.org/wiki/Map_Features#Building
         '''
         from osmnx.core import overpass_request
+        from shapely.geometry import Point
+        import geopandas as gpd
+        import os
+
+        if os.path.exists("../Data/Geofiles/OSM/location_{}_{}.json".format(tag_key, tag_value)):
+            print('OSM data for {} = {} already downloaded'.format(tag_key, tag_value))
+            gdf = gpd.read_file("../Data/Geofiles/OSM/location_{}_{}.json".format(tag_key, tag_value))
+            return gdf
         query_osm = ('[out:json][timeout:25];'
                      '('
                      'node["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
                      'way["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
                      'relation["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
-                     ');(._;>;);out {result_type};'
-                     ).format(minlat=self.minlat, maxlat=self.maxlat, minlon=self.minlon, maxlon=self.maxlon, tag_key=tag_key, tag_value=tag_value, result_type=result_type)
+                     ');(._;>;);out center;'
+                     ).format(minlat=self.minlat, maxlat=self.maxlat, minlon=self.minlon, maxlon=self.maxlon, tag_key=tag_key, tag_value=tag_value)
         print('Downloading OSM data for {} = {}'.format(tag_key, tag_value))
         # overpass_request is already saving json to a cache folder
         response_json = overpass_request(data={'data': query_osm}, timeout=600, error_pause_duration=None)
-
-        return response_json
-
-    def to_gdf(self, response_json):
-        '''
-        From an OSM geojson to a GeoPandas DataFrame
-        '''
-        from shapely.geometry import Point
-        import geopandas as gpd
 
         points = []
         for result in response_json['elements']:
@@ -62,6 +61,7 @@ class OSM_extractor:
                 points.append(point)
         gdf = gpd.GeoDataFrame(points)
         gdf.crs = {'init': 'epsg:4326'}
+        gdf.to_file("../Data/Geofiles/OSM/location_{}_{}.json".format(tag_key, tag_value), driver='GeoJSON')
         return gdf
 
     def distance_to_nearest(self, df, points_gdf, lat_col="gpsLatitude", lon_col="gpsLongitude"):
