@@ -4,6 +4,7 @@ from img_utils import get_cell_idx
 import gdal
 import numpy as np
 import sentinel_utils
+from utils import squaretogeojson
 
 
 with open('../private_config.yml', 'r') as cfgfile:
@@ -195,14 +196,14 @@ class RasterGrid:
 
         elif provider == 'Sentinel':
             d = 5000
-            geojson=sentinel_utils.squaretogeojson(lon,lat,d)
-            url=sentinel_utils.gee_url(geojson,str(start_date),str(end_date))
+            geojson = squaretogeojson(lon, lat, d)
+            url = sentinel_utils.gee_url(geojson, str(start_date), str(end_date))
             return url
 
         elif provider == 'Sentinel_maxNDVI':
             d = 5000
-            geojson=sentinel_utils.squaretogeojson(lon,lat,d)
-            url=sentinel_utils.gee_maxNDBImaxNDVImaxNDWI_url(geojson,str(start_date),str(end_date))
+            geojson = squaretogeojson(lon, lat, d)
+            url = sentinel_utils.gee_maxNDBImaxNDVImaxNDWI_url(geojson, str(start_date), str(end_date))
             return url
 
         else:
