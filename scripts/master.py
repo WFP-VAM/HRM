@@ -130,7 +130,7 @@ def run(id):
     # add OSM features #
     # ---------------- #
     OSM = OSM_extractor(data)
-    tags = {"amenity": ["school", "hospital", "place_of_worship"], "natural": ["tree"], "waterway": ["river", "stream"]}
+    tags = {"amenity": ["school", "hospital"], "natural": ["tree"]}
     osm_gdf = {}
     osm_features = []
 
@@ -138,11 +138,11 @@ def run(id):
         for value in values:
             osm_gdf["value"] = OSM.download(key, value)
             dist = data.apply(OSM.distance_to_nearest, args=(osm_gdf["value"],), axis=1)
-            density = data.apply(OSM.density, args=(osm_gdf["value"],), axis=1)
+            #density = data.apply(OSM.density, args=(osm_gdf["value"],), axis=1)
             data['distance_{}'.format(value)] = dist.apply(lambda x: np.log(0.0001 + x))
             osm_features.append('distance_{}'.format(value))
-            data['density_{}'.format(value)] = density.apply(lambda x: np.log(0.0001 + x))
-            osm_features.append('density_{}'.format(value))
+            #data['density_{}'.format(value)] = density.apply(lambda x: np.log(0.0001 + x))
+            #osm_features.append('density_{}'.format(value))
 
     # --------------- #
     # save features   #
@@ -157,10 +157,12 @@ def run(id):
     data_features = data[list(set(data.columns) - set(data_cols) - set(['i', 'j']))]  # take only the CNN features
 
     # if take log of indicator
-    if config['log'][0]: data[indicator] = np.log(data[indicator])
+    if config['log'][0]:
+        data[indicator] = np.log(data[indicator])
     from modeller import Modeller
     md = Modeller(['kNN', 'Kriging', 'RmSense', 'Ensamble'], data_features)
-    md.compute(data[['i', 'j']], data[indicator].values)
+    cv_loops = 20
+    md.compute(data[['i', 'j']], data[indicator].values, cv_loops)
 
     # save model for production
     md.save_models(id)
@@ -169,17 +171,14 @@ def run(id):
     # ------------------ #
     # write scores to DB #
     # ------------------ #
-    def default_dict_ops(d):
-        r = []
-        for s in d.values():
-            r.append(s)
-        return np.mean(r), np.var(r)
 
-    r2, r2_var = default_dict_ops(md.scores['Ensamble'])
-    r2_knn, r2_var_knn = default_dict_ops(md.scores['kNN'])
-    r2_rmsense, r2_var_rmsense = default_dict_ops(md.scores['RmSense'])
-    mape_rmsense = np.mean(np.abs([item for sublist in md.results['RmSense'] for item in sublist] - data[indicator])/ data[indicator])
-    if mape_rmsense == float("inf") or mape_rmsense == float("-inf"): mape_rmsense = 0
+    r2, r2_var = np.mean(md.scores['Ensamble']), np.var(md.scores['Ensamble'])
+    r2_knn, r2_var_knn = np.mean(md.scores['kNN']), np.var(md.scores['kNN'])
+    r2_rmsense, r2_var_rmsense = np.mean(md.scores['RmSense']), np.var(md.scores['RmSense'])
+    y_duplicated = np.repeat(data[indicator], cv_loops)
+    mape_rmsense = np.mean(np.abs([item for sublist in md.results['RmSense'] for item in sublist] - y_duplicated) / y_duplicated)
+    if mape_rmsense == float("inf") or mape_rmsense == float("-inf"):
+        mape_rmsense = 0
 
     query = """
     insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense, mape_rmsense)
@@ -194,7 +193,7 @@ def run(id):
     # ------------------------- #
     print('INFO: writing predictions to disk ...')
     results = pd.DataFrame({
-        'yhat': [item for sublist in md.results['kNN'] for item in sublist],
+        #'yhat': [item for sublist in md.results['kNN'] for item in sublist],
         'y': data[indicator].values,
         'lat': data['gpsLatitude'],
         'lon': data['gpsLongitude']})
