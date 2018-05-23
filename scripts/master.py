@@ -11,8 +11,6 @@ import yaml
 import pandas as pd
 import numpy as np
 import functools
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import KFold, cross_val_score
 try:
     os.chdir('scripts')
 except FileNotFoundError:
@@ -44,7 +42,6 @@ def run(id):
     nightlights_date = config.get("nightlights_date")[0]
     if config['satellite_config'][0].get('satellite_images') == 'Y':
         step = config['satellite_config'][0].get("satellite_step")
-
 
     # -------- #
     # DATAPREP #
@@ -120,21 +117,14 @@ def run(id):
     # --------------- #
     from geojson import Polygon
     from nightlights import Nightlights
-    from sklearn import preprocessing
 
     area = Polygon([[(max(data.gpsLongitude), max(data.gpsLatitude)),
                      (max(data.gpsLongitude), min(data.gpsLatitude)),
                      (min(data.gpsLongitude), min(data.gpsLatitude)),
                      (min(data.gpsLongitude), max(data.gpsLatitude))]])
 
-    print('INFO: adding nightlights')
     NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date)
-    scaler = preprocessing.StandardScaler()
-    data['nightlights'] = scaler.fit_transform(NGT.nightlights_values(data).reshape(-1, 1))
-
-    shuffle = KFold(n_splits=5, shuffle=True, random_state=0)
-    scores = cross_val_score(LinearRegression(), data[['nightlights']], data[indicator], cv=shuffle, scoring='r2')
-    print('INFO: nightlights R2: ', scores.mean())
+    data['nightlights'] = NGT.nightlights_values(data)
 
     # ---------------- #
     # add OSM features #
@@ -153,11 +143,6 @@ def run(id):
             osm_features.append('distance_{}'.format(value))
             data['density_{}'.format(value)] = density.apply(lambda x: np.log(0.0001 + x))
             osm_features.append('density_{}'.format(value))
-
-    X_osm = data[osm_features]
-    shuffle = KFold(n_splits=5, shuffle=True, random_state=0)
-    scores = cross_val_score(LinearRegression(), X_osm, data[indicator], cv=shuffle, scoring='r2')
-    print('INFO: OSM R2: ', scores.mean())
 
     # --------------- #
     # save features   #

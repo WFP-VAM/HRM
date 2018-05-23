@@ -16,15 +16,16 @@ class Nightlights:
         self.area = area
         self.dir = dir
         self.date = date
+        self.build_threshold = 0.3
 
+        print('INFO: downloading nightlights for area of interest ...')
         ee.Initialize()
-
         now = ee.Date(date)
         # Create mask using DMSP-OLS to select settlements -----------------
         popImgSet = ee.ImageCollection('NOAA/DMSP-OLS/NIGHTTIME_LIGHTS').select('stable_lights').filterDate('2010-01-01',
                                                                                                             now)
-        popImg = ee.Image(popImgSet.sort('system:index', False).first())
-        popImgmask = popImg.gte(5)
+        popImgmask = ee.Image(popImgSet.sort('system:index', False).first())
+        #popImgmask = popImg.gte(self.build_threshold)
 
         # Select VIIRS Nightlights images ----------------------------------
         NLImgSet = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG').select('avg_rad').filterDate('2014-01-01', now)
