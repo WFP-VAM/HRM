@@ -8,7 +8,11 @@
 """
 import os
 import sys
-sys.path.append(os.path.join("..", "Src"))
+try:
+    os.chdir('scripts')
+except FileNotFoundError:
+    pass
+sys.path.append(os.path.join("..","Src"))
 from img_lib import RasterGrid
 from sqlalchemy import create_engine
 import yaml
@@ -20,6 +24,7 @@ from sklearn.externals import joblib
 import click
 import rasterio
 from rasterio.mask import mask
+from osm import OSM_extractor
 
 # ---------- #
 # PARAMETERS #
@@ -27,7 +32,7 @@ from rasterio.mask import mask
 @click.option('--top_left', default=(15.173283, -4.293467))
 @click.option('--bottom_left', default=(15.168365, -4.479364))
 @click.option('--bottom_right', default=(15.448367, -4.506647))
-@click.option('--top_right', default=(15.372248, -4.283885))
+@click.option('--top_right', default=(15.448367, -4.283885))
 @click.option('--config_id', default=1)
 def main(top_left, bottom_left, bottom_right, top_right, config_id):
 
@@ -43,14 +48,15 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
 
     config = pd.read_sql_query("select * from config_new where id = {}".format(config_id), engine)
 
-    step = config["satellite_step"][0]
-    start_date = config["sentinel_config"][0]["start_date"]
-    end_date = config["sentinel_config"][0]["end_date"]
+    raster = config["satellite_grid"][0]
+    nightlights_date = config.get("nightlights_date")[0]
     base_raster = "../tmp/local_raster.tif"
+    if config['satellite_config'][0].get('satellite_images') == 'Y':
+        step = config['satellite_config'][0].get("satellite_step")
 
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
-    aggregate(config["satellite_grid"][0], base_raster, 10)
+    aggregate(raster, base_raster, 10)
 
     # -------------------  #
     # CLIP RASTER TO SCOPE #
@@ -80,31 +86,72 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
     # ------------------------------------------------------------- #
     # download images from Google and Sentinel and Extract Features #
     # ------------------------------------------------------------- #
-    for sat in ['Google', 'Sentinel']:
-        print('INFO: routine for provider: ', sat)
-        # dopwnlaod the images from the relevant API
-        GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
-        print('INFO: images downloaded.')
+    if config["satellite_config"][0]["satellite_images"] != 'N':
 
-        print('INFO: scoring ...')
-        # extarct the features
-        network = NNExtractor(id, sat, GRID.image_dir, sat, step, GRID)
-        print('INFO: extractor instantiated.')
-        features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline='scoring')
-        # normalize the features
-        features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, config_id, 'scoring'), index=False)
+        start_date = config["satellite_config"][0]["start_date"]
+        end_date = config["satellite_config"][0]["end_date"]
 
-    g_features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format("Google", config_id, 'scoring'))
-    s_features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format("Sentinel", config_id, 'scoring'))
+        for sat in ['Google', 'Sentinel']:
+            print('INFO: routine for provider: ', sat)
+            # dopwnlaod the images from the relevant API
+            GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
+            print('INFO: images downloaded.')
 
-    data = pd.merge(g_features, s_features, on=['i','j', 'index'])
-    data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(config_id), index=False)
+            print('INFO: scoring ...')
+            # extarct the features
+            network = NNExtractor(id, sat, GRID.image_dir, sat, step, GRID)
+            print('INFO: extractor instantiated.')
+            features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline='scoring')
+            # normalize the features
+            features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, config_id, 'scoring'), index=False)
 
-    print('INFO: features extracted.')
+        g_features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format("Google", config_id, 'scoring'))
+        s_features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format("Sentinel", config_id, 'scoring'))
+
+        data = pd.merge(g_features, s_features, on=['i','j', 'index'])
+        data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(config_id), index=False)
+
+        print('INFO: features extracted.')
+
+    else:
+        data = pd.DataFrame({'gpsLongitude': coords_x, 'gpsLatitude': coords_y, 'j': list_j, 'i': list_i})
+    # --------------- #
+    # add nightlights #
+    # --------------- #
+    from geojson import Polygon
+    from nightlights import Nightlights
+
+    area = Polygon([[top_left, bottom_left, bottom_right, top_right]])
+
+    NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date)
+    data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
+    data['nightlights'] = NGT.nightlights_values(data)
+
+    # ---------------- #
+    # add OSM features #
+    # ---------------- #
+    OSM = OSM_extractor(data)
+    tags = {"amenity": ["school", "hospital"], "natural": ["tree"]}
+    osm_gdf = {}
+    osm_features = []
+
+    for key, values in tags.items():
+        for value in values:
+            osm_gdf["value"] = OSM.download(key, value)
+            dist = data.apply(OSM.distance_to_nearest, args=(osm_gdf["value"],), axis=1)
+            # density = data.apply(OSM.density, args=(osm_gdf["value"],), axis=1)
+            data['distance_{}'.format(value)] = dist.apply(lambda x: np.log(0.0001 + x))
+            osm_features.append('distance_{}'.format(value))
+            # data['density_{}'.format(value)] = density.apply(lambda x: np.log(0.0001 + x))
+            # osm_features.append('density_{}'.format(value))
+
     # ---------------------- #
     # LOAD MODEL AND PREDICT #
     print("INFO: load model and predict ...")
-    X = data.drop(['index', 'i', 'j'], axis=1)
+    try:
+        X = data.drop(['index', 'i', 'j', 'gpsLongitude', 'gpsLatitude'], axis=1)
+    except ValueError:
+        X = data.drop(['i', 'j', 'gpsLongitude', 'gpsLatitude'], axis=1)
     # load model and predict
     try:
         RmSense = joblib.load('../Models/RmSense_model_config_id_{}.pkl'.format(config_id))
