@@ -1,4 +1,4 @@
-def gee_url(geojson,start_date,end_date):
+def gee_url(geojson, start_date, end_date):
     import ee
     ee.Initialize()
 
@@ -6,12 +6,12 @@ def gee_url(geojson,start_date,end_date):
     cloud_cover = 10
     while lock == 0:
         sentinel = ee.ImageCollection('COPERNICUS/S2') \
-                        .filterDate(start_date, end_date) \
-                        .select('B2', 'B3', 'B4') \
-                        .filterBounds(geojson) \
-                        .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', cloud_cover) \
-                        .sort('GENERATION_TIME') \
-                        .sort('CLOUDY_PIXEL_PERCENTAGE', False)
+            .filterDate(start_date, end_date) \
+            .select('B2', 'B3', 'B4') \
+            .filterBounds(geojson) \
+            .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', cloud_cover) \
+            .sort('GENERATION_TIME') \
+            .sort('CLOUDY_PIXEL_PERCENTAGE', False)
 
         collectionList = sentinel.toList(sentinel.size())
         # check if there are images, otherwise increase accepteable cloud cover
@@ -26,12 +26,12 @@ def gee_url(geojson,start_date,end_date):
     path = image1.getDownloadUrl({
         'scale': 10,
         'crs': 'EPSG:4326',
-        'region':geojson
+        'region': geojson
     })
     return path
 
 
-def gee_maxNDBImaxNDVImaxNDWI_url(geojson,start_date,end_date):
+def gee_maxNDBImaxNDVImaxNDWI_url(geojson, start_date, end_date):
     import ee
     ee.Initialize()
     #Functions to create new bands to add the collection
@@ -41,9 +41,9 @@ def gee_maxNDBImaxNDVImaxNDWI_url(geojson,start_date,end_date):
     SWIR = 'B11'
 
     sentinel = ee.ImageCollection('COPERNICUS/S2') \
-            .filterDate(start_date, end_date) \
-            .filterBounds(geojson) \
-            .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', 12)
+        .filterDate(start_date, end_date) \
+        .filterBounds(geojson) \
+        .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', 12)
 
     def addIndices(image):
         ndvi = image.normalizedDifference([NIR, RED])
@@ -70,16 +70,18 @@ def download_and_unzip(buffer, a, b, path):
     zip_file = ZipFile(buffer)
     files = zip_file.namelist()
     for i in range(a,b):
-        zip_file.extract(files[i],path+"/tiff/")
+        zip_file.extract(files[i], path + "/tiff/")
         #print("{} downloaded and unzippped".format(files[i]))
         unzipped.append(files[i])
     return unzipped
 
+
 def norm(band):
     band_min, band_max = band.min(), band.max()
-    return ((band - band_min)/(band_max - band_min))
+    return ((band - band_min) / (band_max - band_min))
 
-def rgbtiffstojpg(files,path,name):
+
+def rgbtiffstojpg(files, path, name):
     '''
     files: a list of files ordered as follow. 0: Blue Band 1: Green Band 2: Red Band
     path: the path to look for the tiff files and to save the jpg
@@ -87,9 +89,9 @@ def rgbtiffstojpg(files,path,name):
     import scipy.misc as sm
     import gdal
     import numpy as np
-    b2_link = gdal.Open(path+"/tiff/"+files[0])
-    b3_link = gdal.Open(path+"/tiff/"+files[1])
-    b4_link = gdal.Open(path+"/tiff/"+files[2])
+    b2_link = gdal.Open(path + "/tiff/" + files[0])
+    b3_link = gdal.Open(path + "/tiff/" + files[1])
+    b4_link = gdal.Open(path + "/tiff/" + files[2])
 
     # call the norm function on each band as array converted to float
     b2 = norm(b2_link.ReadAsArray().astype(np.float))
@@ -97,6 +99,6 @@ def rgbtiffstojpg(files,path,name):
     b4 = norm(b4_link.ReadAsArray().astype(np.float))
 
     # Create RGB
-    rgb = np.dstack((b4,b3,b2))
+    rgb = np.dstack((b4, b3, b2))
     del b2, b3, b4
-    sm.toimage(rgb,cmin=np.percentile(rgb,2),cmax=np.percentile(rgb,98)).save(path+name)
+    sm.toimage(rgb, cmin=np.percentile(rgb, 2), cmax=np.percentile(rgb, 98)).save(path + name)

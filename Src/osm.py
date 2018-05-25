@@ -35,7 +35,7 @@ class OSM_extractor:
         import os
 
         if os.path.exists("../Data/Geofiles/OSM/location_{}_{}.json".format(tag_key, tag_value)):
-            print('OSM data for {} = {} already downloaded'.format(tag_key, tag_value))
+            print('INFO: OSM data for {} = {} already downloaded'.format(tag_key, tag_value))
             gdf = gpd.read_file("../Data/Geofiles/OSM/location_{}_{}.json".format(tag_key, tag_value))
             return gdf
         query_osm = ('[out:json][timeout:25];'

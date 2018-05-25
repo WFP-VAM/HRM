@@ -58,7 +58,7 @@ def run(id):
     # GROUP CLUSTERS IN SAME TILE #
     # --------------------------- #
     # TODO: looks like shit
-    cluster_N = 'countbyEA'
+    cluster_N = 'n'
     print("Number of clusters: {} ".format(len(data)))
 
     def wavg(g, df, weight_series):
@@ -88,7 +88,7 @@ def run(id):
         for sat in ['Google', 'Sentinel']:
             print('INFO: routine for provider: ', sat)
             # downlaod the images from the relevant API
-            GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
+            GRID.download_images(list_i, list_j, step, sat, start_date, end_date, zoom_vhr=16, img_size_sentinel=5000)
             print('INFO: images downloaded.')
 
             if os.path.exists("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline)):

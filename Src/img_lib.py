@@ -138,7 +138,7 @@ class RasterGrid:
 
         return x_size, top_left_x_coords, top_left_y_coords, centroid_x_coords, centroid_y_coords, bands_data
 
-    def download_images(self, list_i, list_j, step, provider, start_date="2017-01-01", end_date="2018-01-01"):
+    def download_images(self, list_i, list_j, step, provider, start_date="2017-01-01", end_date="2018-01-01", zoom_vhr=16, img_size_sentinel=5000):
         """
         Function
         --------
@@ -151,15 +151,15 @@ class RasterGrid:
         """
 
         cnt = 0
-        total = len(list_i)*(2*step+1)**2
+        total = len(list_i) * (2 * step + 1)**2
         # compose the file path and make the directory of not there
         self.image_dir = os.path.join("../Data", "Satellite", provider + '/')
         if not os.path.exists(self.image_dir):
             os.makedirs(self.image_dir)
 
         for i, j in zip(list_i, list_j):
-            for a in range(-step, 1+step):
-                for b in range(-step, 1+step):
+            for a in range(-step, 1 + step):
+                for b in range(-step, 1 + step):
 
                     print("INFO: {} images downloaded out of {}".format(cnt, total), end='\r')
                     cnt += 1
@@ -168,40 +168,50 @@ class RasterGrid:
                     lat = np.round(self.centroid_y_coords[j + b], 5)
 
                     if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
-                        file_name = str(lon) + '_' + str(lat) + "_" + str(start_date)+"_"+str(end_date) + '.jpg'
+                        if img_size_sentinel == 5000:  # For consistency
+                            pix_size = ""
+                        else:
+                            pix_size = '_' + str(img_size_sentinel)
+                        file_name = str(lon) + '_' + str(lat) + "_" + str(start_date) + "_" + str(end_date) + pix_size + '.jpg'
                     else:
-                        file_name = str(lon) + '_' + str(lat) + '_' + str(16) + '.jpg'
+                        file_name = str(lon) + '_' + str(lat) + '_' + str(zoom_vhr) + '.jpg'
 
                     if os.path.exists(self.image_dir + file_name):
                         print("INFO: {} already downloaded".format(file_name), end='\r')
                     else:
-                        url = self._produce_url(lon, lat, provider, start_date, end_date)
+                        url = self._produce_url(lon, lat, provider, start_date, end_date, zoom_vhr, img_size_sentinel)
                         self._save_img(url, self.image_dir, file_name, provider)
 
-    def _produce_url(self, lon, lat, provider, start_date, end_date):
+    def _produce_url(self, lon, lat, provider, start_date, end_date, zoom_vhr, img_size_sentinel):
         """wrapper for the creation of the url depending on the engine."""
 
         if provider == 'Google':
-            return('https://maps.googleapis.com/maps/api/staticmap?center=' + str(lat) + ',' +
-                    str(lon) + '&zoom=16&size=400x500&maptype=satellite&key=' + tokens['Google'])
+            imagery_set = "satellite"
+            zoom_level = str(zoom_vhr)
+            map_size = "400x500"
+            center_point = str(lat) + "," + str(lon)
+
+            return('https://maps.googleapis.com/maps/api/staticmap?center=' + center_point +
+                   '&zoom=' + zoom_level + '&size=' + map_size + '&maptype=' + imagery_set +
+                   '&key=' + tokens['Google'])
 
         elif provider == 'Bing':
             imagery_set = "Aerial"
-            zoom_level = "16"
+            zoom_level = str(zoom_vhr)
             map_size = "400,500"
             center_point = str(lat) + "," + str(lon)
 
             return("http://dev.virtualearth.net/REST/v1/Imagery/Map/" + imagery_set + "/" + center_point +
-                    "/" + zoom_level + "?mapSize=" + map_size + "&key=" + tokens['Bing'])
+                   "/" + zoom_level + "?mapSize=" + map_size + "&key=" + tokens['Bing'])
 
         elif provider == 'Sentinel':
-            d = 5000
+            d = img_size_sentinel
             geojson = squaretogeojson(lon, lat, d)
             url = sentinel_utils.gee_url(geojson, str(start_date), str(end_date))
             return url
 
         elif provider == 'Sentinel_maxNDVI':
-            d = 5000
+            d = img_size_sentinel
             geojson = squaretogeojson(lon, lat, d)
             url = sentinel_utils.gee_maxNDBImaxNDVImaxNDWI_url(geojson, str(start_date), str(end_date))
             return url
@@ -228,8 +238,8 @@ class RasterGrid:
             gee_tif = sentinel_utils.download_and_unzip(buffer, 3, 6, file_path)
             try:
                 sentinel_utils.rgbtiffstojpg(gee_tif, file_path, file_name)
-            except:  # TODO: JB specify which exception
-                print("GEE error with :{}".format(file_name))
+            except Exception as e:  # TODO: JB specify which exception
+                print("GEE error with :{} Error: {}".format(file_name, e))
 
         else:
             image = imread(buffer, mode='RGB')

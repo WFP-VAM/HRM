@@ -51,7 +51,6 @@ class Modeller:
             x_features, valid_features = self.sat_features.loc[training, :], self.sat_features.loc[validation, :]
 
             if 'kNN' in self.model_list:
-                print('kNN ...')
                 parameters = {'n_neighbors': range(1, 18, 2)}
                 model = KNeighborsRegressor(weights='distance')
                 self.kNN = GridSearchCV(estimator=model, param_grid=parameters, cv=inner_cv, scoring=r2)
@@ -61,7 +60,6 @@ class Modeller:
                 self.scores['kNN'].append(R2(valid_y, res))
 
             if 'Kriging' in self.model_list:
-                print('Kriging ...')
                 parameters = {"kernel": [RBF(l) for l in [[1, 1]]]}
                 model = GaussianProcessRegressor(alpha=0.1, n_restarts_optimizer=0)
                 self.Kriging = GridSearchCV(estimator=model, param_grid=parameters, cv=inner_cv, scoring=r2)
@@ -71,19 +69,16 @@ class Modeller:
                 self.scores['Kriging'].append(R2(valid_y, res))
 
             if 'RmSense' in self.model_list:
-                print('rs features ...')
                 parameters = {"alpha": [0.001, 0.01, 0.1, 1, 10, 100, 1000]}
                 model = Ridge()
                 self.RmSense = GridSearchCV(estimator=model, param_grid=parameters, cv=inner_cv, scoring=r2)
-                print('INFO: best alpha - ', self.RmSense.fit(x_features, y).best_params_)
+                #print('INFO: best alpha - ', self.RmSense.fit(x_features, y).best_params_)
 
                 res = self.RmSense.fit(x_features, y).predict(valid_features)
                 self.results['RmSense'].append(list(res))
                 self.scores['RmSense'].append(R2(valid_y, res))
 
             if 'Ensamble' in self.model_list:
-                print('Ensamble ...')
-
                 res = (self.RmSense.predict(valid_features) + self.kNN.predict(valid_x)) / 2.
                 self.results['Ensamble'].append(list(res))
                 self.scores['Ensamble'].append(R2(valid_y, res))
