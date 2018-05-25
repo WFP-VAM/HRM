@@ -19,7 +19,7 @@ def zonal_stats(path_to_shape_file, lon, lat, val):
     def vals_in_poly(lon, lat, vals, pol):
         v = []
         for lo, la, val in zip(lon, lat, vals):
-            if pol.contains(Point(lo,la)):
+            if pol.contains(Point(lo, lat)):
                 v.append(val)
         return np.mean(v)
 
@@ -86,13 +86,102 @@ def aggregate(input_rst, output_rst, scale):
 
 
 def squaretogeojson(lon, lat, d):
-    from math import pi,cos
+    from math import pi, cos
     from geojson import Polygon
-    r_earth=6378000
-    minx  = lon  - ((d/2) / r_earth) * (180 / pi)
-    miny = lat - ((d/2) / r_earth) * (180 / pi) / cos(lon * pi/180)
-    maxx  = lon  + ((d/2) / r_earth) * (180 / pi)
-    maxy = lat + ((d/2) / r_earth) * (180 / pi) / cos(lon * pi/180)
+    r_earth = 6378000
+    minx = lon - ((d / 2) / r_earth) * (180 / pi)
+    miny = lat - ((d / 2) / r_earth) * (180 / pi) / cos(lon * pi / 180)
+    maxx = lon + ((d / 2) / r_earth) * (180 / pi)
+    maxy = lat + ((d / 2) / r_earth) * (180 / pi) / cos(lon * pi / 180)
     #return minx,miny,maxx,maxy
-    square=Polygon([[(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy)]])
+    square = Polygon([[(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy)]])
     return square
+
+
+def multiply(input_rst1, input_rst2, output_rst):
+    """
+    Multiply two rasters cell by cell.
+    Args:
+        input_rst1: path to the input raster in a format supported by gdal
+        input_rst2: path to the output raster in a format supported by gdal
+        output_rst: path to the raster to copy the referenced system (projection and transformation) from
+    Returns:
+        Save the output raster to disk.
+    """
+    import rasterio
+
+    with rasterio.open(input_rst1) as src1:
+        with rasterio.open(input_rst2) as src2:
+            data1 = src1.read()
+            data2 = src2.read()
+            data1[data1 == src1.nodata] = 0
+            data2[data2 == src2.nodata] = 0
+            final = data1 * data2
+            profile = src1.profile
+
+    with rasterio.open(output_rst, 'w', **profile) as dst:
+        dst.nodata = 0
+        dst.write(final)
+
+
+def weighted_sum_by_polygon(input_shp, input_rst, weight_rst, output_shp):
+    """
+    Take the weighted sum of two rasters (indicator and weights) within each polygon of a shapefile.
+
+    input_rst and weight_rst need to be in the same projection system and have the same shape
+
+    Args:
+        input_shp: path to the input shapefile in a format support by geopandas
+        input_rst: path to the raster containing the value you want to aggregate
+        weight_rst: path to the raster containing the weights (ex: population data)
+        output_shp: path to the input shapefile in a format support by geopandas
+    Returns:
+        Save a copy of the shapefile to disk with the resulting weighted sum as a new attribute of each polygon.
+    """
+    import geopandas as gpd
+    import rasterio
+    import rasterio.mask
+    import json
+    import numpy as np
+
+    mult_rst = input_rst.replace(".tif", "_multiplied.tif")
+    multiply(input_rst, weight_rst, mult_rst)
+
+    X = []
+    Y = []
+    gdf = gpd.read_file(input_shp)
+    #gdf['indicator'] = None
+    #gdf['population'] = None
+
+    with rasterio.open(mult_rst) as src1:
+        with rasterio.open(weight_rst) as src2:
+            index = 0
+            gdf = gdf.to_crs(crs=src1.crs.data)  # Re-project shape-file according to mult_rst
+            features = json.loads(gdf.to_json())['features']
+            for feature in features:
+                geom = feature['geometry']
+                try:
+                    out_image, out_transform = rasterio.mask.mask(src1, [geom], crop=True)
+                    out_image2, out_transform2 = rasterio.mask.mask(src2, [geom], crop=True)
+                    out_image[out_image == src1.nodata] = 0
+                    out_image2[out_image2 == src2.nodata] = 0
+                    weighted_sum = out_image.sum()
+                    y = out_image2.sum()
+                    if y == 0:
+                        x = 0.00
+                    else:
+                        x = (weighted_sum / y).item()
+                except ValueError:
+                    x = 0.00
+                    y = 0
+
+                X.append(x)
+                Y.append(y)
+                #print(gdf.loc[index, 'admin1Name'], x, y)
+                gdf.loc[index, 'indicator'] = x
+                gdf.loc[index, 'population'] = int(y)
+                print(x, int(y))
+                print(type(x))
+                index += 1
+    print("Total_Weights : {}".format(np.array(Y).sum()))
+    gdf.to_file(output_shp)

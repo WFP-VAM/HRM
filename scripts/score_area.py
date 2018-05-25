@@ -56,7 +56,7 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
 
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
-    aggregate(raster, base_raster, 10)
+    aggregate(raster, base_raster, 1)
 
     # -------------------  #
     # CLIP RASTER TO SCOPE #
@@ -79,9 +79,9 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
     # load the new clipped raster to the img_lib
     GRID = RasterGrid(base_raster)
     with rasterio.open(base_raster) as src:
-        list_j, list_i = np.where(src.read()[0] != 0)
+        list_j, list_i = np.where(src.read()[0] != src.nodata)
     print("INFO: downloading images in scope ...")
-    coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j),5)
+    coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
 
     # ------------------------------------------------------------- #
     # download images from Google and Sentinel and Extract Features #

@@ -39,9 +39,17 @@ def run(id):
     dataset = config.get("dataset_filename")[0]
     indicator = config["indicator"][0]
     raster = config["satellite_grid"][0]
+    aggregate_factor = 1
+    # ----------------------------------- #
+    # WorldPop Raster too fine, aggregate #
+    from utils import aggregate
+    base_raster = "../tmp/local_raster.tif"
+    aggregate(raster, base_raster, aggregate_factor)
+
     nightlights_date = config.get("nightlights_date")[0]
     if config['satellite_config'][0].get('satellite_images') == 'Y':
         step = config['satellite_config'][0].get("satellite_step")
+
 
     # -------- #
     # DATAPREP #
@@ -50,8 +58,12 @@ def run(id):
     data_cols = data.columns.values
 
     # grid
-    GRID = RasterGrid(raster)
+    GRID = RasterGrid(base_raster)
     list_i, list_j = GRID.get_gridcoordinates(data)
+
+    coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
+    data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
+
     data["i"], data["j"] = list_i, list_j
 
     # --------------------------- #

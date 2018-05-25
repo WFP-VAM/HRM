@@ -8,6 +8,7 @@ class OSM_extractor:
         '''
         Get GPS coordinates of the boundary box of a DataFrame and add some buffer around it.
         '''
+        from numpy import round
         minlat = df["gpsLatitude"].min()
         maxlat = df["gpsLatitude"].max()
         minlon = df["gpsLongitude"].min()
@@ -16,10 +17,10 @@ class OSM_extractor:
         lat_buffer = (maxlat - minlat) * buffer
         lon_buffer = (maxlon - minlon) * buffer
 
-        minlat = minlat - lat_buffer
-        maxlat = maxlat + lat_buffer
-        minlon = minlon - lon_buffer
-        maxlon = maxlon + lon_buffer
+        minlat = round(minlat - lat_buffer, 5)
+        maxlat = round(maxlat + lat_buffer, 5)
+        minlon = round(minlon - lon_buffer, 5)
+        maxlon = round(maxlon + lon_buffer, 5)
 
         return minlat, maxlat, minlon, maxlon
 
@@ -34,9 +35,9 @@ class OSM_extractor:
         import geopandas as gpd
         import os
 
-        if os.path.exists("../Data/Geofiles/OSM/location_{}_{}.json".format(tag_key, tag_value)):
+        if os.path.exists("../Data/Geofiles/OSM/location_{}_{}_{}_{}_{}_{}.json".format(tag_key, tag_value, self.minlat, self.maxlat, self.minlon, self.maxlon)):
             print('INFO: OSM data for {} = {} already downloaded'.format(tag_key, tag_value))
-            gdf = gpd.read_file("../Data/Geofiles/OSM/location_{}_{}.json".format(tag_key, tag_value))
+            gdf = gpd.read_file("../Data/Geofiles/OSM/location_{}_{}_{}_{}_{}_{}.json".format(tag_key, tag_value, self.minlat, self.maxlat, self.minlon, self.maxlon))
             return gdf
         query_osm = ('[out:json][timeout:25];'
                      '('
@@ -61,7 +62,7 @@ class OSM_extractor:
                 points.append(point)
         gdf = gpd.GeoDataFrame(points)
         gdf.crs = {'init': 'epsg:4326'}
-        gdf.to_file("../Data/Geofiles/OSM/location_{}_{}.json".format(tag_key, tag_value), driver='GeoJSON')
+        gdf.to_file("../Data/Geofiles/OSM/location_{}_{}_{}_{}_{}_{}.json".format(tag_key, tag_value, self.minlat, self.maxlat, self.minlon, self.maxlon), driver='GeoJSON')
         return gdf
 
     def distance_to_nearest(self, df, points_gdf, lat_col="gpsLatitude", lon_col="gpsLongitude"):
