@@ -29,11 +29,11 @@ from osm import OSM_extractor
 # ---------- #
 # PARAMETERS #
 @click.command()
-@click.option('--top_left', default=(15.173283, -4.293467))
-@click.option('--bottom_left', default=(15.168365, -4.479364))
-@click.option('--bottom_right', default=(15.448367, -4.506647))
-@click.option('--top_right', default=(15.448367, -4.283885))
-@click.option('--config_id', default=1)
+@click.option('--top_left', default=(15.0347900390625, -4.056056210178768))
+@click.option('--bottom_left', default=(15.03753662109375, -4.592851699293249))
+@click.option('--bottom_right', default=(15.827178955078123, -4.592851699293249))
+@click.option('--top_right', default=(15.825805664062502, -4.056056210178768))
+@click.option('--config_id')
 def main(top_left, bottom_left, bottom_right, top_right, config_id):
 
     # ------#
@@ -108,7 +108,7 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
         g_features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format("Google", config_id, 'scoring'))
         s_features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format("Sentinel", config_id, 'scoring'))
 
-        data = pd.merge(g_features, s_features, on=['i','j', 'index'])
+        data = pd.merge(g_features, s_features, on=['i', 'j', 'index'])
         data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(config_id), index=False)
 
         print('INFO: features extracted.')
@@ -138,7 +138,8 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
     for key, values in tags.items():
         for value in values:
             osm_gdf["value"] = OSM.download(key, value)
-            dist = data.apply(OSM.distance_to_nearest, args=(osm_gdf["value"],), axis=1)
+            osm_tree = OSM.gpd_to_tree(osm_gdf["value"])
+            dist = data.apply(OSM.distance_to_nearest, args=(osm_tree,), axis=1)
             # density = data.apply(OSM.density, args=(osm_gdf["value"],), axis=1)
             data['distance_{}'.format(value)] = dist.apply(lambda x: np.log(0.0001 + x))
             osm_features.append('distance_{}'.format(value))

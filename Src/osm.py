@@ -46,10 +46,10 @@ class OSM_extractor:
                      'relation["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
                      ');(._;>;);out center;'
                      ).format(minlat=self.minlat, maxlat=self.maxlat, minlon=self.minlon, maxlon=self.maxlon, tag_key=tag_key, tag_value=tag_value)
-        print('Downloading OSM data for {} = {}'.format(tag_key, tag_value))
+        print('INFO: Downloading OSM data for {} = {}'.format(tag_key, tag_value))
         # overpass_request is already saving json to a cache folder
         response_json = overpass_request(data={'data': query_osm}, timeout=600, error_pause_duration=None)
-
+        print('INFO: OSM data for {} = {} downloaded. N lines: '.format(tag_key, tag_value, len(response_json)))
         points = []
         for result in response_json['elements']:
             if 'type' in result and result['type'] == 'node':
@@ -63,9 +63,10 @@ class OSM_extractor:
         gdf = gpd.GeoDataFrame(points)
         gdf.crs = {'init': 'epsg:4326'}
         gdf.to_file("../Data/Geofiles/OSM/location_{}_{}_{}_{}_{}_{}.json".format(tag_key, tag_value, self.minlat, self.maxlat, self.minlon, self.maxlon), driver='GeoJSON')
+        gdf.to_file("../Data/Geofiles/OSM/location_{}_{}_{}_{}_{}_{}.shp".format(tag_key, tag_value, self.minlat, self.maxlat, self.minlon, self.maxlon), driver='ESRI Shapefile')
         return gdf
 
-    def distance_to_nearest(self, df, points_gdf, lat_col="gpsLatitude", lon_col="gpsLongitude"):
+    def distance_to_nearest2(self, df, points_gdf, lat_col="gpsLatitude", lon_col="gpsLongitude"):
         '''
         Ditance for a point in a pandas dataframe to the nearest point in a geodataframe.
         '''
@@ -76,6 +77,21 @@ class OSM_extractor:
         point = Point(df[lat_col], df[lon_col])
         nearest_point = nearest_points(point, geom_union)[1]
         distance = nearest_point.distance(point)
+        return distance
+
+    def gpd_to_tree(self, points_gdf):
+        import scipy.spatial as spatial
+        gps = []
+        for x in points_gdf["geometry"]:
+            gps.append(x.coords[:][0])
+        point_tree = spatial.cKDTree(gps)
+        return point_tree
+
+    def distance_to_nearest(self, df, point_tree, lat_col="gpsLatitude", lon_col="gpsLongitude"):
+        '''
+        Ditance between a point in a pandas dataframe and the nearest point in a scipy kd-tree.
+        '''
+        distance = point_tree.query([df[lat_col], df[lon_col]], k=1)[0]
         return distance
 
     def density(self, df, points_gdf, distance=5000, lat_col="gpsLatitude", lon_col="gpsLongitude"):
