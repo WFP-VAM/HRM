@@ -180,8 +180,6 @@ def weighted_sum_by_polygon(input_shp, input_rst, weight_rst, output_shp):
                 #print(gdf.loc[index, 'admin1Name'], x, y)
                 gdf.loc[index, 'indicator'] = x
                 gdf.loc[index, 'population'] = int(y)
-                print(x, int(y))
-                print(type(x))
                 index += 1
     print("Total_Weights : {}".format(np.array(Y).sum()))
     gdf.to_file(output_shp)
