@@ -149,7 +149,8 @@ def run(id):
     for key, values in tags.items():
         for value in values:
             osm_gdf["value"] = OSM.download(key, value)
-            dist = data.apply(OSM.distance_to_nearest, args=(osm_gdf["value"],), axis=1)
+            osm_tree = OSM.gpd_to_tree(osm_gdf["value"])
+            dist = data.apply(OSM.distance_to_nearest, args=(osm_tree,), axis=1)
             #density = data.apply(OSM.density, args=(osm_gdf["value"],), axis=1)
             data['distance_{}'.format(value)] = dist.apply(lambda x: np.log(0.0001 + x))
             osm_features.append('distance_{}'.format(value))
