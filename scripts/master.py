@@ -39,7 +39,8 @@ def run(id):
     dataset = config.get("dataset_filename")[0]
     indicator = config["indicator"][0]
     raster = config["satellite_grid"][0]
-    aggregate_factor = 1
+    aggregate_factor = config["aggregation"][0]
+
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
     from utils import aggregate
@@ -49,7 +50,6 @@ def run(id):
     nightlights_date = config.get("nightlights_date")[0]
     if config['satellite_config'][0].get('satellite_images') == 'Y':
         step = config['satellite_config'][0].get("satellite_step")
-
 
     # -------- #
     # DATAPREP #
@@ -193,7 +193,7 @@ def run(id):
         mape_rmsense = 0
 
     query = """
-    insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense, mape_rmsense)
+    insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_features, r2_var_features, mape_rmsense)
     values (current_date, {}, {}, {}, {}, {}, {}, {}, {}) """.format(
         config['id'][0],
         r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense, mape_rmsense
