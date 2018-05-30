@@ -44,8 +44,12 @@ def run(id):
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
     from utils import aggregate
-    base_raster = "../tmp/local_raster.tif"
-    aggregate(raster, base_raster, aggregate_factor)
+    if aggregate_factor > 1:
+        print('INFO: aggregating raster ...')
+        base_raster = "../tmp/local_raster.tif"
+        aggregate(raster, base_raster, aggregate_factor)
+    else:
+        base_raster = raster
 
     nightlights_date = config.get("nightlights_date")[0]
     if config['satellite_config'][0].get('satellite_images') == 'Y':
