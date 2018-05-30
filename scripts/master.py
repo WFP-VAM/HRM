@@ -159,6 +159,7 @@ def run(id):
             dist = data.apply(OSM.distance_to_nearest, args=(osm_tree,), axis=1)
             #density = data.apply(OSM.density, args=(osm_gdf["value"],), axis=1)
             data['distance_{}'.format(value)] = dist.apply(lambda x: np.log(0.0001 + x))
+            data['distance_{}'.format(value)] = (data['distance_{}'.format(value)] - np.mean(data['distance_{}'.format(value)]))/np.std(data['distance_{}'.format(value)])
             osm_features.append('distance_{}'.format(value))
             #data['density_{}'.format(value)] = density.apply(lambda x: np.log(0.0001 + x))
             #osm_features.append('density_{}'.format(value))
@@ -167,6 +168,7 @@ def run(id):
     #   NDBI,NDVI,NDWI #
     # ---------------- #
     # TODO: Use efficiently maxNDBImaxNDVImaxNDWI_sum_todf
+    print('INFO: getting NDBI, NDVI, NDWI ...')
     NDBI = []
     NDVI = []
     NDWI = []
@@ -178,9 +180,9 @@ def run(id):
         NDBI.append(gee_maxNDBImaxNDVImaxNDWI_sum(geojson, start_date, end_date)["NDBI"])
         NDVI.append(gee_maxNDBImaxNDVImaxNDWI_sum(geojson, start_date, end_date)["NDVI"])
         NDWI.append(gee_maxNDBImaxNDVImaxNDWI_sum(geojson, start_date, end_date)["NDWI"])
-    data["NDBI"] = NDBI
-    data["NDVI"] = NDVI
-    data["NDWI"] = NDWI
+    data["NDBI"] = (NDBI - np.mean(NDBI))/np.std(NDBI)
+    data["NDVI"] = (NDVI - np.mean(NDVI))/np.std(NDVI)
+    data["NDWI"] = (NDWI - np.mean(NDWI))/np.std(NDWI)
 
     # --------------- #
     # save features   #
