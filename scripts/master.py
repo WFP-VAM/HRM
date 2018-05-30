@@ -19,6 +19,8 @@ sys.path.append(os.path.join("..","Src"))
 from img_lib import RasterGrid
 from nn_extractor import NNExtractor
 from osm import OSM_extractor
+from sentinel_utils import gee_maxNDBImaxNDVImaxNDWI_sum
+from utils import squaretogeojson
 
 
 def run(id):
@@ -156,6 +158,25 @@ def run(id):
             osm_features.append('distance_{}'.format(value))
             #data['density_{}'.format(value)] = density.apply(lambda x: np.log(0.0001 + x))
             #osm_features.append('density_{}'.format(value))
+
+    # ---------------- #
+    #   NDBI,NDVI,NDWI #
+    # ---------------- #
+    # TODO: Use efficiently maxNDBImaxNDVImaxNDWI_sum_todf
+    NDBI = []
+    NDVI = []
+    NDWI = []
+    start_date = "2017-01-01"
+    end_date = "2018-01-01"
+    for lat, lon in zip(data["gpsLatitude"], data["gpsLongitude"]):
+        d = 100
+        geojson = squaretogeojson(lon, lat, d)
+        NDBI.append(gee_maxNDBImaxNDVImaxNDWI_sum(geojson, start_date, end_date)["NDBI"])
+        NDVI.append(gee_maxNDBImaxNDVImaxNDWI_sum(geojson, start_date, end_date)["NDVI"])
+        NDWI.append(gee_maxNDBImaxNDVImaxNDWI_sum(geojson, start_date, end_date)["NDWI"])
+    data["NDBI"] = NDBI
+    data["NDVI"] = NDVI
+    data["NDWI"] = NDWI
 
     # --------------- #
     # save features   #
