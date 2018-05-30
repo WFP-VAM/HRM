@@ -63,6 +63,40 @@ def gee_maxNDBImaxNDVImaxNDWI_url(geojson, start_date, end_date):
     return path
 
 
+def gee_maxNDBImaxNDVImaxNDWI_sum(geojson, start_date, end_date):
+    import ee
+    ee.Initialize()
+    #Functions to create new bands to add the collection
+    GREEN = 'B3'
+    RED = 'B4'
+    NIR = 'B8'
+    SWIR = 'B11'
+
+    sentinel = ee.ImageCollection('COPERNICUS/S2') \
+        .filterDate(start_date, end_date) \
+        .filterBounds(geojson) \
+        .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', 12)
+
+    def addIndices(image):
+        ndvi = image.normalizedDifference([NIR, RED])
+        ndbi = image.normalizedDifference([SWIR, NIR])
+        ndwi = image.normalizedDifference([GREEN, NIR])
+        return image.addBands(ndvi.rename('NDVI')).addBands(ndbi.rename('NDBI')).addBands(ndwi.rename('NDWI'))
+
+    sentinel_w_indices = sentinel.map(addIndices)
+
+    maxImageSentinel = sentinel_w_indices.select(['NDBI', 'NDVI', 'NDWI']).max()
+
+    maxNDBImaxNDVImaxNDWI_dict = maxImageSentinel.reduceRegion(reducer=ee.Reducer.sum(), geometry=geojson, crs='EPSG:4326', scale=1).getInfo()
+
+    return maxNDBImaxNDVImaxNDWI_dict
+
+
+def maxNDBImaxNDVImaxNDWI_sum_todf(df, start_date="2017-01-01", end_date="2018-01-01", d=100, indice="NDVI", lat_col="gpsLatitude", lon_col="gpsLongitude"):
+    from utils import squaretogeojson
+    geojson = squaretogeojson(df[lon_col], df[lat_col], d)
+    return gee_maxNDBImaxNDVImaxNDWI_sum(geojson, start_date, end_date)[indice]
+
 def download_and_unzip(buffer, a, b, path):
     unzipped = []
     from zipfile import ZipFile
