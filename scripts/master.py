@@ -15,7 +15,7 @@ try:
     os.chdir('scripts')
 except FileNotFoundError:
     pass
-sys.path.append(os.path.join("..","Src"))
+sys.path.append(os.path.join("..", "Src"))
 from img_lib import RasterGrid
 from nn_extractor import NNExtractor
 from osm import OSM_extractor
@@ -53,7 +53,9 @@ def run(id):
     else:
         base_raster = raster
 
-    nightlights_date = config.get("nightlights_date")[0]
+    nightlights_date_start = config["nightlights_date"][0].get("start")
+    nightlights_date_end = config["nightlights_date"][0].get("end")
+
     if config['satellite_config'][0].get('satellite_images') == 'Y':
         step = config['satellite_config'][0].get("satellite_step")
 
@@ -141,7 +143,7 @@ def run(id):
                      (min(data.gpsLongitude), min(data.gpsLatitude)),
                      (min(data.gpsLongitude), max(data.gpsLatitude))]])
 
-    NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date)
+    NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date_start, nightlights_date_end)
     data['nightlights'] = NGT.nightlights_values(data)
 
     # ---------------- #

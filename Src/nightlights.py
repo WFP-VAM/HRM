@@ -6,7 +6,7 @@ from pandas import to_datetime
 
 class Nightlights:
 
-    def __init__(self, area, dir, date):
+    def __init__(self, area, dir, date_from, date_end):
         """
         given an area defined by a geoJSON, it returns a nightlights raster at the specified date at the most granular level (500x500)
         :param area: geoJSON, use squaretogeojson to generate
@@ -15,20 +15,22 @@ class Nightlights:
         """
         self.area = area
         self.dir = dir
-        self.date = date
         self.build_threshold = 0.3
 
         print('INFO: downloading nightlights for area of interest ...')
         ee.Initialize()
-        now = ee.Date(date)
+        start = ee.Date(date_from)
+        end = ee.Date(date_end)
+
         # Create mask using DMSP-OLS to select settlements -----------------
-        popImgSet = ee.ImageCollection('NOAA/DMSP-OLS/NIGHTTIME_LIGHTS').select('stable_lights').filterDate('2010-01-01',
-                                                                                                            now)
+        popImgSet = ee.ImageCollection('NOAA/DMSP-OLS/NIGHTTIME_LIGHTS').\
+            select('stable_lights').\
+            filterDate('2010-01-01', date_end)
+
         popImgmask = ee.Image(popImgSet.sort('system:index', False).first())
-        #popImgmask = popImg.gte(self.build_threshold)
 
         # Select VIIRS Nightlights images ----------------------------------
-        NLImgSet = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG').select('avg_rad').filterDate('2014-01-01', now)
+        NLImgSet = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG').select('avg_rad').filterDate(start, end)
 
         # Mask each NL image first by DMSP-OLS then to only select values greater than 0.3
         def maskImage(img):
@@ -36,9 +38,20 @@ class Nightlights:
 
         NLImgSet = NLImgSet.map(maskImage)
 
-        url = ee.Image(NLImgSet.sort('system:index', False).first()).getDownloadURL({'crs': 'EPSG:4326', 'region': area})
-        self.file = self.dir+self.download_and_unzip(BytesIO(urllib.request.urlopen(url).read()), dir)
+        # from collection to 1 image
+        first = ee.Image(NLImgSet.first())
 
+        def appendBand(img, previous):
+                return ee.Image(previous).addBands(img)
+
+        img = ee.Image(NLImgSet.iterate(appendBand, first))
+
+        # reduce (mean) pixel wise
+        img = img.reduce(ee.Reducer.mean())
+
+        # download
+        url = img.getDownloadURL({'crs': 'EPSG:4326', 'region': area})
+        self.file = self.dir+self.download_and_unzip(BytesIO(urllib.request.urlopen(url).read()), dir)
 
     @staticmethod
     def download_and_unzip(buffer, dir):
