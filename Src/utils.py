@@ -183,3 +183,12 @@ def weighted_sum_by_polygon(input_shp, input_rst, weight_rst, output_shp):
                 index += 1
     print("Total_Weights : {}".format(np.array(Y).sum()))
     gdf.to_file(output_shp)
+
+
+def date_range(start, end, intv):
+    from datetime import datetime
+    start = datetime.strptime(start,"%Y-%m-%d")
+    end = datetime.strptime(end,"%Y-%m-%d")
+    diff = (end  - start ) / intv
+    for i in range(intv):
+        yield ((start + diff * i).strftime("%Y-%m-%d"),(start + diff * (i+1)).strftime("%Y-%m-%d"))

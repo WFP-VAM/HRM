@@ -28,7 +28,7 @@ class Modeller:
     def _k_fold_cross_validation(X, K, n):
         j = 0
         for i in range(n):
-            X = X.sample(frac=1, random_state=i).reset_index(drop=True)
+            X = X.sample(frac=1, random_state=i)
             for k in range(K):
                 j += 1
                 training = [x for i, x in enumerate(X.index) if i % K != k]
@@ -69,7 +69,7 @@ class Modeller:
                 self.scores['Kriging'].append(R2(valid_y, res))
 
             if 'RmSense' in self.model_list:
-                parameters = {"alpha": [0.001, 0.01, 0.1, 1, 10, 100, 1000]}
+                parameters = {"alpha": [1]}
                 model = Ridge()
                 self.RmSense = GridSearchCV(estimator=model, param_grid=parameters, cv=inner_cv, scoring=r2)
                 #print('INFO: best alpha - ', self.RmSense.fit(x_features, y).best_params_)

@@ -19,8 +19,8 @@ sys.path.append(os.path.join("..", "Src"))
 from img_lib import RasterGrid
 from nn_extractor import NNExtractor
 from osm import OSM_extractor
-from sentinel_utils import gee_NDBI_NDVI_NDWI
-from utils import squaretogeojson
+from sentinel_utils import gee_sentinel_raster, gee_raster_mean
+from utils import squaretogeojson, date_range
 
 
 def run(id):
@@ -35,7 +35,7 @@ def run(id):
 
     engine = create_engine("""postgresql+psycopg2://{}:{}@{}/{}"""
                            .format(private_config['DB']['user'], private_config['DB']['password'],
-                                    private_config['DB']['host'], private_config['DB']['database']))
+                                   private_config['DB']['host'], private_config['DB']['database']))
 
     config = pd.read_sql_query("select * from config_new where id = {}".format(id), engine)
     dataset = config.get("dataset_filename")[0]
@@ -71,7 +71,8 @@ def run(id):
 
     coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
 
-    #data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
+    # OPTIONAL: REPLACING THE CLUSTER COORDINATES BY THE CORRESPONDING GRID CENTER COORDINATES
+    # data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
 
     data["i"], data["j"] = list_i, list_j
 
@@ -172,41 +173,21 @@ def run(id):
     # ---------------- #
     # TODO: Use efficiently maxNDBImaxNDVImaxNDWI_sum_todf
     print('INFO: getting NDBI, NDVI, NDWI ...')
-    NDBI_min = []
-    NDBI_max = []
-    NDBI_mean = []
-    NDVI_min = []
-    NDVI_max = []
-    NDVI_mean = []
-    NDWI_min = []
-    NDWI_max = []
-    NDWI_mean = []
+
     start_date = "2017-01-01"
-    end_date = "2018-01-01"
-    for lat, lon in zip(data["gpsLatitude"], data["gpsLongitude"]):
-        d = 100
-        geojson = squaretogeojson(lon, lat, d)
-        print(lat, lon, len(geojson))
-        NDBI_min_val, NDBI_max_val, NDBI_mean_val, NDVI_min_val, NDVI_max_val, \
-            NDVI_mean_val, NDWI_min_val, NDWI_max_val, NDWI_mean_val = gee_NDBI_NDVI_NDWI(geojson, start_date, end_date)
-        NDBI_min.append(NDBI_min_val)
-        NDBI_max.append(NDBI_max_val)
-        NDBI_mean.append(NDBI_mean_val)
-        NDVI_min.append(NDVI_min_val)
-        NDVI_max.append(NDVI_max_val)
-        NDVI_mean.append(NDVI_mean_val)
-        NDWI_min.append(NDWI_min_val)
-        NDWI_max.append(NDWI_max_val)
-        NDWI_mean.append(NDWI_mean_val)
-    data["NDBI_min"] = (NDBI_min - np.mean(NDBI_min)) / np.std(NDBI_min)
-    data["NDBI_max"] = (NDBI_max - np.mean(NDBI_max)) / np.std(NDBI_max)
-    data["NDBI_mean"] = (NDBI_mean - np.mean(NDBI_mean)) / np.std(NDBI_mean)
-    data["NDVI_min"] = (NDVI_min - np.mean(NDVI_min)) / np.std(NDVI_min)
-    data["NDVI_max"] = (NDVI_max - np.mean(NDVI_max)) / np.std(NDVI_max)
-    data["NDVI_mean"] = (NDVI_mean - np.mean(NDVI_mean)) / np.std(NDVI_mean)
-    data["NDWI_min"] = (NDWI_min - np.mean(NDWI_min)) / np.std(NDWI_min)
-    data["NDWI_max"] = (NDWI_max - np.mean(NDWI_max)) / np.std(NDWI_max)
-    data["NDWI_mean"] = (NDWI_mean - np.mean(NDWI_mean)) / np.std(NDWI_mean)
+    end_date = "2017-12-31"
+    for i in date_range(start_date, end_date, 3):
+        print('INFO: getting max NDVI between dates: {}'.format(i))
+        gee_ndvi_max_raster = gee_sentinel_raster(i[0], i[1], area, ind="NDVI")
+        data["max_NDVI_{}_{}".format(i[0], i[1])] = data.apply(gee_raster_mean, args=(gee_ndvi_max_raster, "gpsLatitude", "gpsLongitude", "NDVI"), axis=1)
+
+    print('INFO: getting max NDBI')
+    gee_ndbi_max_raster = gee_sentinel_raster(start_date, end_date, area, ind="NDBI")
+    data["max_NDBI"] = data.apply(gee_raster_mean, args=(gee_ndbi_max_raster, "gpsLatitude", "gpsLongitude", "NDBI"), axis=1)
+
+    print('INFO: getting max NDWI')
+    gee_ndwi_max_raster = gee_sentinel_raster(start_date, end_date, area, ind="NDWI")
+    data["max_NDWI"] = data.apply(gee_raster_mean, args=(gee_ndwi_max_raster, "gpsLatitude", "gpsLongitude", "NDWI"), axis=1)
 
     # --------------- #
     # save features   #
