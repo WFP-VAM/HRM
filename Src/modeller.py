@@ -69,7 +69,7 @@ class Modeller:
                 self.scores['Kriging'].append(R2(valid_y, res))
 
             if 'RmSense' in self.model_list:
-                parameters = {"alpha": [1]}
+                parameters = {"alpha": [0.001, 0.01, 0.1, 1, 10, 100, 1000]}
                 model = Ridge()
                 self.RmSense = GridSearchCV(estimator=model, param_grid=parameters, cv=inner_cv, scoring=r2)
                 #print('INFO: best alpha - ', self.RmSense.fit(x_features, y).best_params_)
