@@ -163,7 +163,6 @@ def run(id):
             dist = data.apply(OSM.distance_to_nearest, args=(osm_tree,), axis=1)
             #density = data.apply(OSM.density, args=(osm_gdf["value"],), axis=1)
             data['distance_{}'.format(value)] = dist.apply(lambda x: np.log(0.0001 + x))
-            data['distance_{}'.format(value)] = (data['distance_{}'.format(value)] - np.mean(data['distance_{}'.format(value)]))/np.std(data['distance_{}'.format(value)])
             osm_features.append('distance_{}'.format(value))
             #data['density_{}'.format(value)] = density.apply(lambda x: np.log(0.0001 + x))
             #osm_features.append('density_{}'.format(value))
@@ -201,6 +200,11 @@ def run(id):
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  # shuffle data
     data_features = data[list(set(data.columns) - set(data_cols) - set(['i', 'j']))]  # take only the CNN features
 
+    # Standardizing Features (0 mean and 1 std)
+    data_features = (data_features - data_features.mean()) / data_features.std()
+    print(data_features.mean())
+    print(data_features.std())
+
     # if take log of indicator
     if config['log'][0]:
         data[indicator] = np.log(data[indicator])
@@ -212,6 +216,8 @@ def run(id):
     # save model for production
     md.save_models(id)
     print(str(np.datetime64('now')), 'INFO: model saved.')
+
+    pd.concat([data[indicator], data[['i', 'j']], data_features], axis=1).to_csv("../Data/Features/features_all_test_id_{}_evaluation.csv".format(id), index=False)
 
     # ------------------ #
     # write scores to DB #
@@ -229,8 +235,7 @@ def run(id):
     insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_features, r2_var_features, mape_rmsense)
     values (current_date, {}, {}, {}, {}, {}, {}, {}, {}) """.format(
         config['id'][0],
-        r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense, mape_rmsense
-        )
+        r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense, mape_rmsense)
     engine.execute(query)
 
     # ------------------------- #
