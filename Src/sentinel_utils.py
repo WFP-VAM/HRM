@@ -32,28 +32,8 @@ def gee_url(geojson, start_date, end_date):
 
 
 def gee_maxNDBImaxNDVImaxNDWI_url(geojson, start_date, end_date):
-    import ee
-    ee.Initialize()
-    #Functions to create new bands to add the collection
-    GREEN = 'B3'
-    RED = 'B4'
-    NIR = 'B8'
-    SWIR = 'B11'
 
-    sentinel = ee.ImageCollection('COPERNICUS/S2') \
-        .filterDate(start_date, end_date) \
-        .filterBounds(geojson) \
-        .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', 30)
-
-    def addIndices(image):
-        ndvi = image.normalizedDifference([NIR, RED])
-        ndbi = image.normalizedDifference([SWIR, NIR])
-        ndwi = image.normalizedDifference([GREEN, NIR])
-        return image.addBands(ndvi.rename('NDVI')).addBands(ndbi.rename('NDBI')).addBands(ndwi.rename('NDWI'))
-
-    sentinel_w_indices = sentinel.map(addIndices)
-
-    maxImageSentinel = sentinel_w_indices.select(['NDBI', 'NDVI', 'NDWI']).max()
+    maxImageSentinel = gee_sentinel_raster(start_date, end_date, geojson, agg="max", ind="NDVI")
 
     path = maxImageSentinel.getDownloadUrl({
         'scale': 10,
@@ -63,10 +43,9 @@ def gee_maxNDBImaxNDVImaxNDWI_url(geojson, start_date, end_date):
     return path
 
 
-def gee_NDBI_NDVI_NDWI(geojson, start_date="2017-01-01", end_date="2018-01-01"):
+def gee_sentinel_raster(start_date, end_date, large_area, agg="max", ind="NDVI"):
     import ee
     ee.Initialize()
-
     # Functions to create new bands to add the collection
     GREEN = 'B3'
     RED = 'B4'
@@ -75,8 +54,9 @@ def gee_NDBI_NDVI_NDWI(geojson, start_date="2017-01-01", end_date="2018-01-01"):
 
     sentinel = ee.ImageCollection('COPERNICUS/S2') \
         .filterDate(start_date, end_date) \
-        .filterBounds(geojson) \
-        .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', 30)
+        .filterBounds(large_area) \
+        .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', 40) \
+        .select(['B3', 'B4', 'B8', 'B11'])
 
     def addIndices(image):
         ndvi = image.normalizedDifference([NIR, RED])
@@ -84,23 +64,19 @@ def gee_NDBI_NDVI_NDWI(geojson, start_date="2017-01-01", end_date="2018-01-01"):
         ndwi = image.normalizedDifference([GREEN, NIR])
         return image.addBands(ndvi.rename('NDVI')).addBands(ndbi.rename('NDBI')).addBands(ndwi.rename('NDWI'))
 
-    NDBI_NDVI_NDWI = sentinel.map(addIndices).select(['NDBI', 'NDVI', 'NDWI'])
+    sentinel_w_indices = sentinel.map(addIndices)
 
-    NDBI_NDVI_NDWI_min = NDBI_NDVI_NDWI.min().reduceRegion(reducer=ee.Reducer.sum(), geometry=geojson, crs='EPSG:4326', scale=1).getInfo()
-    NDBI_NDVI_NDWI_max = NDBI_NDVI_NDWI.max().reduceRegion(reducer=ee.Reducer.sum(), geometry=geojson, crs='EPSG:4326', scale=1).getInfo()
-    NDBI_NDVI_NDWI_mean = NDBI_NDVI_NDWI.mean().reduceRegion(reducer=ee.Reducer.sum(), geometry=geojson, crs='EPSG:4326', scale=1).getInfo()
-    NDBI_min = NDBI_NDVI_NDWI_min["NDBI"]
-    NDBI_max = NDBI_NDVI_NDWI_max["NDBI"]
-    NDBI_mean = NDBI_NDVI_NDWI_mean["NDBI"]
-    NDVI_min = NDBI_NDVI_NDWI_min["NDVI"]
-    NDVI_max = NDBI_NDVI_NDWI_max["NDVI"]
-    NDVI_mean = NDBI_NDVI_NDWI_mean["NDVI"]
-    NDWI_min = NDBI_NDVI_NDWI_min["NDWI"]
-    NDWI_max = NDBI_NDVI_NDWI_max["NDWI"]
-    NDWI_mean = NDBI_NDVI_NDWI_mean["NDWI"]
+    maxraster = sentinel_w_indices.select(ind).reduce(agg)
+    return maxraster
 
-    NDVI_mean = NDBI_NDVI_NDWI_mean["NDVI"]
-    return NDBI_min, NDBI_max, NDBI_mean, NDVI_min, NDVI_max, NDVI_mean, NDWI_min, NDWI_max, NDWI_mean
+
+def gee_raster_mean(df, gee_raster, lat_col="gpsLatitude", lon_col="gpsLongitude", ind="NDVI", agg="max"):
+    from utils import squaretogeojson
+    import ee
+    small_area = squaretogeojson(df[lon_col], df[lat_col], 100)
+    value = gee_raster.reduceRegion(reducer=ee.Reducer.mean(), geometry=small_area, crs='EPSG:4326', scale=10).getInfo()
+    return value[ind + "_" + agg]
+
 
 def download_and_unzip(buffer, a, b, path):
     unzipped = []

@@ -245,8 +245,8 @@ class RasterGrid:
             image = imread(buffer, mode='RGB')
             if (image[:, :, 0] == 245).sum() >= 100000: #Gray image in Bing
                 print("No image in Bing API", file_name)
-            elif np.array_equal(image[0, :, 0], image[1, :, 0]):
-                print("No image in Google API", file_name)
+            # elif np.array_equal(image[0, :, 0], image[1, :, 0]):
+            #     print("No image in Google API", file_name)
             else:
                 print('file path: ', file_path)
                 print('file name: ', file_name)
