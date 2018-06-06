@@ -20,7 +20,7 @@ from img_lib import RasterGrid
 from nn_extractor import NNExtractor
 from osm import OSM_extractor
 from sentinel_utils import gee_sentinel_raster, gee_raster_mean
-from utils import squaretogeojson, date_range
+from utils import squaretogeojson, date_range, df_boundaries, points_to_polygon
 
 
 def run(id):
@@ -78,6 +78,10 @@ def run(id):
     # data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
 
     data["i"], data["j"] = list_i, list_j
+
+    # Get Polygon Geojson of the boundaries
+    minlat, maxlat, minlon, maxlon = df_boundaries(data, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
+    area = points_to_polygon(minlon, minlat, maxlon, maxlat)
 
     # --------------------------- #
     # GROUP CLUSTERS IN SAME TILE #
@@ -140,17 +144,11 @@ def run(id):
     # --------------- #
     # add nightlights #
     # --------------- #
-    from geojson import Polygon
-    from nightlights import Nightlights
 
-    area = Polygon([[(max(data.gpsLongitude), max(data.gpsLatitude)),
-                     (max(data.gpsLongitude), min(data.gpsLatitude)),
-                     (min(data.gpsLongitude), min(data.gpsLatitude)),
-                     (min(data.gpsLongitude), max(data.gpsLatitude))]])
+    from nightlights import Nightlights
 
     NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date_start, nightlights_date_end)
     data['nightlights'] = NGT.nightlights_values(data)
-    data['nightlights'] = (data['nightlights'] - np.mean(data['nightlights'])) / np.std(data['nightlights'])
 
     # ---------------- #
     # add OSM features #
@@ -167,7 +165,6 @@ def run(id):
             dist = data.apply(OSM.distance_to_nearest, args=(osm_tree,), axis=1)
             #density = data.apply(OSM.density, args=(osm_gdf["value"],), axis=1)
             data['distance_{}'.format(value)] = dist.apply(lambda x: np.log(0.0001 + x))
-            data['distance_{}'.format(value)] = (data['distance_{}'.format(value)] - np.mean(data['distance_{}'.format(value)]))/np.std(data['distance_{}'.format(value)])
             osm_features.append('distance_{}'.format(value))
             #data['density_{}'.format(value)] = density.apply(lambda x: np.log(0.0001 + x))
             #osm_features.append('density_{}'.format(value))
@@ -178,8 +175,8 @@ def run(id):
     # TODO: Use efficiently maxNDBImaxNDVImaxNDWI_sum_todf
     print('INFO: getting NDBI, NDVI, NDWI ...')
 
-    start_date = nightlights_date_start
-    end_date = nightlights_date_end
+    start_date = "2017-01-01"  # TODO: Add to config, be careful no image before 2015
+    end_date = "2018-01-01"
     for i in date_range(start_date, end_date, 3):
         print('INFO: getting max NDVI between dates: {}'.format(i))
         gee_ndvi_max_raster = gee_sentinel_raster(i[0], i[1], area, ind="NDVI")
@@ -197,13 +194,19 @@ def run(id):
     # save features   #
     # --------------- #
 
+    features_list = list(set(data.columns) - set(data_cols) - set(['i', 'j']))
+
+    # Standardize Features (0 mean and 1 std)
+    data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].std()
+
     data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id), index=False)
 
     # --------------- #
     # model indicator #
     # --------------- #
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  # shuffle data
-    data_features = data[list(set(data.columns) - set(data_cols) - set(['i', 'j']))]  # take only the CNN features
+
+    data_features = data[features_list]
 
     # if take log of indicator
     if config['log'][0]:

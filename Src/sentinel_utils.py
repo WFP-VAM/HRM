@@ -55,7 +55,6 @@ def gee_sentinel_raster(start_date, end_date, large_area, agg="max", ind="NDVI")
     sentinel = ee.ImageCollection('COPERNICUS/S2') \
         .filterDate(start_date, end_date) \
         .filterBounds(large_area) \
-        .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', 40) \
         .select(['B3', 'B4', 'B8', 'B11'])
 
     def addIndices(image):
@@ -66,7 +65,7 @@ def gee_sentinel_raster(start_date, end_date, large_area, agg="max", ind="NDVI")
 
     sentinel_w_indices = sentinel.map(addIndices)
 
-    maxraster = sentinel_w_indices.select(ind).reduce(agg)
+    maxraster = sentinel_w_indices.select(ind).reduce(agg).clip(large_area)
     return maxraster
 
 

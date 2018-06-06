@@ -87,14 +87,40 @@ def aggregate(input_rst, output_rst, scale):
 
 def squaretogeojson(lon, lat, d):
     from math import pi, cos
-    from geojson import Polygon
     r_earth = 6378000
-    minx = lon - ((d / 2) / r_earth) * (180 / pi)
-    miny = lat - ((d / 2) / r_earth) * (180 / pi) / cos(lon * pi / 180)
-    maxx = lon + ((d / 2) / r_earth) * (180 / pi)
-    maxy = lat + ((d / 2) / r_earth) * (180 / pi) / cos(lon * pi / 180)
+    minlon = lon - ((d / 2) / r_earth) * (180 / pi)
+    minlat = lat - ((d / 2) / r_earth) * (180 / pi) / cos(lon * pi / 180)
+    maxlon = lon + ((d / 2) / r_earth) * (180 / pi)
+    maxlat = lat + ((d / 2) / r_earth) * (180 / pi) / cos(lon * pi / 180)
     #return minx,miny,maxx,maxy
-    square = Polygon([[(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy)]])
+    square = points_to_polygon(minlon, minlat, maxlon, maxlat)
+    return square
+
+
+def df_boundaries(df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude"):
+    '''
+    Get GPS coordinates of the boundary box of a DataFrame and add some buffer around it.
+    '''
+    from numpy import round
+    minlat = df["gpsLatitude"].min()
+    maxlat = df["gpsLatitude"].max()
+    minlon = df["gpsLongitude"].min()
+    maxlon = df["gpsLongitude"].max()
+
+    lat_buffer = (maxlat - minlat) * buffer
+    lon_buffer = (maxlon - minlon) * buffer
+
+    minlat = round(minlat - lat_buffer, 5)
+    maxlat = round(maxlat + lat_buffer, 5)
+    minlon = round(minlon - lon_buffer, 5)
+    maxlon = round(maxlon + lon_buffer, 5)
+
+    return minlat, maxlat, minlon, maxlon
+
+
+def points_to_polygon(minlon, minlat, maxlon, maxlat):
+    from geojson import Polygon
+    square = Polygon([[(minlon, minlat), (maxlon, minlat), (maxlon, maxlat), (minlon, maxlat), (minlon, minlat)]])
     return square
 
 
