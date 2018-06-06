@@ -69,8 +69,8 @@ def run(id):
     GRID = RasterGrid(base_raster)
     list_i, list_j = GRID.get_gridcoordinates(data)
 
-    coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
-
+    # to use the centroid from the tile instead
+    # coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
     #data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
 
     data["i"], data["j"] = list_i, list_j
@@ -146,6 +146,7 @@ def run(id):
 
     NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date_start, nightlights_date_end)
     data['nightlights'] = NGT.nightlights_values(data)
+    data['nightlights'] = (data['nightlights'] - np.mean(data['nightlights'])) / np.std(data['nightlights'])
 
     # ---------------- #
     # add OSM features #
@@ -181,8 +182,8 @@ def run(id):
     NDWI_min = []
     NDWI_max = []
     NDWI_mean = []
-    start_date = "2017-01-01"
-    end_date = "2018-01-01"
+    start_date = nightlights_date_start
+    end_date = nightlights_date_end
     for lat, lon in zip(data["gpsLatitude"], data["gpsLongitude"]):
         d = 100
         geojson = squaretogeojson(lon, lat, d)

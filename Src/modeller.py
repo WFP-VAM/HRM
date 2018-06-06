@@ -28,7 +28,7 @@ class Modeller:
     def _k_fold_cross_validation(X, K, n):
         j = 0
         for i in range(n):
-            X = X.sample(frac=1, random_state=i).reset_index(drop=True)
+            X = X.sample(frac=1, random_state=i)#.reset_index(drop=True)
             for k in range(K):
                 j += 1
                 training = [x for i, x in enumerate(X.index) if i % K != k]
