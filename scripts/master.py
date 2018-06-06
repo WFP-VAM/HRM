@@ -175,8 +175,8 @@ def run(id):
     # TODO: Use efficiently maxNDBImaxNDVImaxNDWI_sum_todf
     print('INFO: getting NDBI, NDVI, NDWI ...')
 
-    start_date = nightlights_date_start
-    end_date = nightlights_date_end
+    start_date = "2017-01-01"  # TODO: Add to config, be careful no image before 2015
+    end_date = "2018-01-01"
     for i in date_range(start_date, end_date, 3):
         print('INFO: getting max NDVI between dates: {}'.format(i))
         gee_ndvi_max_raster = gee_sentinel_raster(i[0], i[1], area, ind="NDVI")
