@@ -1,28 +1,11 @@
 
+from utils import df_boundaries
+
+
 class OSM_extractor:
 
     def __init__(self, df):
-        self.minlat, self.maxlat, self.minlon, self.maxlon = self.__boundaries(df)
-
-    def __boundaries(self, df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude"):
-        '''
-        Get GPS coordinates of the boundary box of a DataFrame and add some buffer around it.
-        '''
-        from numpy import round
-        minlat = df["gpsLatitude"].min()
-        maxlat = df["gpsLatitude"].max()
-        minlon = df["gpsLongitude"].min()
-        maxlon = df["gpsLongitude"].max()
-
-        lat_buffer = (maxlat - minlat) * buffer
-        lon_buffer = (maxlon - minlon) * buffer
-
-        minlat = round(minlat - lat_buffer, 5)
-        maxlat = round(maxlat + lat_buffer, 5)
-        minlon = round(minlon - lon_buffer, 5)
-        maxlon = round(maxlon + lon_buffer, 5)
-
-        return minlat, maxlat, minlon, maxlon
+        self.minlat, self.maxlat, self.minlon, self.maxlon = df_boundaries(df)
 
     def download(self, tag_key='amenity', tag_value='school'):
         '''
