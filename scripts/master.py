@@ -90,19 +90,19 @@ def run(id):
     cluster_N = 'n'
     print("Number of clusters: {} ".format(len(data)))
 
-    def wavg(g, df, weight_series):
-        w = df.ix[g.index][weight_series]
-        return (g * w).sum() / w.sum()
-
-    fnc = functools.partial(wavg, df=data, weight_series=cluster_N)
-
-    try:
-        data = data.groupby(["i", "j"]).agg({indicator: fnc, 'gpsLatitude': fnc, 'gpsLongitude': fnc}).reset_index()
-    except KeyError:
-        print("No weights, taking the average per i and j")
-        data = data[['i', 'j', 'n', 'gpsLatitude', 'gpsLongitude', indicator]].groupby(["i", "j"]).mean().reset_index()
-
-    print("Number of unique tiles: {} ".format(len(data)))
+    # def wavg(g, df, weight_series):
+    #     w = df.ix[g.index][weight_series]
+    #     return (g * w).sum() / w.sum()
+    #
+    # fnc = functools.partial(wavg, df=data, weight_series=cluster_N)
+    #
+    # try:
+    #     data = data.groupby(["i", "j"]).agg({indicator: fnc, 'gpsLatitude': fnc, 'gpsLongitude': fnc}).reset_index()
+    # except KeyError:
+    #     print("No weights, taking the average per i and j")
+    #     data = data[['i', 'j', 'n', 'gpsLatitude', 'gpsLongitude', indicator]].groupby(["i", "j"]).mean().reset_index()
+    #
+    # print("Number of unique tiles: {} ".format(len(data)))
 
     list_i, list_j, pipeline = data["i"], data["j"], 'evaluation'
 

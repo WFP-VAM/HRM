@@ -74,7 +74,10 @@ def gee_raster_mean(df, gee_raster, lat_col="gpsLatitude", lon_col="gpsLongitude
     import ee
     small_area = squaretogeojson(df[lon_col], df[lat_col], 100)
     value = gee_raster.reduceRegion(reducer=ee.Reducer.mean(), geometry=small_area, crs='EPSG:4326', scale=10).getInfo()
-    return value[ind + "_" + agg]
+    if len(value) == 0:
+        print("INFO: GEE, No data at this location")
+    else:
+        return value[ind + "_" + agg]
 
 
 def download_and_unzip(buffer, a, b, path):
