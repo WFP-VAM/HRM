@@ -68,26 +68,22 @@ class S2indexes:
         :param lat_col: column name of latitude
         :return: Series
         """
-
-        import georasters as gr
+        import rasterio
         try:
-            NDVI = gr.load_tiff(self.dir+self.files[0])
-            NDBI = gr.load_tiff(self.dir+self.files[1])
-            NDWI = gr.load_tiff(self.dir+self.files[2])
+            NDVI = rasterio.open(self.dir + self.files[0])
+            NDBI = rasterio.open(self.dir + self.files[1])
+            NDWI = rasterio.open(self.dir + self.files[2])
         except MemoryError:
             print('Remote Sensing Indexes Raster too big!')
             raise
 
-        # Find location of point (x,y) on raster, e.g. to extract info at that location
-        NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(self.dir+self.files[0])
-
         def val_extract(row):
 
-            try: # TODO: BUFFER!
-                c, r = gr.map_pixel(row[lon_col], row[lat_col], GeoT[1], GeoT[-1], GeoT[0], GeoT[3])
-                veg = NDVI[c, r]
-                burn = NDBI[c, r]
-                wat = NDWI[c, r]
+            try:  # TODO: BUFFER!
+                row, col = NDVI.index(row[lon_col], row[lat_col])
+                veg = NDVI.read(0)[row, col]
+                burn = NDBI.read(0)[row, col]
+                wat = NDWI.read(0)[row, col]
 
                 return veg, burn, wat
 

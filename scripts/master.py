@@ -55,6 +55,9 @@ def run(id):
     nightlights_date_start = config["nightlights_date"][0].get("start")
     nightlights_date_end = config["nightlights_date"][0].get("end")
 
+    s2_date_start = config["NDs_date"][0].get("start")
+    s2_date_end = config["NDs_date"][0].get("end")
+
     if config['satellite_config'][0].get('satellite_images') == 'Y':
         step = config['satellite_config'][0].get("satellite_step")
 
@@ -156,7 +159,7 @@ def run(id):
 
     from rms_indexes import S2indexes
 
-    S2 = S2indexes(area, '../Data/Geofiles/NDs/', nightlights_date_start, nightlights_date_end, scope)
+    S2 = S2indexes(area, '../Data/Geofiles/NDs/', s2_date_start, s2_date_end, scope)
     data[['max_NDVI', 'max_NDBI', 'max_NDWI']] = S2.rms_values(data).apply(pd.Series)
     # --------------- #
     # save features   #
@@ -206,7 +209,7 @@ def run(id):
     # ------------------ #
 
     query = """
-    insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_features, r2_var_features, mape_rmsense)
+    insert into results_new (run_date, config_id, r2, r2_sd, r2_knn, r2_sd_knn, r2_features, r2_sd_features, mape_rmsense)
     values (current_date, {}, {}, {}, {}, {}, {}, {}, {}) """.format(
         config['id'][0],
         Ensemble_R2_mean, Ensemble_R2_std, kNN_R2_mean, kNN_R2_std, Ridge_R2_mean, Ridge_R2_std, 0)

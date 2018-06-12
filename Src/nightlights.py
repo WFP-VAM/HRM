@@ -74,21 +74,18 @@ class Nightlights:
         :return: Series
         """
 
-        import georasters as gr
+        import rasterio
         try:
-            pop = gr.load_tiff(self.file)
+            pop = rasterio.open(self.file)
         except MemoryError:
             print('Landuse Raster too big!')
             raise
 
-        # Find location of point (x,y) on raster, e.g. to extract info at that location
-        NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(self.file)
-
         def lu_extract(row):
 
             try:
-                c, r = gr.map_pixel(row[lon_col], row[lat_col], GeoT[1], GeoT[-1], GeoT[0], GeoT[3])
-                lu = pop[c, r]
+                row, col = pop.index(row[lon_col], row[lat_col])
+                lu = pop.read(0)[row, col]
                 return lu
 
             except IndexError:
