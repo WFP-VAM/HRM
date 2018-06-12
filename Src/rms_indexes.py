@@ -80,10 +80,10 @@ class S2indexes:
         def val_extract(row):
 
             try:  # TODO: BUFFER!
-                row, col = NDVI.index(row[lon_col], row[lat_col])
-                veg = NDVI.read(0)[row, col]
-                burn = NDBI.read(0)[row, col]
-                wat = NDWI.read(0)[row, col]
+                i, j = NDVI.index(row[lon_col], row[lat_col])
+                veg = NDVI.read(1)[i, j]
+                burn = NDBI.read(1)[i, j]
+                wat = NDWI.read(1)[i, j]
 
                 return veg, burn, wat
 

@@ -84,8 +84,8 @@ class Nightlights:
         def lu_extract(row):
 
             try:
-                row, col = pop.index(row[lon_col], row[lat_col])
-                lu = pop.read(0)[row, col]
+                i, j = pop.index(row[lon_col], row[lat_col])
+                lu = pop.read(1)[i, j]
                 return lu
 
             except IndexError:
