@@ -10,7 +10,6 @@ from sqlalchemy import create_engine
 import yaml
 import pandas as pd
 import numpy as np
-import functools
 try:
     os.chdir('scripts')
 except FileNotFoundError:
@@ -41,7 +40,7 @@ def run(id):
     dataset = config.get("dataset_filename")[0]
     indicator = config["indicator"][0]
     raster = config["satellite_grid"][0]
-    aggregate_factor = config["aggregation"][0]
+    aggregate_factor = config["base_raster_aggregation"][0]
 
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
@@ -83,26 +82,7 @@ def run(id):
     minlat, maxlat, minlon, maxlon = df_boundaries(data, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
     area = points_to_polygon(minlon, minlat, maxlon, maxlat)
 
-    # --------------------------- #
-    # GROUP CLUSTERS IN SAME TILE #
-    # --------------------------- #
-    # TODO: looks like shit
-    cluster_N = 'n'
     print("Number of clusters: {} ".format(len(data)))
-
-    # def wavg(g, df, weight_series):
-    #     w = df.ix[g.index][weight_series]
-    #     return (g * w).sum() / w.sum()
-    #
-    # fnc = functools.partial(wavg, df=data, weight_series=cluster_N)
-    #
-    # try:
-    #     data = data.groupby(["i", "j"]).agg({indicator: fnc, 'gpsLatitude': fnc, 'gpsLongitude': fnc}).reset_index()
-    # except KeyError:
-    #     print("No weights, taking the average per i and j")
-    #     data = data[['i', 'j', 'n', 'gpsLatitude', 'gpsLongitude', indicator]].groupby(["i", "j"]).mean().reset_index()
-    #
-    # print("Number of unique tiles: {} ".format(len(data)))
 
     list_i, list_j, pipeline = data["i"], data["j"], 'evaluation'
 
@@ -206,49 +186,64 @@ def run(id):
     # --------------- #
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  # shuffle data
 
-    data_features = data[features_list]
-
     # if take log of indicator
     if config['log'][0]:
         data[indicator] = np.log(data[indicator])
-    from modeller import Modeller
-    md = Modeller(['kNN', 'Kriging', 'RmSense', 'Ensamble'], data_features)
-    cv_loops = 20
-    md.compute(data[['i', 'j']], data[indicator].values, cv_loops)
 
-    # save model for production
-    md.save_models(id)
-    print(str(np.datetime64('now')), 'INFO: model saved.')
+    from modeller import Modeller
+    X = data
+    y = data[indicator]
+    Modeller = Modeller(X, y, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20)
+
+    kNN_pipeline = Modeller.make_model_pipeline('kNN')
+    kNN_scores = Modeller.compute_scores(kNN_pipeline)
+    kNN_R2_mean = kNN_scores.mean()
+    kNN_R2_std = kNN_scores.std()
+    print("kNN_R2_mean: ", kNN_R2_mean, "kNN_R2_std: ", kNN_R2_std)
+
+    Ridge_pipeline = Modeller.make_model_pipeline('Ridge')
+    Ridge_scores = Modeller.compute_scores(Ridge_pipeline)
+    Ridge_R2_mean = Ridge_scores.mean()
+    Ridge_R2_std = Ridge_scores.std()
+    print("Ridge_R2_mean: ", Ridge_R2_mean, "Ridge_R2_std: ", Ridge_R2_std)
+
+    Ensemble_pipeline = Modeller.make_ensemble_pipeline([kNN_pipeline, Ridge_pipeline])
+    Ensemble_scores = Modeller.compute_scores(Ensemble_pipeline)
+    Ensemble_R2_mean = Ensemble_scores.mean()
+    Ensemble_R2_std = Ensemble_scores.std()
+    print("Ensemble_R2_mean: ", Ensemble_R2_mean, "Ensemble_R2_std: ", Ensemble_R2_std)
 
     # ------------------ #
     # write scores to DB #
     # ------------------ #
 
-    r2, r2_var = np.mean(md.scores['Ensamble']), np.var(md.scores['Ensamble'])
-    r2_knn, r2_var_knn = np.mean(md.scores['kNN']), np.var(md.scores['kNN'])
-    r2_rmsense, r2_var_rmsense = np.mean(md.scores['RmSense']), np.var(md.scores['RmSense'])
-    y_duplicated = np.repeat(data[indicator], cv_loops)
-    mape_rmsense = np.mean(np.abs([item for sublist in md.results['RmSense'] for item in sublist] - y_duplicated) / y_duplicated)
-    if mape_rmsense == float("inf") or mape_rmsense == float("-inf"):
-        mape_rmsense = 0
-
     query = """
     insert into results_new (run_date, config_id, r2, r2_var, r2_knn, r2_var_knn, r2_features, r2_var_features, mape_rmsense)
     values (current_date, {}, {}, {}, {}, {}, {}, {}, {}) """.format(
         config['id'][0],
-        r2, r2_var, r2_knn, r2_var_knn, r2_rmsense, r2_var_rmsense, mape_rmsense)
+        Ensemble_R2_mean, Ensemble_R2_std, kNN_R2_mean, kNN_R2_std, Ridge_R2_mean, Ridge_R2_std, 0)
     engine.execute(query)
 
     # ------------------------- #
     # write predictions to file #
     # ------------------------- #
+
     print('INFO: writing predictions to disk ...')
+
+    Ensemble_pipeline.fit(X.values, y)
+    Ensemble_predictions = Ensemble_pipeline.predict(X.values)
+
     results = pd.DataFrame({
-        #'yhat': [item for sublist in md.results['kNN'] for item in sublist],
+        'yhat': Ensemble_predictions,
         'y': data[indicator].values,
         'lat': data['gpsLatitude'],
         'lon': data['gpsLongitude']})
     results.to_csv('../Data/Results/config_{}.csv'.format(id), index=False)
+
+    # save model for production
+    from sklearn.externals import joblib
+    joblib.dump(Ensemble_pipeline, '../Models/Ensemble_model_config_id_{}.pkl'.format(id))
+    print(str(np.datetime64('now')), 'INFO: model saved.')
 
 
 if __name__ == "__main__":
