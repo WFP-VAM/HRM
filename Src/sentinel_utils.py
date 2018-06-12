@@ -66,15 +66,16 @@ def gee_sentinel_raster(start_date, end_date, large_area, agg="max", ind="NDVI")
     sentinel_w_indices = sentinel.map(addIndices)
 
     maxraster = sentinel_w_indices.select(ind).reduce(agg).clip(large_area)
+
     return maxraster
 
 
-def gee_raster_mean(df, gee_raster, lat_col="gpsLatitude", lon_col="gpsLongitude", ind="NDVI", agg="max"):
-    from utils import squaretogeojson
-    import ee
-    small_area = squaretogeojson(df[lon_col], df[lat_col], 100)
-    value = gee_raster.reduceRegion(reducer=ee.Reducer.mean(), geometry=small_area, crs='EPSG:4326', scale=10).getInfo()
-    return value[ind + "_" + agg]
+# def gee_raster_mean(df, gee_raster, lat_col="gpsLatitude", lon_col="gpsLongitude", ind="NDVI", agg="max"):
+#     from utils import squaretogeojson
+#     import ee
+#     small_area = squaretogeojson(df[lon_col], df[lat_col], 100)
+#     value = gee_raster.reduceRegion(reducer=ee.Reducer.mean(), geometry=small_area, crs='EPSG:4326', scale=10).getInfo()
+#     return value[ind + "_" + agg]
 
 
 def download_and_unzip(buffer, a, b, path):
