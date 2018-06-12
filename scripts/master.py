@@ -18,8 +18,7 @@ sys.path.append(os.path.join("..", "Src"))
 from img_lib import RasterGrid
 from nn_extractor import NNExtractor
 from osm import OSM_extractor
-from sentinel_utils import gee_sentinel_raster, gee_raster_mean
-from utils import squaretogeojson, date_range, df_boundaries, points_to_polygon
+from utils import df_boundaries, points_to_polygon
 
 
 def run(id):
@@ -41,6 +40,7 @@ def run(id):
     indicator = config["indicator"][0]
     raster = config["satellite_grid"][0]
     aggregate_factor = config["base_raster_aggregation"][0]
+    scope = config["scope"][0]
 
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
@@ -152,24 +152,12 @@ def run(id):
     # ---------------- #
     #   NDBI,NDVI,NDWI #
     # ---------------- #
-    # TODO: Use efficiently maxNDBImaxNDVImaxNDWI_sum_todf
     print('INFO: getting NDBI, NDVI, NDWI ...')
 
-    start_date = "2017-01-01"  # TODO: Add to config, be careful no image before 2015
-    end_date = "2018-01-01"
-    for i in date_range(start_date, end_date, 3):
-        print('INFO: getting max NDVI between dates: {}'.format(i))
-        gee_ndvi_max_raster = gee_sentinel_raster(i[0], i[1], area, ind="NDVI")
-        data["max_NDVI_{}_{}".format(i[0], i[1])] = data.apply(gee_raster_mean, args=(gee_ndvi_max_raster, "gpsLatitude", "gpsLongitude", "NDVI"), axis=1)
+    from rms_indexes import S2indexes
 
-    print('INFO: getting max NDBI')
-    gee_ndbi_max_raster = gee_sentinel_raster(start_date, end_date, area, ind="NDBI")
-    data["max_NDBI"] = data.apply(gee_raster_mean, args=(gee_ndbi_max_raster, "gpsLatitude", "gpsLongitude", "NDBI"), axis=1)
-
-    print('INFO: getting max NDWI')
-    gee_ndwi_max_raster = gee_sentinel_raster(start_date, end_date, area, ind="NDWI")
-    data["max_NDWI"] = data.apply(gee_raster_mean, args=(gee_ndwi_max_raster, "gpsLatitude", "gpsLongitude", "NDWI"), axis=1)
-
+    S2 = S2indexes(area, '../Data/Geofiles/NDs/', nightlights_date_start, nightlights_date_end, scope)
+    data[['max_NDVI', 'max_NDBI', 'max_NDWI']] = S2.rms_values(data).apply(pd.Series)
     # --------------- #
     # save features   #
     # --------------- #

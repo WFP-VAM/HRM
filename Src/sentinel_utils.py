@@ -66,6 +66,7 @@ def gee_sentinel_raster(start_date, end_date, large_area, agg="max", ind="NDVI")
     sentinel_w_indices = sentinel.map(addIndices)
 
     maxraster = sentinel_w_indices.select(ind).reduce(agg).clip(large_area)
+
     return maxraster
 
 
@@ -79,7 +80,7 @@ def gee_raster_mean(df, gee_raster, lat_col="gpsLatitude", lon_col="gpsLongitude
     else:
         return value[ind + "_" + agg]
 
-
+      
 def download_and_unzip(buffer, a, b, path):
     unzipped = []
     from zipfile import ZipFile
