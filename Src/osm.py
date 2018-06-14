@@ -36,11 +36,11 @@ class OSM_extractor:
         points = []
         for result in response_json['elements']:
             if 'type' in result and result['type'] == 'node':
-                p = Point([(result['lat'], result['lon'])])
+                p = Point([(result['lon'], result['lat'])])
                 point = {'geometry': p}
                 points.append(point)
             if 'type' in result and result['type'] == 'way':
-                p = Point([(result['center']['lat'], result['center']['lon'])])
+                p = Point([(result['center']['lon'], result['center']['lat'])])
                 point = {'geometry': p}
                 points.append(point)
         gdf = gpd.GeoDataFrame(points)
@@ -57,7 +57,7 @@ class OSM_extractor:
         from shapely.ops import nearest_points
         from shapely.geometry import Point
         geom_union = points_gdf.unary_union
-        point = Point(df[lat_col], df[lon_col])
+        point = Point(df[lon_col], df[lat_col])
         nearest_point = nearest_points(point, geom_union)[1]
         distance = nearest_point.distance(point)
         return distance
@@ -74,7 +74,7 @@ class OSM_extractor:
         '''
         Ditance between a point in a pandas dataframe and the nearest point in a scipy kd-tree.
         '''
-        distance = point_tree.query([df[lat_col], df[lon_col]], k=1)[0]
+        distance = point_tree.query([df[lon_col], df[lat_col]], k=1)[0]
         return distance
 
     def density(self, df, points_gdf, distance=5000, lat_col="gpsLatitude", lon_col="gpsLongitude"):
@@ -84,12 +84,12 @@ class OSM_extractor:
         # To do: Use a spatial index for faster computation
         from osmnx.core import bbox_from_point
         from shapely.geometry import Polygon
-        point = (df[lat_col], df[lon_col])
+        point = (df[lon_col], df[lat_col])
         north, south, east, west = bbox_from_point(point, distance)
-        point1 = (south, east)
-        point2 = (south, west)
-        point3 = (north, west)
-        point4 = (north, east)
+        point1 = (east, south)
+        point2 = (west, south)
+        point3 = (west, north)
+        point4 = (east, north)
         poly = Polygon([point1, point2, point3, point4])
         n = points_gdf.within(poly).sum()
         return n
