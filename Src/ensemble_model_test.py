@@ -2,25 +2,37 @@ import pandas as pd
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-from Src.ensemble_model import MyEnsemble
+from Src.ensemble_model import MyEnsembleRegressor
 
 
 bunch = load_boston()
-_, target = load_boston(return_X_y=True)
+X, y = load_boston(return_X_y=True)
 df = pd.DataFrame(data=bunch.data, columns=bunch.feature_names)
-df['target'] = target
+df['target'] = y
 
 input_model1 = ['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM']
 input_model2 = ['AGE', 'DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT', 'target']
 
-mymodel = MyEnsemble(base_estimators={'model1': RandomForestRegressor, 'model2': LinearRegression},
-                     estimator_params={'model1': {'n_estimators': 5, 'max_depth': 10},
-                                       'model2': {'fit_intercept': True}})
+# Define your regressor
+rndf = RandomForestRegressor(n_estimators=10)
+lr = LinearRegression()
 
-x = {'model1': df[input_model1], 'model2': df[input_model2]}
-mymodel.fit(X=x, y=df['target'])
+# Define the ensemble regressor
+#
+mymodel = MyEnsembleRegressor(base_estimators=[rndf, lr], meta_regressor=None)
 
-y = mymodel.predict(x)
+
+# You can fit all your estimator
+mymodel.fit(df, df['target'])
+mymodel.predict(df)
+mymodel.score(df, df['target'])
+
+
+mymodel.fit(df, df['target'], column_selection=[input_model1, input_model2])
+mymodel.predict(df)
+mymodel.score(df, df['target'])
+
+
 
 
 
