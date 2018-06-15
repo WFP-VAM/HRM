@@ -15,25 +15,60 @@ class MyEnsembleRegressor(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-    base_estimators : dict of object, optional (default=None)
-        The base estimator from which the ensemble is built.
-        es: {'model1': RandomForest, 'model2':DecisionTree}
+    regressors : array-like, shape = [n_regressors]
+        A list of regressors.
+        Invoking the `fit` method on the `MyEnsembleRegressor` will fit clones
+        of those original regressors that will
+        be stored in the class attribute
+        `self.regr_`.
+    meta_regressor : object, default SVR(kernel='rbf')
+        The meta-regressor to be fitted on the ensemble of
+        regressors
 
-    estimator_params : dict of dict of param names and param values
-        The list of attributes to use as parameters when instantiating a
-        new base estimator. If none are given, default parameters are used.
-        es: {'model1': {'n_estimators':10}, 'model2':{'max_depth':5}}
+    Examples
+    --------
+    import pandas as pd
+    from sklearn.datasets import load_boston
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.linear_model import LinearRegression
+    from Src.ensemble_model import MyEnsembleRegressor
+
+
+    bunch = load_boston()
+    X, y = load_boston(return_X_y=True)
+    df = pd.DataFrame(data=bunch.data, columns=bunch.feature_names)
+    df['target'] = y
+
+    input_model1 = ['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM']
+    input_model2 = ['AGE', 'DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT', 'target']
+
+    # Define your regressor
+    rndf = RandomForestRegressor(n_estimators=10)
+    lr = LinearRegression()
+
+    # Define the ensemble regressor
+    mymodel = MyEnsembleRegressor(regressors=[rndf, lr], meta_regressor=None)
+
+
+    # You can fit all your estimator
+    mymodel.fit(df, df['target'])
+    mymodel.predict(df)
+    mymodel.score(df, df['target'])
+
+    # You can select different input features for each model
+    mymodel.fit(df, df['target'], column_selection=[input_model1, input_model2])
+    mymodel.predict(df)
+    mymodel.score(df, df['target'])
     """
 
-    def __init__(self, base_estimators, meta_regressor=None):
-        self.my_esitimators = base_estimators
+    def __init__(self, regressors, meta_regressor=None):
+        self.my_esitimators = regressors
         self.meta_regressor = meta_regressor
 
-
-
-    def _make_estimators(self, X):
+    def _make_estimators(self):
         """
-        Make and configure a copy of the `base_estimator_` attribute.
+        Create a stacking regessor made of pipelines.
+        The pipelines are contains the column selector transformer
 
         """
         pipes = list()
@@ -52,14 +87,30 @@ class MyEnsembleRegressor(BaseEstimator, RegressorMixin):
         return stregr
 
     def fit(self, X, y, column_selection=None):
+        """
+        Fit the model
+        Parameters
+        ----------
+        X : pandas.DataFrame or {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+        y : pandas.Series or array-like, shape = [n_samples] or [n_samples, n_targets]
+            Target values.
+        column_selection : list of list
+            Selected columns for each regressor.
+            If X is a DataFrame, column_selection elements should be a list of column name.
+
+        Returns
+        -------
+
+        """
         self.columns_selection = self._check_column_selection(X, columns_selction=column_selection)
-        self.ensembled_esitimator_ = self._make_estimators(X)
+        self.ensembled_esitimator_ = self._make_estimators()
         if isinstance(X, pd.DataFrame):
             X = X.as_matrix()
         if isinstance(y, pd.DataFrame) or isinstance(y, pd.Series):
             y = y.values
         self.ensembled_esitimator_.fit(X, y)
-
 
     def _check_column_selection(self, X, columns_selction):
         if columns_selction is None:
@@ -79,6 +130,19 @@ class MyEnsembleRegressor(BaseEstimator, RegressorMixin):
             return columns_selction
 
     def predict(self, X):
+        """ Predict target values for X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame or {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        Returns
+        ----------
+        y_target : array-like, shape = [n_samples] or [n_samples, n_targets]
+            Predicted target values.
+        """
         if isinstance(X, pd.DataFrame):
             X = X.as_matrix()
         return self.ensembled_esitimator_.predict(X)

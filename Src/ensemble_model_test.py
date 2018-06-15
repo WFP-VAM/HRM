@@ -18,8 +18,7 @@ rndf = RandomForestRegressor(n_estimators=10)
 lr = LinearRegression()
 
 # Define the ensemble regressor
-#
-mymodel = MyEnsembleRegressor(base_estimators=[rndf, lr], meta_regressor=None)
+mymodel = MyEnsembleRegressor(regressors=[rndf, lr], meta_regressor=None)
 
 
 # You can fit all your estimator
@@ -27,10 +26,12 @@ mymodel.fit(df, df['target'])
 mymodel.predict(df)
 mymodel.score(df, df['target'])
 
-
+# You can select different input features for each model
 mymodel.fit(df, df['target'], column_selection=[input_model1, input_model2])
 mymodel.predict(df)
 mymodel.score(df, df['target'])
+
+
 
 
 
