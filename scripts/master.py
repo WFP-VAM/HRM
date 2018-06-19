@@ -160,6 +160,7 @@ def run(id):
     from rms_indexes import S2indexes
 
     S2 = S2indexes(area, '../Data/Geofiles/NDs/', s2_date_start, s2_date_end, scope)
+    S2.download()
     data[['max_NDVI', 'max_NDBI', 'max_NDWI']] = S2.rms_values(data).apply(pd.Series)
     # --------------- #
     # save features   #
@@ -184,22 +185,22 @@ def run(id):
     from modeller import Modeller
     X = data
     y = data[indicator]
-    Modeller = Modeller(X, y, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20)
+    Modeller = Modeller(X, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20)
 
     kNN_pipeline = Modeller.make_model_pipeline('kNN')
-    kNN_scores = Modeller.compute_scores(kNN_pipeline)
+    kNN_scores = Modeller.compute_scores(kNN_pipeline, y)
     kNN_R2_mean = kNN_scores.mean()
     kNN_R2_std = kNN_scores.std()
     print("kNN_R2_mean: ", kNN_R2_mean, "kNN_R2_std: ", kNN_R2_std)
 
     Ridge_pipeline = Modeller.make_model_pipeline('Ridge')
-    Ridge_scores = Modeller.compute_scores(Ridge_pipeline)
+    Ridge_scores = Modeller.compute_scores(Ridge_pipeline, y)
     Ridge_R2_mean = Ridge_scores.mean()
     Ridge_R2_std = Ridge_scores.std()
     print("Ridge_R2_mean: ", Ridge_R2_mean, "Ridge_R2_std: ", Ridge_R2_std)
 
     Ensemble_pipeline = Modeller.make_ensemble_pipeline([kNN_pipeline, Ridge_pipeline])
-    Ensemble_scores = Modeller.compute_scores(Ensemble_pipeline)
+    Ensemble_scores = Modeller.compute_scores(Ensemble_pipeline, y)
     Ensemble_R2_mean = Ensemble_scores.mean()
     Ensemble_R2_std = Ensemble_scores.std()
     print("Ensemble_R2_mean: ", Ensemble_R2_mean, "Ensemble_R2_std: ", Ensemble_R2_std)

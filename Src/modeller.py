@@ -23,20 +23,19 @@ class Modeller:
     """
     Handles rs_features and spatial_features separately.
     """
-    def __init__(self, X, y, rs_features=None, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20):
+    def __init__(self, X, rs_features=None, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20):
         self.rs_features_indices = [X.columns.get_loc(c) for c in X.columns if c in rs_features]
         self.spatial_features_indices = (X.columns.get_loc(spatial_features[0]), X.columns.get_loc(spatial_features[1]))
         self.cv_loops = cv_loops
         self.X = X.values
-        self.y = y
         self.scoring = 'r2'
 
-    def compute_scores(self, pipeline):
+    def compute_scores(self, pipeline, y):
         shuffle = []
         scores = np.array([])
         for i in range(self.cv_loops):
             shuffle = KFold(n_splits=5, shuffle=True, random_state=i)
-            scores = np.append(scores, cross_val_score(pipeline, self.X, self.y, cv=shuffle, scoring=self.scoring))
+            scores = np.append(scores, cross_val_score(pipeline, self.X, y, cv=shuffle, scoring=self.scoring))
         return scores
 
     def make_model_pipeline(self, model):
@@ -50,6 +49,7 @@ class Modeller:
             estimator = Ridge()
             cols = self.rs_features_indices
         gridsearch = GridSearchCV(estimator=estimator, param_grid=parameters, cv=inner_cv, scoring=self.scoring)
+        print(cols)
         pipeline = make_pipeline(ColumnSelector(cols=cols), gridsearch)
         return pipeline
 

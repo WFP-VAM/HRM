@@ -77,7 +77,8 @@ def aggregate(input_rst, output_rst, scale):
     input_gr = gr.from_file(input_rst)
 
     # No data values are replaced with 0 to prevent summing them in each block.
-    input_gr.raster.data[input_gr.raster.data == input_gr.nodata_value] = 0
+    print(len(input_gr.raster.data.astype(np.float32) == np.float32(input_gr.nodata_value)))
+    input_gr.raster.data[input_gr.raster.data.astype(np.float32) == np.float32(input_gr.nodata_value)] = 0
     input_gr.nodata_value = 0
 
     output_gr = input_gr.aggregate(block_size=(scale, scale))
