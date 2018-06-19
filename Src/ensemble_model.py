@@ -8,6 +8,13 @@ from mlxtend.regressor import StackingRegressor
 from sklearn.svm import SVR
 from mlxtend.feature_selection import ColumnSelector
 
+class MeanRegressor(BaseEstimator):
+    def fit(self, X, y=None):
+        return self
+
+    def predict(self, X, y=None):
+        return(np.mean(X, axis=1))
+
 class MyEnsembleRegressor(BaseEstimator, RegressorMixin):
     """Base class for all ensemble classes.
 
@@ -80,8 +87,8 @@ class MyEnsembleRegressor(BaseEstimator, RegressorMixin):
                 pipes.append(make_pipeline(ColumnSelector(cols=self.columns_selection[idx]), estimator))
 
         if self.meta_regressor is None:
-            self.meta_regressor = SVR(kernel='rbf')
-
+            self.meta_regressor = MeanRegressor()
+            
         stregr = StackingRegressor(regressors=pipes, meta_regressor=self.meta_regressor)
 
         return stregr
