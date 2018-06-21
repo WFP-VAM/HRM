@@ -183,7 +183,8 @@ def run(id):
         data[indicator] = np.log(data[indicator])
 
     from modeller import Modeller
-    X = data
+    X = data[features_list + ["gpsLatitude", "gpsLongitude"]]
+    X.to_csv("../Data/Features/features_all_id_{}_evaluation_2.csv".format(id), index=False)
     y = data[indicator]
     Modeller = Modeller(X, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20)
 

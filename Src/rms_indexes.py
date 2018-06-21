@@ -26,7 +26,7 @@ class S2indexes:
         if os.path.exists(self.dir + str(self.area["coordinates"]) + "NDVI_max.tif") \
         and os.path.exists(self.dir + str(self.area["coordinates"]) + "NDBI_max.tif") \
         and os.path.exists(self.dir + str(self.area["coordinates"]) + "NDWI_max.tif"):
-            self.files = ["NDVI_max.tif", "NDBI_max.tif", "NDWI_max.tif"]
+            self.files = [str(self.area["coordinates"]) + "NDVI_max.tif", str(self.area["coordinates"]) + "NDBI_max.tif", str(self.area["coordinates"]) + "NDWI_max.tif"]
             print('INFO: NDs data for {} already downloaded'.format(self.area["coordinates"]))
         else:
 
@@ -61,8 +61,7 @@ class S2indexes:
             url = img.getDownloadUrl({'crs': 'EPSG:4326', 'region': self.area, 'scale': scale})
             self.files = self.unzip(BytesIO(urllib.request.urlopen(url).read()), self.dir, self.area)
 
-    @staticmethod
-    def unzip(buffer, dir, area):
+    def unzip(self, buffer, dir, area):
 
         from zipfile import ZipFile
 
@@ -73,7 +72,7 @@ class S2indexes:
             zip_file.extract(i, dir)
             os.rename(dir + i, dir + str(area["coordinates"]) + j)
 
-        return ["NDVI_max.tif", "NDBI_max.tif", "NDWI_max.tif"]
+        return [str(self.area["coordinates"]) + "NDVI_max.tif", str(self.area["coordinates"]) + "NDBI_max.tif", str(self.area["coordinates"]) + "NDWI_max.tif"]
 
     def rms_values(self, df, lon_col='gpsLongitude', lat_col='gpsLatitude'):
         """
@@ -102,7 +101,10 @@ class S2indexes:
                 return veg, build, wat
 
             except IndexError as e:
-                print(e)
-                pass
+                print(e, row[lon_col], ", ", row[lat_col])
+                veg = 0
+                build = 0
+                wat = 0
+                return veg, build, wat
 
         return df.apply(val_extract, axis=1)

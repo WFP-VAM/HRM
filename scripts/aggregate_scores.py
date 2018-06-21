@@ -11,12 +11,11 @@ import pandas as pd
 from utils import weighted_sum_by_polygon
 import click
 
-
 # ---------- #
 # PARAMETERS #
 @click.command()
 @click.option('--config_id')
-@click.option('--shapefile', default=("../Data/Geofiles/Shapefiles/ADM3/kinshasa_quartiers/kinshasa_quartiers.shp"))
+@click.option('--shapefile', default=("../Data/Geofiles/Shapefiles/ADM2/bfa_admbnda_adm2_1m_salb_itos/bfa_admbnda_adm2_1m_salb_itos.shp"))
 def main(config_id, shapefile):
 
     with open('../private_config.yml', 'r') as cfgfile:

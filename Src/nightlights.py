@@ -88,7 +88,9 @@ class Nightlights:
                 lu = pop.read(1)[i, j]
                 return lu
 
-            except IndexError:
-                pass
+            except IndexError as e:
+                print(e, row[lon_col], ", ", row[lat_col])
+                lu = 0
+                return lu
 
         return df.apply(lu_extract, axis=1)

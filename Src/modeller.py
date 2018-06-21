@@ -23,12 +23,13 @@ class Modeller:
     """
     Handles rs_features and spatial_features separately.
     """
-    def __init__(self, X, rs_features=None, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20):
+    def __init__(self, X, rs_features=[], spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20):
+        rs_features = [rs_features] if isinstance(rs_features, str) else rs_features
         self.rs_features_indices = [X.columns.get_loc(c) for c in X.columns if c in rs_features]
         self.spatial_features_indices = (X.columns.get_loc(spatial_features[0]), X.columns.get_loc(spatial_features[1]))
         self.cv_loops = cv_loops
         self.X = X.values
-        self.scoring = 'r2'
+        self.scoring = scoring
 
     def compute_scores(self, pipeline, y):
         shuffle = []
@@ -49,7 +50,6 @@ class Modeller:
             estimator = Ridge()
             cols = self.rs_features_indices
         gridsearch = GridSearchCV(estimator=estimator, param_grid=parameters, cv=inner_cv, scoring=self.scoring)
-        print(cols)
         pipeline = make_pipeline(ColumnSelector(cols=cols), gridsearch)
         return pipeline
 
