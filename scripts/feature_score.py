@@ -87,7 +87,7 @@ def individual_r2(id, indicator, scoring):
         Ridge_pipeline2 = Modeller_all_but_feature.make_model_pipeline('Ridge')
         Ridge_scores_all_but_feature = Modeller_all_but_feature.compute_scores(Ridge_pipeline2, y)
         Ridge_R2_mean_all_but_feature = Ridge_scores_all_but_feature.mean()
-        print(X[Modeller_feature.rs_features_indices], " R2_mean: ", round(Ridge_R2_mean_feature, 2), " R2_mean_added_value: ", round(Ridge_R2_mean - Ridge_R2_mean_all_but_feature, 2), "R2_std: ", round(Ridge_R2_std_feature, 2))
+        print(feature, " R2_mean: ", round(Ridge_R2_mean_feature, 2), " R2_mean_added_value: ", round(Ridge_R2_mean - Ridge_R2_mean_all_but_feature, 2), "R2_std: ", round(Ridge_R2_std_feature, 2))
 
 
 if __name__ == "__main__":
