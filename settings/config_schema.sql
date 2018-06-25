@@ -1,13 +1,15 @@
-CREATE TABLE "public".config_new (
+CREATE TABLE "public".config (
 	dataset_filename varchar NULL,
 	satellite_grid varchar NULL,
-	satellite_step int2 NULL DEFAULT 0,
-	sentinel_config json null,
+	satellite_config json NULL,
 	id serial NOT NULL,
-	model_grid_parameters json NULL,
 	"indicator" varchar NULL,
 	"comment" varchar NULL,
 	"output" varchar NOT NULL DEFAULT 'regression'::character varying,
-	land_use_raster varchar NULL,
+	log bool NULL DEFAULT false,
+	base_raster_aggregation int2 NULL,
+	nightlights_date json NULL,
+	"scope" varchar NULL,
+	"NDs_date" json NULL,
 	PRIMARY KEY (id)
-);
+)
