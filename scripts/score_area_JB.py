@@ -12,6 +12,7 @@ from sqlalchemy import create_engine
 import yaml
 import pandas as pd
 import numpy as np
+from sklearn.externals import joblib
 try:
     os.chdir('scripts')
 except FileNotFoundError:
@@ -42,14 +43,15 @@ def run(id):
 
     config = pd.read_sql_query("select * from config_new where id = {}".format(id), engine)
     dataset = config.get("dataset_filename")[0]
-    indicator = config["indicator"][0]
     raster = config["satellite_grid"][0]
-    aggregate_factor = config["base_raster_aggregation"][0]
+    aggregate_factor = 10 #config["base_raster_aggregation"][0]
     scope = config["scope"][0]
+    nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), config["nightlights_date"][0].get("end")
+    s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
+    if config['satellite_config'][0].get('satellite_images') == 'Y': step = config['satellite_config'][0].get("satellite_step")
 
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
-    aggregate_factor = 10
 
     if aggregate_factor > 1:
         print('INFO: aggregating raster ...')
@@ -58,25 +60,17 @@ def run(id):
     else:
         base_raster = raster
 
-    nightlights_date_start = config["nightlights_date"][0].get("start")
-    nightlights_date_end = config["nightlights_date"][0].get("end")
-
-    s2_date_start = config["NDs_date"][0].get("start")
-    s2_date_end = config["NDs_date"][0].get("end")
-
-    if config['satellite_config'][0].get('satellite_images') == 'Y':
-        step = config['satellite_config'][0].get("satellite_step")
-
-    # -------- #
-    # DATAPREP #
-    # -------- #
+    # ---------------- #
+    # AREA OF INTEREST #
+    # ---------------- #
     dataset_df = pd.read_csv(dataset)
     data_cols = dataset_df.columns.values
 
-    # grid
+    # create geometry
     minlat, maxlat, minlon, maxlon = df_boundaries(dataset_df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
     area = points_to_polygon(minlon, minlat, maxlon, maxlat)
 
+    # crop raster
     with rasterio.open(base_raster) as src:
         out_image, out_transform = mask(src, [area], crop=True)
         out_meta = src.meta.copy()
@@ -93,6 +87,7 @@ def run(id):
         dest.write(out_image)
         list_j, list_i = np.where(dest.read()[0] != dest.nodata)
 
+    # instantiate GRID
     GRID = RasterGrid(final_raster)
 
     coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
@@ -100,12 +95,6 @@ def run(id):
     data = pd.DataFrame({"i": list_i, "j": list_j})
     data["gpsLatitude"] = coords_y
     data["gpsLongitude"] = coords_x
-
-    # OPTIONAL: REPLACING THE CLUSTER COORDINATES BY THE CORRESPONDING GRID CENTER COORDINATES
-    # data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
-
-    # Get Polygon Geojson of the boundaries
-
 
     print("Number of clusters: {} ".format(len(data)))
 
@@ -168,11 +157,8 @@ def run(id):
             osm_gdf["value"] = OSM.download(key, value)
             osm_tree = OSM.gpd_to_tree(osm_gdf["value"])
             dist = data.apply(OSM.distance_to_nearest, args=(osm_tree,), axis=1)
-            #density = data.apply(OSM.density, args=(osm_gdf["value"],), axis=1)
             data['distance_{}'.format(value)] = dist.apply(lambda x: np.log(0.0001 + x))
             osm_features.append('distance_{}'.format(value))
-            #data['density_{}'.format(value)] = density.apply(lambda x: np.log(0.0001 + x))
-            #osm_features.append('density_{}'.format(value))
 
     # ---------------- #
     #   NDBI,NDVI,NDWI #
@@ -184,11 +170,12 @@ def run(id):
     S2 = S2indexes(area, '../Data/Geofiles/NDs/', s2_date_start, s2_date_end, scope)
     S2.download()
     data[['max_NDVI', 'max_NDBI', 'max_NDWI']] = S2.rms_values(data).apply(pd.Series)
+
     # --------------- #
     # save features   #
     # --------------- #
 
-    features_list = list(set(data.columns) - set(data_cols) - set(['i', 'j']))
+    features_list = list(sorted(set(data.columns) - set(data_cols) - set(['i', 'j'])))
 
     # Standardize Features (0 mean and 1 std)
     data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].std()
@@ -196,22 +183,17 @@ def run(id):
     data.to_csv("../Data/Features/features_all_id_{}_{}.csv".format(id, pipeline), index=False)
 
     # Open model
-    from sklearn.externals import joblib
-    Ensemble_pipeline = joblib.load('../Models/Ensemble_model_config_id_{}.pkl'.format(id))
-    print(str(np.datetime64('now')), 'INFO: model saved.')
+    ensemble_pipeline = joblib.load('../Models/Ensemble_model_config_id_{}.pkl'.format(id))
+    print(str(np.datetime64('now')), 'INFO: model loaded.')
 
-    original_columns = pd.read_csv("../Data/Features/features_all_id_{}_evaluation_2.csv".format(id)).columns.tolist()
-    data = data[original_columns]
-    print(data.head())
-    X = data
-    print(X.columns.tolist())
-    Ensemble_predictions = Ensemble_pipeline.predict(X.values)
+    X = data[features_list + ["gpsLatitude", "gpsLongitude"]]
+    ensemble_predictions = ensemble_pipeline.predict(X.values)
 
     # if take log of indicator
     if config['log'][0]:
-        Ensemble_predictions = np.exp(Ensemble_predictions)
+        ensemble_predictions = np.exp(ensemble_predictions)
 
-    results = pd.DataFrame({'i': list_i, 'j': list_j, 'lat': coords_y, 'lon': coords_x, 'yhat': Ensemble_predictions})
+    results = pd.DataFrame({'i': list_i, 'j': list_j, 'lat': coords_y, 'lon': coords_x, 'yhat': ensemble_predictions})
 
     outfile = "../Data/Results/scalerout_{}.tif".format(id)
     tifgenerator(outfile=outfile,

@@ -41,6 +41,9 @@ def run(id):
     raster = config["satellite_grid"][0]
     aggregate_factor = config["base_raster_aggregation"][0]
     scope = config["scope"][0]
+    nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), config["nightlights_date"][0].get("end")
+    s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
+    if config['satellite_config'][0].get('satellite_images') == 'Y': step = config['satellite_config'][0].get("satellite_step")
 
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
@@ -52,15 +55,6 @@ def run(id):
     else:
         base_raster = raster
 
-    nightlights_date_start = config["nightlights_date"][0].get("start")
-    nightlights_date_end = config["nightlights_date"][0].get("end")
-
-    s2_date_start = config["NDs_date"][0].get("start")
-    s2_date_end = config["NDs_date"][0].get("end")
-
-    if config['satellite_config'][0].get('satellite_images') == 'Y':
-        step = config['satellite_config'][0].get("satellite_step")
-
     # -------- #
     # DATAPREP #
     # -------- #
@@ -70,11 +64,6 @@ def run(id):
     # grid
     GRID = RasterGrid(base_raster)
     list_i, list_j = GRID.get_gridcoordinates(data)
-
-    # to use the centroid from the tile instead
-    # coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
-    #data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
-    coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
 
     # OPTIONAL: REPLACING THE CLUSTER COORDINATES BY THE CORRESPONDING GRID CENTER COORDINATES
     # data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
@@ -166,7 +155,7 @@ def run(id):
     # save features   #
     # --------------- #
 
-    features_list = list(set(data.columns) - set(data_cols) - set(['i', 'j']))
+    features_list = list(sorted(set(data.columns) - set(data_cols) - set(['i', 'j'])))
 
     # Standardize Features (0 mean and 1 std)
     data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].std()
@@ -184,7 +173,7 @@ def run(id):
 
     from modeller import Modeller
     X = data[features_list + ["gpsLatitude", "gpsLongitude"]]
-    X.to_csv("../Data/Features/features_all_id_{}_evaluation_2.csv".format(id), index=False)
+    #X.to_csv("../Data/Features/features_all_id_{}_evaluation_2.csv".format(id), index=False)
     y = data[indicator]
     Modeller = Modeller(X, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20)
 
