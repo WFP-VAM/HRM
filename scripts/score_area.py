@@ -1,69 +1,78 @@
-# -*- coding: utf-8 -*-
+
+
 """
-- downloads the pictures relevant for scoring
-- extracts features
-- loads a pre-trained model
-- makes predictions
-- plots
+- loads the survey data (already preprocessed)
+- donwloads the relevant satellite images
+- extracts the features with a pre-trained net
+- trains a regression model to predict food insecurity
 """
 import os
 import sys
-try:
-    os.chdir('scripts')
-except FileNotFoundError:
-    pass
-sys.path.append(os.path.join("..","Src"))
-from img_lib import RasterGrid
 from sqlalchemy import create_engine
 import yaml
 import pandas as pd
 import numpy as np
-from nn_extractor import NNExtractor
-from utils import tifgenerator, aggregate
 from sklearn.externals import joblib
-import click
+try:
+    os.chdir('scripts')
+except FileNotFoundError:
+    pass
+sys.path.append(os.path.join("..", "Src"))
+from img_lib import RasterGrid
+from nn_extractor import NNExtractor
+from osm import OSM_extractor
+from utils import df_boundaries, points_to_polygon, tifgenerator, aggregate
+
 import rasterio
 from rasterio.mask import mask
-from osm import OSM_extractor
 
-# ---------- #
-# PARAMETERS #
-@click.command()
-@click.option('--top_left', default=(15.0347900390625, -4.056056210178768))
-@click.option('--bottom_left', default=(15.03753662109375, -4.592851699293249))
-@click.option('--bottom_right', default=(15.827178955078123, -4.592851699293249))
-@click.option('--top_right', default=(15.825805664062502, -4.056056210178768))
-@click.option('--config_id')
-def main(top_left, bottom_left, bottom_right, top_right, config_id):
 
-    # ------#
-    # SETUP #
+def run(id):
+    # ----------------- #
+    # SETUP #############
+    # ----------------- #
+
+    print(str(np.datetime64('now')), " INFO: config id =", id)
+
     with open('../private_config.yml', 'r') as cfgfile:
         private_config = yaml.load(cfgfile)
 
-    # connect to db and read config table
     engine = create_engine("""postgresql+psycopg2://{}:{}@{}/{}"""
                            .format(private_config['DB']['user'], private_config['DB']['password'],
                                    private_config['DB']['host'], private_config['DB']['database']))
 
-    config = pd.read_sql_query("select * from config_new where id = {}".format(config_id), engine)
-
+    config = pd.read_sql_query("select * from config_new where id = {}".format(id), engine)
+    dataset = config.get("dataset_filename")[0]
     raster = config["satellite_grid"][0]
-    nightlights_date = config.get("nightlights_date")[0]
-    base_raster = "../tmp/local_raster.tif"
-    if config['satellite_config'][0].get('satellite_images') == 'Y':
-        step = config['satellite_config'][0].get("satellite_step")
+    aggregate_factor = config["base_raster_aggregation"][0]
+    scope = config["scope"][0]
+    nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), config["nightlights_date"][0].get("end")
+    s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
+    if config['satellite_config'][0].get('satellite_images') == 'Y': step = config['satellite_config'][0].get("satellite_step")
 
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
-    aggregate(raster, base_raster, 1)
 
-    # -------------------  #
-    # CLIP RASTER TO SCOPE #
-    geoms = [{'type': 'Polygon', 'coordinates': [[top_left, bottom_left, bottom_right, top_right]]}]
+    if aggregate_factor > 1:
+        print('INFO: aggregating raster ...')
+        base_raster = "../tmp/local_raster.tif"
+        aggregate(raster, base_raster, aggregate_factor)
+    else:
+        base_raster = raster
 
+    # ---------------- #
+    # AREA OF INTEREST #
+    # ---------------- #
+    dataset_df = pd.read_csv(dataset)
+    data_cols = dataset_df.columns.values
+
+    # create geometry
+    minlat, maxlat, minlon, maxlon = df_boundaries(dataset_df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
+    area = points_to_polygon(minlon, minlat, maxlon, maxlat)
+
+    # crop raster
     with rasterio.open(base_raster) as src:
-        out_image, out_transform = mask(src, geoms, crop=True)
+        out_image, out_transform = mask(src, [area], crop=True)
         out_meta = src.meta.copy()
 
     # save the resulting raster
@@ -73,15 +82,23 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
                      "transform": out_transform
                      })
 
-    with rasterio.open(base_raster, "w", **out_meta) as dest:
+    final_raster = "../tmp/final_raster.tif"
+    with rasterio.open(final_raster, "w", **out_meta) as dest:
         dest.write(out_image)
+        list_j, list_i = np.where(dest.read()[0] != dest.nodata)
 
-    # load the new clipped raster to the img_lib
-    GRID = RasterGrid(base_raster)
-    with rasterio.open(base_raster) as src:
-        list_j, list_i = np.where(src.read()[0] != src.nodata)
-    print("INFO: downloading images in scope ...")
+    # instantiate GRID
+    GRID = RasterGrid(final_raster)
+
     coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
+
+    data = pd.DataFrame({"i": list_i, "j": list_j})
+    data["gpsLatitude"] = coords_y
+    data["gpsLongitude"] = coords_x
+
+    print("Number of clusters: {} ".format(len(data)))
+
+    list_i, list_j, pipeline = data["i"], data["j"], 'scoring'
 
     # ------------------------------------------------------------- #
     # download images from Google and Sentinel and Extract Features #
@@ -93,44 +110,44 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
 
         for sat in ['Google', 'Sentinel']:
             print('INFO: routine for provider: ', sat)
-            # dopwnlaod the images from the relevant API
-            GRID.download_images(list_i, list_j, step, sat, start_date, end_date)
+            # downlaod the images from the relevant API
+            GRID.download_images(list_i, list_j, step, sat, start_date, end_date, zoom_vhr=16, img_size_sentinel=5000)
             print('INFO: images downloaded.')
 
-            print('INFO: scoring ...')
-            # extarct the features
-            network = NNExtractor(id, sat, GRID.image_dir, sat, step, GRID)
-            print('INFO: extractor instantiated.')
-            features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline='scoring')
-            # normalize the features
-            features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, config_id, 'scoring'), index=False)
+            if os.path.exists("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline)):
+                print('INFO: already scored.')
+                features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline))
+            else:
+                print('INFO: scoring ...')
+                # extract the features
+                network = NNExtractor(id, sat, GRID.image_dir, sat, step, GRID)
+                print('INFO: extractor instantiated.')
 
-        g_features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format("Google", config_id, 'scoring'))
-        s_features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format("Sentinel", config_id, 'scoring'))
+                features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
+                # normalize the features
 
-        data = pd.merge(g_features, s_features, on=['i', 'j', 'index'])
-        data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(config_id), index=False)
+                features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
+
+            features = features.drop('index', 1)
+            data = data.merge(features, on=["i", "j"])
+
+        data.to_csv("../Data/Features/features_all_id_{}_{}.csv".format(id, pipeline), index=False)
 
         print('INFO: features extracted.')
 
-    else:
-        data = pd.DataFrame({'gpsLongitude': coords_x, 'gpsLatitude': coords_y, 'j': list_j, 'i': list_i})
     # --------------- #
     # add nightlights #
     # --------------- #
-    from geojson import Polygon
+
     from nightlights import Nightlights
 
-    area = Polygon([[top_left, bottom_left, bottom_right, top_right]])
-
-    NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date)
-    data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
+    NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date_start, nightlights_date_end)
     data['nightlights'] = NGT.nightlights_values(data)
 
     # ---------------- #
     # add OSM features #
     # ---------------- #
-    OSM = OSM_extractor(data)
+    OSM = OSM_extractor(dataset_df)
     tags = {"amenity": ["school", "hospital"], "natural": ["tree"]}
     osm_gdf = {}
     osm_features = []
@@ -140,35 +157,55 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
             osm_gdf["value"] = OSM.download(key, value)
             osm_tree = OSM.gpd_to_tree(osm_gdf["value"])
             dist = data.apply(OSM.distance_to_nearest, args=(osm_tree,), axis=1)
-            # density = data.apply(OSM.density, args=(osm_gdf["value"],), axis=1)
             data['distance_{}'.format(value)] = dist.apply(lambda x: np.log(0.0001 + x))
             osm_features.append('distance_{}'.format(value))
-            # data['density_{}'.format(value)] = density.apply(lambda x: np.log(0.0001 + x))
-            # osm_features.append('density_{}'.format(value))
 
-    # ---------------------- #
-    # LOAD MODEL AND PREDICT #
-    print("INFO: load model and predict ...")
-    try:
-        X = data.drop(['index', 'i', 'j', 'gpsLongitude', 'gpsLatitude'], axis=1)
-    except ValueError:
-        X = data.drop(['i', 'j', 'gpsLongitude', 'gpsLatitude'], axis=1)
-    # load model and predict
-    try:
-        RmSense = joblib.load('../Models/RmSense_model_config_id_{}.pkl'.format(config_id))
-        kNN = joblib.load('../Models/kNN_model_config_id_{}.pkl'.format(config_id))
-    except FileNotFoundError:
-        print('ERROR: model not found')
+    # ---------------- #
+    #   NDBI,NDVI,NDWI #
+    # ---------------- #
+    print('INFO: getting NDBI, NDVI, NDWI ...')
 
-    yhat = (RmSense.predict(X) + kNN.predict(data[['i','j']])) / 2.
-    results = pd.DataFrame({'i': list_i, 'j': list_j, 'lat': coords_y, 'lon': coords_x, 'yhat': yhat})
+    from rms_indexes import S2indexes
 
-    outfile = "../Data/Results/scalerout_{}.tif".format(config_id)
+    S2 = S2indexes(area, '../Data/Geofiles/NDs/', s2_date_start, s2_date_end, scope)
+    S2.download()
+    data[['max_NDVI', 'max_NDBI', 'max_NDWI']] = S2.rms_values(data).apply(pd.Series)
+
+    # --------------- #
+    # save features   #
+    # --------------- #
+
+    features_list = list(sorted(set(data.columns) - set(data_cols) - set(['i', 'j'])))
+
+    # Standardize Features (0 mean and 1 std)
+    data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].std()
+
+    data.to_csv("../Data/Features/features_all_id_{}_{}.csv".format(id, pipeline), index=False)
+
+    # Open model
+    ensemble_pipeline = joblib.load('../Models/Ensemble_model_config_id_{}.pkl'.format(id))
+    print(str(np.datetime64('now')), 'INFO: model loaded.')
+
+    X = data[features_list + ["gpsLatitude", "gpsLongitude"]]
+    ensemble_predictions = ensemble_pipeline.predict(X.values)
+
+    # if take log of indicator
+    if config['log'][0]:
+        ensemble_predictions = np.exp(ensemble_predictions)
+
+    results = pd.DataFrame({'i': list_i, 'j': list_j, 'lat': coords_y, 'lon': coords_x, 'yhat': ensemble_predictions})
+
+    outfile = "../Data/Results/scalerout_{}.tif".format(id)
     tifgenerator(outfile=outfile,
-                 raster_path=base_raster,
+                 raster_path=final_raster,
                  df=results)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    main()
+    import tensorflow as tf
+    for id in sys.argv[1:]:
+        run(id)
+
+    # rubbish collection
+    tf.keras.backend.clear_session()

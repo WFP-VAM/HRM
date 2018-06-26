@@ -41,6 +41,9 @@ def run(id):
     raster = config["satellite_grid"][0]
     aggregate_factor = config["base_raster_aggregation"][0]
     scope = config["scope"][0]
+    nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), config["nightlights_date"][0].get("end")
+    s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
+    if config['satellite_config'][0].get('satellite_images') == 'Y': step = config['satellite_config'][0].get("satellite_step")
 
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
@@ -52,15 +55,6 @@ def run(id):
     else:
         base_raster = raster
 
-    nightlights_date_start = config["nightlights_date"][0].get("start")
-    nightlights_date_end = config["nightlights_date"][0].get("end")
-
-    s2_date_start = config["NDs_date"][0].get("start")
-    s2_date_end = config["NDs_date"][0].get("end")
-
-    if config['satellite_config'][0].get('satellite_images') == 'Y':
-        step = config['satellite_config'][0].get("satellite_step")
-
     # -------- #
     # DATAPREP #
     # -------- #
@@ -70,11 +64,6 @@ def run(id):
     # grid
     GRID = RasterGrid(base_raster)
     list_i, list_j = GRID.get_gridcoordinates(data)
-
-    # to use the centroid from the tile instead
-    # coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
-    #data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
-    coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
 
     # OPTIONAL: REPLACING THE CLUSTER COORDINATES BY THE CORRESPONDING GRID CENTER COORDINATES
     # data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
@@ -146,11 +135,8 @@ def run(id):
             osm_gdf["value"] = OSM.download(key, value)
             osm_tree = OSM.gpd_to_tree(osm_gdf["value"])
             dist = data.apply(OSM.distance_to_nearest, args=(osm_tree,), axis=1)
-            #density = data.apply(OSM.density, args=(osm_gdf["value"],), axis=1)
             data['distance_{}'.format(value)] = dist.apply(lambda x: np.log(0.0001 + x))
             osm_features.append('distance_{}'.format(value))
-            #data['density_{}'.format(value)] = density.apply(lambda x: np.log(0.0001 + x))
-            #osm_features.append('density_{}'.format(value))
 
     # ---------------- #
     #   NDBI,NDVI,NDWI #
@@ -165,8 +151,8 @@ def run(id):
     # --------------- #
     # save features   #
     # --------------- #
-
-    features_list = list(set(data.columns) - set(data_cols) - set(['i', 'j']))
+    # features to be use in the linear model
+    features_list = list(sorted(set(data.columns) - set(data_cols) - set(['i', 'j'])))
 
     # Standardize Features (0 mean and 1 std)
     data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].std()
@@ -176,32 +162,31 @@ def run(id):
     # --------------- #
     # model indicator #
     # --------------- #
+    # shuffle dataset
     data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  # shuffle data
 
-    # if take log of indicator
+    # if set in the config, take log of indicator
     if config['log'][0]:
         data[indicator] = np.log(data[indicator])
 
     from modeller import Modeller
-    X = data[features_list + ["gpsLatitude", "gpsLongitude"]]
-    X.to_csv("../Data/Features/features_all_id_{}_evaluation_2.csv".format(id), index=False)
-    y = data[indicator]
-    Modeller = Modeller(X, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20)
+    X, y = data[features_list + ["gpsLatitude", "gpsLongitude"]], data[indicator]
+    modeller = Modeller(X, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20)
 
-    kNN_pipeline = Modeller.make_model_pipeline('kNN')
-    kNN_scores = Modeller.compute_scores(kNN_pipeline, y)
+    kNN_pipeline = modeller.make_model_pipeline('kNN')
+    kNN_scores = modeller.compute_scores(kNN_pipeline, y)
     kNN_R2_mean = kNN_scores.mean()
     kNN_R2_std = kNN_scores.std()
     print("kNN_R2_mean: ", kNN_R2_mean, "kNN_R2_std: ", kNN_R2_std)
 
-    Ridge_pipeline = Modeller.make_model_pipeline('Ridge')
-    Ridge_scores = Modeller.compute_scores(Ridge_pipeline, y)
+    Ridge_pipeline = modeller.make_model_pipeline('Ridge')
+    Ridge_scores = modeller.compute_scores(Ridge_pipeline, y)
     Ridge_R2_mean = Ridge_scores.mean()
     Ridge_R2_std = Ridge_scores.std()
     print("Ridge_R2_mean: ", Ridge_R2_mean, "Ridge_R2_std: ", Ridge_R2_std)
 
-    Ensemble_pipeline = Modeller.make_ensemble_pipeline([kNN_pipeline, Ridge_pipeline])
-    Ensemble_scores = Modeller.compute_scores(Ensemble_pipeline, y)
+    Ensemble_pipeline = modeller.make_ensemble_pipeline([kNN_pipeline, Ridge_pipeline])
+    Ensemble_scores = modeller.compute_scores(Ensemble_pipeline, y)
     Ensemble_R2_mean = Ensemble_scores.mean()
     Ensemble_R2_std = Ensemble_scores.std()
     print("Ensemble_R2_mean: ", Ensemble_R2_mean, "Ensemble_R2_std: ", Ensemble_R2_std)
