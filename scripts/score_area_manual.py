@@ -29,14 +29,14 @@ from osm import OSM_extractor
 # ---------- #
 # PARAMETERS #
 @click.command()
-@click.option('--top_left', default=(15.0347900390625, -4.056056210178768))
-@click.option('--bottom_left', default=(15.03753662109375, -4.592851699293249))
-@click.option('--bottom_right', default=(15.827178955078123, -4.592851699293249))
-@click.option('--top_right', default=(15.825805664062502, -4.056056210178768))
+@click.option('--top_left', default=(15.224515, -4.292011))
+@click.option('--bottom_left', default=(15.214246, -4.492340))
+@click.option('--bottom_right', default=(15.444959, -4.449897))
+@click.option('--top_right', default=(15.462812, -4.292011))
 @click.option('--config_id')
 def main(top_left, bottom_left, bottom_right, top_right, config_id):
 
-    print(str(np.datetime64('now')), " INFO: config id =", id)
+    print(str(np.datetime64('now')), " INFO: config id =", config_id)
 
     with open('../private_config.yml', 'r') as cfgfile:
         private_config = yaml.load(cfgfile)
@@ -45,7 +45,7 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
                            .format(private_config['DB']['user'], private_config['DB']['password'],
                                    private_config['DB']['host'], private_config['DB']['database']))
 
-    config = pd.read_sql_query("select * from config_new where id = {}".format(id), engine)
+    config = pd.read_sql_query("select * from config_new where id = {}".format(config_id), engine)
     dataset = config.get("dataset_filename")[0]
     raster = config["satellite_grid"][0]
     aggregate_factor = 10 #config["base_raster_aggregation"][0]
@@ -119,9 +119,9 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
             GRID.download_images(list_i, list_j, step, sat, start_date, end_date, zoom_vhr=16, img_size_sentinel=5000)
             print('INFO: images downloaded.')
 
-            if os.path.exists("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline)):
+            if os.path.exists("../Data/Features/features_{}_id_{}_{}.csv".format(sat, config_id, pipeline)):
                 print('INFO: already scored.')
-                features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline))
+                features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, config_id, pipeline))
             else:
                 print('INFO: scoring ...')
                 # extract the features
@@ -131,12 +131,12 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
                 features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
                 # normalize the features
 
-                features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
+                features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, config_id, pipeline), index=False)
 
             features = features.drop('index', 1)
             data = data.merge(features, on=["i", "j"])
 
-        data.to_csv("../Data/Features/features_all_id_{}_{}.csv".format(id, pipeline), index=False)
+        data.to_csv("../Data/Features/features_all_id_{}_{}.csv".format(config_id, pipeline), index=False)
 
         print('INFO: features extracted.')
 
@@ -185,10 +185,10 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
     # Standardize Features (0 mean and 1 std)
     data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].std()
 
-    data.to_csv("../Data/Features/features_all_id_{}_{}.csv".format(id, pipeline), index=False)
+    data.to_csv("../Data/Features/features_all_id_{}_{}.csv".format(config_id, pipeline), index=False)
 
     # Open model
-    ensemble_pipeline = joblib.load('../Models/Ensemble_model_config_id_{}.pkl'.format(id))
+    ensemble_pipeline = joblib.load('../Models/Ensemble_model_config_id_{}.pkl'.format(config_id))
     print(str(np.datetime64('now')), 'INFO: model loaded.')
 
     X = data[features_list + ["gpsLatitude", "gpsLongitude"]]
@@ -197,13 +197,13 @@ def main(top_left, bottom_left, bottom_right, top_right, config_id):
     # if take log of indicator
     if config['log'][0]:
         ensemble_predictions = np.exp(ensemble_predictions)
-
-    results = pd.DataFrame({'i': list_i, 'j': list_j, 'lat': coords_y, 'lon': coords_x, 'yhat': ensemble_predictions})
-
-    outfile = "../Data/Results/scalerout_{}.tif".format(id)
+    print('list: ', len(list_i), len(list_j), ' coords: ', len(coords_x), len(coords_x), ' preds: ', len(ensemble_predictions))
+    #results = pd.DataFrame({'i': list_i, 'j': list_j, 'lat': coords_y, 'lon': coords_x, 'yhat': ensemble_predictions})
+    data['yhat'] = ensemble_predictions
+    outfile = "../Data/Results/scalerout_{}.tif".format(config_id)
     tifgenerator(outfile=outfile,
                  raster_path=final_raster,
-                 df=results)
+                 df=data)
 
 
 if __name__ == '__main__':
