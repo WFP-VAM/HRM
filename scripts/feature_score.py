@@ -19,7 +19,8 @@ from evaluation_utils import r2_pearson
 @click.option('--id')
 @click.option('--indicator', default=(None))
 @click.option('--scoring', default=('r2'))
-def individual_r2(id, indicator, scoring):
+@click.option('--cv', default=(10))
+def individual_r2(id, indicator, scoring, cv):
     with open('../private_config.yml', 'r') as cfgfile:
         private_config = yaml.load(cfgfile)
 
@@ -52,8 +53,9 @@ def individual_r2(id, indicator, scoring):
         scoring = r2_pearson
 
     X = data
+    print("indicator: ", indicator)
     y = data[indicator]
-    cv_loops = 2
+    cv_loops = cv
     from modeller import Modeller
     Modeller_all = Modeller(X, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring=scoring, cv_loops=cv_loops)
 
