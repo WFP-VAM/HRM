@@ -23,6 +23,7 @@ from osm import OSM_extractor
 from utils import df_boundaries, points_to_polygon, tifgenerator, aggregate
 
 import rasterio
+from rasterio.mask import mask
 
 
 def run(id):
@@ -73,13 +74,27 @@ def run(id):
     data_cols = dataset_df.columns.values
 
     # grid
-    GRID = RasterGrid(base_raster)
-    with rasterio.open(base_raster) as src:
-        list_j, list_i = np.where(src.read()[0] != src.nodata)
+    minlat, maxlat, minlon, maxlon = df_boundaries(dataset_df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
+    area = points_to_polygon(minlon, minlat, maxlon, maxlat)
 
-    # to use the centroid from the tile instead
-    # coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
-    #data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
+    with rasterio.open(base_raster) as src:
+        out_image, out_transform = mask(src, [area], crop=True)
+        out_meta = src.meta.copy()
+
+    # save the resulting raster
+    out_meta.update({"driver": "GTiff",
+                     "height": out_image.shape[1],
+                     "width": out_image.shape[2],
+                     "transform": out_transform
+                     })
+
+    final_raster = "../tmp/final_raster.tif"
+    with rasterio.open(final_raster, "w", **out_meta) as dest:
+        dest.write(out_image)
+        list_j, list_i = np.where(dest.read()[0] != dest.nodata)
+
+    GRID = RasterGrid(final_raster)
+
     coords_x, coords_y = np.round(GRID.get_gpscoordinates(list_i, list_j), 5)
 
     data = pd.DataFrame({"i": list_i, "j": list_j})
@@ -90,8 +105,7 @@ def run(id):
     # data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
 
     # Get Polygon Geojson of the boundaries
-    minlat, maxlat, minlon, maxlon = df_boundaries(dataset_df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
-    area = points_to_polygon(minlon, minlat, maxlon, maxlat)
+
 
     print("Number of clusters: {} ".format(len(data)))
 
@@ -201,7 +215,7 @@ def run(id):
 
     outfile = "../Data/Results/scalerout_{}.tif".format(id)
     tifgenerator(outfile=outfile,
-                 raster_path=base_raster,
+                 raster_path=final_raster,
                  df=results)
 
 
