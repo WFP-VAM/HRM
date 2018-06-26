@@ -1,36 +1,40 @@
-
-
+# -*- coding: utf-8 -*-
 """
-- loads the survey data (already preprocessed)
-- donwloads the relevant satellite images
-- extracts the features with a pre-trained net
-- trains a regression model to predict food insecurity
+- downloads the pictures relevant for scoring
+- extracts features
+- loads a pre-trained model
+- makes predictions
+- plots
 """
 import os
 import sys
-from sqlalchemy import create_engine
-import yaml
-import pandas as pd
-import numpy as np
-from sklearn.externals import joblib
 try:
     os.chdir('scripts')
 except FileNotFoundError:
     pass
-sys.path.append(os.path.join("..", "Src"))
+sys.path.append(os.path.join("..","Src"))
 from img_lib import RasterGrid
+from sqlalchemy import create_engine
+import yaml
+import pandas as pd
+import numpy as np
 from nn_extractor import NNExtractor
-from osm import OSM_extractor
-from utils import df_boundaries, points_to_polygon, tifgenerator, aggregate
-
+from utils import tifgenerator, aggregate
+from sklearn.externals import joblib
+import click
 import rasterio
 from rasterio.mask import mask
+from osm import OSM_extractor
 
-
-def run(id):
-    # ----------------- #
-    # SETUP #############
-    # ----------------- #
+# ---------- #
+# PARAMETERS #
+@click.command()
+@click.option('--top_left', default=(15.0347900390625, -4.056056210178768))
+@click.option('--bottom_left', default=(15.03753662109375, -4.592851699293249))
+@click.option('--bottom_right', default=(15.827178955078123, -4.592851699293249))
+@click.option('--top_right', default=(15.825805664062502, -4.056056210178768))
+@click.option('--config_id')
+def main(top_left, bottom_left, bottom_right, top_right, config_id):
 
     print(str(np.datetime64('now')), " INFO: config id =", id)
 
@@ -46,9 +50,11 @@ def run(id):
     raster = config["satellite_grid"][0]
     aggregate_factor = 10 #config["base_raster_aggregation"][0]
     scope = config["scope"][0]
-    nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), config["nightlights_date"][0].get("end")
+    nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), \
+                                                   config["nightlights_date"][0].get("end")
     s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
-    if config['satellite_config'][0].get('satellite_images') == 'Y': step = config['satellite_config'][0].get("satellite_step")
+    if config['satellite_config'][0].get('satellite_images') == 'Y': step = config['satellite_config'][0].get(
+        "satellite_step")
 
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
@@ -67,12 +73,11 @@ def run(id):
     data_cols = dataset_df.columns.values
 
     # create geometry
-    minlat, maxlat, minlon, maxlon = df_boundaries(dataset_df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
-    area = points_to_polygon(minlon, minlat, maxlon, maxlat)
+    aoi = [{'type': 'Polygon', 'coordinates': [[top_left, bottom_left, bottom_right, top_right]]}]
 
     # crop raster
     with rasterio.open(base_raster) as src:
-        out_image, out_transform = mask(src, [area], crop=True)
+        out_image, out_transform = mask(src, aoi, crop=True)
         out_meta = src.meta.copy()
 
     # save the resulting raster
@@ -138,10 +143,10 @@ def run(id):
     # --------------- #
     # add nightlights #
     # --------------- #
-
     from nightlights import Nightlights
+    from geojson import Polygon
 
-    NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date_start, nightlights_date_end)
+    NGT = Nightlights(Polygon([[top_left, bottom_left, bottom_right, top_right]]), '../Data/Geofiles/nightlights/', nightlights_date_start, nightlights_date_end)
     data['nightlights'] = NGT.nightlights_values(data)
 
     # ---------------- #
@@ -167,7 +172,7 @@ def run(id):
 
     from rms_indexes import S2indexes
 
-    S2 = S2indexes(area, '../Data/Geofiles/NDs/', s2_date_start, s2_date_end, scope)
+    S2 = S2indexes(Polygon([[top_left, bottom_left, bottom_right, top_right]]), '../Data/Geofiles/NDs/', s2_date_start, s2_date_end, scope)
     S2.download()
     data[['max_NDVI', 'max_NDBI', 'max_NDWI']] = S2.rms_values(data).apply(pd.Series)
 
@@ -201,11 +206,6 @@ def run(id):
                  df=results)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 
-    import tensorflow as tf
-    for id in sys.argv[1:]:
-        run(id)
-
-    # rubbish collection
-    tf.keras.backend.clear_session()
+    main()
