@@ -22,16 +22,18 @@ class OSM_extractor:
             print('INFO: OSM data for {} = {} already downloaded'.format(tag_key, tag_value))
             gdf = gpd.read_file("../Data/Geofiles/OSM/location_{}_{}_{}_{}_{}_{}.json".format(tag_key, tag_value, self.minlat, self.maxlat, self.minlon, self.maxlon))
             return gdf
-        query_osm = ('[out:json][timeout:25];'
+
+        query_osm = ('[out:json];'
                      '('
                      'node["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
                      'way["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
                      'relation["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
                      ');(._;>;);out center;'
                      ).format(minlat=self.minlat, maxlat=self.maxlat, minlon=self.minlon, maxlon=self.maxlon, tag_key=tag_key, tag_value=tag_value)
+
         print('INFO: Downloading OSM data for {} = {}'.format(tag_key, tag_value))
         # overpass_request is already saving json to a cache folder
-        response_json = overpass_request(data={'data': query_osm}, timeout=600, error_pause_duration=None)
+        response_json = overpass_request(data={'data': query_osm}, timeout=2000)#, error_pause_duration=None)
         print('INFO: OSM data for {} = {} downloaded. N lines: '.format(tag_key, tag_value, len(response_json)))
         points = []
         for result in response_json['elements']:
@@ -47,7 +49,9 @@ class OSM_extractor:
         gdf.crs = {'init': 'epsg:4326'}
         gdf.to_file("../Data/Geofiles/OSM/location_{}_{}_{}_{}_{}_{}.json".format(tag_key, tag_value, self.minlat, self.maxlat, self.minlon, self.maxlon), driver='GeoJSON')
         gdf.to_file("../Data/Geofiles/OSM/location_{}_{}_{}_{}_{}_{}.shp".format(tag_key, tag_value, self.minlat, self.maxlat, self.minlon, self.maxlon), driver='ESRI Shapefile')
+
         return gdf
+
 
     def distance_to_nearest2(self, df, points_gdf, lat_col="gpsLatitude", lon_col="gpsLongitude"):
         '''
