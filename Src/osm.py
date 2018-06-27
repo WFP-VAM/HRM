@@ -23,7 +23,7 @@ class OSM_extractor:
             gdf = gpd.read_file("../Data/Geofiles/OSM/location_{}_{}_{}_{}_{}_{}.json".format(tag_key, tag_value, self.minlat, self.maxlat, self.minlon, self.maxlon))
             return gdf
 
-        query_osm = ('[out:json];'
+        query_osm = ('[out:json][maxsize:2000000000];'
                      '('
                      'node["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
                      'way["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
@@ -33,7 +33,7 @@ class OSM_extractor:
 
         print('INFO: Downloading OSM data for {} = {}'.format(tag_key, tag_value))
         # overpass_request is already saving json to a cache folder
-        response_json = overpass_request(data={'data': query_osm}, timeout=2000)#, error_pause_duration=None)
+        response_json = overpass_request(data={'data': query_osm}, timeout=10000, error_pause_duration=None)
         print('INFO: OSM data for {} = {} downloaded. N lines: '.format(tag_key, tag_value, len(response_json)))
         points = []
         for result in response_json['elements']:
