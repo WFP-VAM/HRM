@@ -32,7 +32,7 @@ def zonal_stats(path_to_shape_file, lon, lat, val):
     return value_means
 
 
-def tifgenerator(outfile, raster_path, df):
+def tifgenerator(outfile, raster_path, df, value='yhat'):
     """
     Given a filepath (.tif), a raster for reference and a dataset with i, j and yhat
     it generates a raster.
@@ -49,7 +49,7 @@ def tifgenerator(outfile, raster_path, df):
     arr = band.ReadAsArray()
     [cols, rows] = arr.shape
     arr_out = np.zeros(arr.shape) - 99
-    arr_out[df['j'], df['i']] = df['yhat']
+    arr_out[df['j'], df['i']] = df[value]
     driver = gdal.GetDriverByName("GTiff")
     outdata = driver.Create(outfile, rows, cols, 1, gdal.GDT_Float32)
 
@@ -188,8 +188,8 @@ def weighted_sum_by_polygon(input_shp, input_rst, weight_rst, output_shp):
             for feature in features:
                 geom = feature['geometry']
                 try:
-                    out_image, out_transform = rasterio.mask.mask(src1, [geom], crop=True)
-                    out_image2, out_transform2 = rasterio.mask.mask(src2, [geom], crop=True)
+                    out_image, out_transform = rasterio.mask.mask(src1, [geom], crop=True)  # all_touched=False so only considers the center of each pixel
+                    out_image2, out_transform2 = rasterio.mask.mask(src2, [geom], crop=True)   # all_touched=False so only considers the center of each pixel
                     out_image[out_image == src1.nodata] = 0
                     out_image2[out_image2 == src2.nodata] = 0
                     weighted_sum = out_image.sum()
@@ -208,7 +208,8 @@ def weighted_sum_by_polygon(input_shp, input_rst, weight_rst, output_shp):
                 gdf.loc[index, 'indicator'] = x
                 gdf.loc[index, 'population'] = int(y)
                 index += 1
-    print("Total_Weights : {}".format(np.array(Y).sum()))
+    print("Total_Weights (population) : {}".format(np.array(Y).sum()))
+    print('-> writing: ', output_shp)
     gdf.to_file(output_shp)
 
 

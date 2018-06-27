@@ -11,6 +11,7 @@ import pandas as pd
 from utils import weighted_sum_by_polygon
 import click
 
+
 # ---------- #
 # PARAMETERS #
 @click.command()
@@ -28,7 +29,7 @@ def main(config_id, shapefile):
 
     input_shp = shapefile
     input_rst = "../Data/Results/scalerout_{}.tif".format(config_id)
-    weight_rst = "../tmp/local_raster.tif"  #TODO: clip config["satellite_grid"][0] to extend of results
+    weight_rst = "../tmp/final_raster.tif"  #TODO: clip config["satellite_grid"][0] to extend of results
 
     output_shp = "../Data/Results/scalerout_{}_aggregated.shp".format(config_id)
 

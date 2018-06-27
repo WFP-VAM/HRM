@@ -1,10 +1,10 @@
-
-
+# -*- coding: utf-8 -*-
 """
-- loads the survey data (already preprocessed)
-- donwloads the relevant satellite images
-- extracts the features with a pre-trained net
-- trains a regression model to predict food insecurity
+- downloads the pictures relevant for scoring
+- extracts features
+- loads a pre-trained model
+- makes predictions
+- plots
 """
 import os
 import sys
@@ -26,8 +26,21 @@ from utils import df_boundaries, points_to_polygon, tifgenerator, aggregate
 import rasterio
 from rasterio.mask import mask
 
+import click
 
-def run(id):
+
+# ---------- #
+# PARAMETERS #
+@click.command()
+@click.option('--id', type=int)
+@click.option('--aggregate_factor', default=None, type=int)
+@click.option('--minlat', default=None, type=float)
+@click.option('--maxlat', default=None, type=float)
+@click.option('--minlon', default=None, type=float)
+@click.option('--maxlon', default=None, type=float)
+@click.option('--shapefile', default=None, type=str)
+def main(id, aggregate_factor, minlat, maxlat, minlon, maxlon, shapefile):
+
     # ----------------- #
     # SETUP #############
     # ----------------- #
@@ -44,14 +57,17 @@ def run(id):
     config = pd.read_sql_query("select * from config_new where id = {}".format(id), engine)
     dataset = config.get("dataset_filename")[0]
     raster = config["satellite_grid"][0]
-    aggregate_factor = config["base_raster_aggregation"][0]
+
     scope = config["scope"][0]
     nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), config["nightlights_date"][0].get("end")
     s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
-    if config['satellite_config'][0].get('satellite_images') == 'Y': step = config['satellite_config'][0].get("satellite_step")
+    if config['satellite_config'][0].get('satellite_images') == 'Y':
+        step = config['satellite_config'][0].get("satellite_step")
 
     # ----------------------------------- #
     # WorldPop Raster too fine, aggregate #
+    if aggregate_factor is None:
+        aggregate_factor = config["base_raster_aggregation"][0]
 
     if aggregate_factor > 1:
         print('INFO: aggregating raster ...')
@@ -67,7 +83,9 @@ def run(id):
     data_cols = dataset_df.columns.values
 
     # create geometry
-    minlat, maxlat, minlon, maxlon = df_boundaries(dataset_df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
+    if (minlat is None) and (maxlat is None) and (minlon is None) and (maxlon is None):
+        minlat, maxlat, minlon, maxlon = df_boundaries(dataset_df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
+
     area = points_to_polygon(minlon, minlat, maxlon, maxlat)
 
     # crop raster
@@ -200,12 +218,15 @@ def run(id):
                  raster_path=final_raster,
                  df=results)
 
+    if shapefile is not None:
+        input_rst = "../Data/Results/scalerout_{}.tif".format(id)
+        weight_rst = "../tmp/final_raster.tif"
 
-if __name__ == "__main__":
+        output_shp = "../Data/Results/scalerout_{}_aggregated.shp".format(id)
+        from utils import weighted_sum_by_polygon
+        weighted_sum_by_polygon(shapefile, input_rst, weight_rst, output_shp)
 
-    import tensorflow as tf
-    for id in sys.argv[1:]:
-        run(id)
 
-    # rubbish collection
-    tf.keras.backend.clear_session()
+if __name__ == '__main__':
+
+    main()
