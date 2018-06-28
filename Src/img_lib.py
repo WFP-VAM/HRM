@@ -164,8 +164,13 @@ class RasterGrid:
                     print("INFO: {} images downloaded out of {}".format(cnt, total), end='\r')
                     cnt += 1
 
-                    lon = np.round(self.centroid_x_coords[i + a], 5)
-                    lat = np.round(self.centroid_y_coords[j + b], 5)
+                    try:
+                        lon = np.round(self.centroid_x_coords[i + a], 5)
+                        lat = np.round(self.centroid_y_coords[j + b], 5)
+                    except IndexError as e:
+                        lon = np.round(self.centroid_x_coords[i], 5)
+                        lat = np.round(self.centroid_y_coords[j], 5)
+                        print("Index Error with: ", self.centroid_x_coords[i], self.centroid_y_coords[j], "steps: ", a, b)
 
                     if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
                         if img_size_sentinel == 5000:  # For consistency
