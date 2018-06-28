@@ -51,7 +51,7 @@ class NNExtractor:
             x = tf.keras.layers.GlobalAveragePooling2D(name='output_maxpool')(self.net.layers[-1].output)
             self.net = tf.keras.models.Model(inputs=self.net.input, outputs=x)
 
-    def __average_features_dir(self, i, j, provider,start_date,end_date):
+    def __average_features_dir(self, i, j, provider, start_date, end_date):
         """
         Private function that takes the average of the features computed for all the images in the cluster into one feature.
         :param image_dir: string with path to the folder with images for one tile.
@@ -62,10 +62,15 @@ class NNExtractor:
         for a in range(-self.step, 1 + self.step):
             for b in range(-self.step, 1 + self.step):
                 k = i + a
-                l = j + b
+                m = j + b
 
+            try:
                 lon = np.round(self.GRID.centroid_x_coords[k], 5)
-                lat = np.round(self.GRID.centroid_y_coords[l], 5)
+                lat = np.round(self.GRID.centroid_y_coords[m], 5)
+            except IndexError as e:
+                lon = np.round(self.GRID.centroid_x_coords[i], 5)
+                lat = np.round(self.GRID.centroid_y_coords[j], 5)
+                print("Index Error with: ", self.GRID.centroid_x_coords[i], self.GRID.centroid_y_coords[j], "steps: ", a, b)
 
                 if provider == 'Sentinel':
                     file_name = str(lon) + '_' + str(lat) + "_" + str(start_date) + "_" + str(end_date) + '.jpg'
@@ -102,7 +107,8 @@ class NNExtractor:
             name = str(i) + '_' + str(j)
             cnt += 1
 
-            if cnt % 10 == 0: print("Feature extraction : {} tiles out of {}".format(cnt, total), end='\r')
+            if cnt % 10 == 0:
+                print("Feature extraction : {} tiles out of {}".format(cnt, total), end='\r')
 
             final[name] = self.__average_features_dir(i, j, provider, start_date, end_date)
 
