@@ -100,16 +100,16 @@ def individual_r2(id, indicator, scoring, cv):
     Modeller_nn = Modeller(X, rs_features=nn_features, spatial_features=["gpsLatitude", "gpsLongitude"], scoring=scoring, cv_loops=cv_loops)
     Ridge_pipeline = Modeller_nn.make_model_pipeline('Ridge')
     Ridge_scores_nn = Modeller_nn.compute_scores(Ridge_pipeline, y)
-    Ridge_R2_mean = Ridge_scores_nn.mean()
-    Ridge_R2_std = Ridge_scores_nn.std()
-    print("Ridge_R2_nn_mean: ", round(Ridge_R2_mean, 2), "Ridge_R2_nn_std: ", round(Ridge_R2_std, 2))
+    Ridge_R2_mean_nn = Ridge_scores_nn.mean()
+    Ridge_R2_std_nn = Ridge_scores_nn.std()
+    print("Ridge_R2_nn_mean: ", round(Ridge_R2_mean_nn, 2), "Ridge_R2_nn_std: ", round(Ridge_R2_std_nn, 2))
 
     Modeller_no_nn = Modeller(X, rs_features=no_nn_features, spatial_features=["gpsLatitude", "gpsLongitude"], scoring=scoring, cv_loops=cv_loops)
     Ridge_pipeline = Modeller_no_nn.make_model_pipeline('Ridge')
     Ridge_scores_no_nn = Modeller_no_nn.compute_scores(Ridge_pipeline, y)
-    Ridge_R2_mean = Ridge_scores_no_nn.mean()
-    Ridge_R2_std = Ridge_scores_no_nn.std()
-    print("Ridge_R2_no_nn_mean: ", round(Ridge_R2_mean, 2), "Ridge_R2_no_nn_std: ", round(Ridge_R2_std, 2))
+    Ridge_R2_mean_no_nn = Ridge_scores_no_nn.mean()
+    Ridge_R2_std_no_nn = Ridge_scores_no_nn.std()
+    print("Ridge_R2_no_nn_mean: ", round(Ridge_R2_mean_no_nn, 2), "Ridge_R2_no_nn_std: ", round(Ridge_R2_std_no_nn, 2))
 
 
     for feature in no_nn_features:
