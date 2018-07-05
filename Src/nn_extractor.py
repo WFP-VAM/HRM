@@ -111,8 +111,7 @@ class NNExtractor:
 
         return final
 
-    @staticmethod
-    def scoring_postprocess(features):
+    def scoring_postprocess(self, features):
 
         features = features.transpose().reset_index()
 
@@ -125,6 +124,10 @@ class NNExtractor:
         from sklearn import preprocessing
         scaler = preprocessing.StandardScaler()
         out = pd.DataFrame(scaler.fit_transform(out))
+
+        # Renaming columns to have the name of source of satellite image
+        out.columns = [str(col) + '_{}'.format(self.sat) for col in out.columns]
+
         out['index'] = features['index']
         # retrieve i and j
         out["i"] = out["index"].apply(lambda x: x.split('_')[0])
