@@ -101,9 +101,11 @@ def main(id, aggregate_factor, minlat, maxlat, minlon, maxlon, shapefile):
                      })
 
     final_raster = "../tmp/final_raster.tif"
+
+    # take raster indexes only for areas that are "inhabited"
     with rasterio.open(final_raster, "w", **out_meta) as dest:
         dest.write(out_image)
-        list_j, list_i = np.where(dest.read()[0] != dest.nodata)
+        list_j, list_i = np.where((dest.read()[0] != dest.nodata) & (dest.read()[0] > 0.3))
 
     # instantiate GRID
     GRID = RasterGrid(final_raster)
