@@ -105,7 +105,7 @@ def main(id, aggregate_factor, minlat, maxlat, minlon, maxlon, shapefile):
     with rasterio.open(final_raster, "w", **out_meta) as dest:
         out_image[out_image < minimum_pop] = dest.nodata
         dest.write(out_image)
-        list_j, list_i = np.where(dest.read()[0] != dest.nodata)
+        list_j, list_i = np.where((dest.read()[0] != dest.nodata) & (dest.read()[0] > 0.3))
 
     # instantiate GRID
     GRID = RasterGrid(final_raster)
