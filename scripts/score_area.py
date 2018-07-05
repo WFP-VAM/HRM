@@ -101,7 +101,9 @@ def main(id, aggregate_factor, minlat, maxlat, minlon, maxlon, shapefile):
                      })
 
     final_raster = "../tmp/final_raster.tif"
+    minimum_pop = 0.3
     with rasterio.open(final_raster, "w", **out_meta) as dest:
+        out_image[out_image < minimum_pop] = dest.nodata
         dest.write(out_image)
         list_j, list_i = np.where(dest.read()[0] != dest.nodata)
 

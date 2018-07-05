@@ -44,8 +44,8 @@ def individual_r2(id, indicator, scoring, cv):
 
     features_list = list(set(data.columns) - set(data_cols) - set(['i', 'j', 'gpsLatitude', 'gpsLongitude', 'cluster', 'n', indicator, "log_".format(indicator)]))
     print(features_list)
-    nn_features_google = [i for i in features_list if i.endswith('_x')]
-    nn_features_sentinel = [i for i in features_list if i.endswith('_y')]
+    nn_features_google = [i for i in features_list if i.endswith('_Google')]
+    nn_features_sentinel = [i for i in features_list if i.endswith('_Sentinel')]
     nn_features = nn_features_google + nn_features_sentinel
     print(nn_features)
     no_nn_features = list(set(features_list) - set(nn_features))
