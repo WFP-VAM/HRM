@@ -85,7 +85,59 @@ def aggregate(input_rst, output_rst, scale):
 
     output_gr.to_tiff(output_rst.replace(".tif", ""))
 
+def upscaleBaseRaster(base_raster, aggregate_factor, dataset_df, minimum_pop=0.3, minlat=None, maxlat=None, minlon=None, maxlon=None):
+    """
+    reduce resolution of base raster
+    Args:
+        base_raster: filepath to base raster
+        aggregat_factor: self explantory
+        dataset_df: dataframe of dataset for scoring with GPS coords
+        minimum_pop: population density below which areas are omitted
+    """
+    # WorldPop Raster too fine, aggregate #
+    #if aggregate_factor is None:
+    #    aggregate_factor = config["base_raster_aggregation"][0]
 
+    if aggregate_factor > 1:
+        print('INFO: aggregating raster ...')
+        base_raster = "../tmp/local_raster.tif"
+        aggregate(raster, base_raster, aggregate_factor)
+    else:
+        base_raster = raster
+
+    # ---------------- #
+    # AREA OF INTEREST #
+    # ---------------- #
+    data_cols = dataset_df.columns.values
+
+    # create geometry
+    if (minlat is None) and (maxlat is None) and (minlon is None) and (maxlon is None):
+        minlat, maxlat, minlon, maxlon = df_boundaries(dataset_df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
+
+    area = points_to_polygon(minlon, minlat, maxlon, maxlat)
+
+    # crop raster
+    with rasterio.open(base_raster) as src:
+        out_image, out_transform = mask(src, [area], crop=True)
+        out_meta = src.meta.copy()
+
+    # save the resulting raster
+    out_meta.update({"driver": "GTiff",
+                     "height": out_image.shape[1],
+                     "width": out_image.shape[2],
+                     "transform": out_transform
+                     })
+
+    final_raster = "../tmp/final_raster.tif"
+    with rasterio.open(final_raster, "w", **out_meta) as dest:
+        out_image[out_image < minimum_pop] = dest.nodata
+        dest.write(out_image)
+        list_j, list_i = np.where(dest.read()[0] != dest.nodata)
+
+    return final_raster
+    
+    
+    
 def squaretogeojson(lon, lat, d):
     from math import pi, cos
     r_earth = 6378000
