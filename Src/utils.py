@@ -41,6 +41,8 @@ def tifgenerator(outfile, raster_path, df, value='yhat',aggregate_factor=1,crop=
     :param df:
     :return:
     """
+    import rasterio
+    from rasterio.mask import mask
     
     # Aggregate raster per aggregation factor
     if aggregate_factor > 1:
