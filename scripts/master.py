@@ -208,17 +208,16 @@ def run(id):
 
     print('INFO: writing predictions to disk ...')
 
-    Ensemble_pipeline.fit(X.values, y)
-    Ensemble_predictions = Ensemble_pipeline.predict(X.values)
-
+    from sklearn.model_selection import cross_val_predict
     results = pd.DataFrame({
-        'yhat': Ensemble_predictions,
+        'yhat': cross_val_predict(Ensemble_pipeline, X.values, y),
         'y': data[indicator].values,
         'lat': data['gpsLatitude'],
         'lon': data['gpsLongitude']})
     results.to_csv('../Data/Results/config_{}.csv'.format(id), index=False)
 
     # save model for production
+    Ensemble_pipeline.fit(X.values, y)
     from sklearn.externals import joblib
     joblib.dump(Ensemble_pipeline, '../Models/Ensemble_model_config_id_{}.pkl'.format(id))
     print(str(np.datetime64('now')), 'INFO: model saved.')
