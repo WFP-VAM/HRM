@@ -126,7 +126,7 @@ class RasterGrid:
         (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = geo_transform
 
         # Get location of each pixel
-        x_size = 1.0 / int(round(1 / float(x_size)))
+        #x_size = 1.0 / int(round(1 / float(x_size)))
         y_size = - x_size
         y_index = np.arange(bands_data.shape[0])
         x_index = np.arange(bands_data.shape[1])
