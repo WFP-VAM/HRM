@@ -22,10 +22,8 @@ from img_lib import RasterGrid
 from nn_extractor import NNExtractor
 from osm import OSM_extractor
 from utils import df_boundaries, points_to_polygon, tifgenerator, aggregate
-
 import rasterio
 from rasterio.mask import mask
-
 import click
 
 
@@ -101,7 +99,7 @@ def main(id, aggregate_factor, minlat, maxlat, minlon, maxlon, shapefile):
                      })
 
     final_raster = "../tmp/final_raster.tif"
-    minimum_pop = 0.3
+    minimum_pop = 100  # only score areas where there are at agg factor living
     with rasterio.open(final_raster, "w", **out_meta) as dest:
         out_image[out_image < minimum_pop] = dest.nodata
         dest.write(out_image)
