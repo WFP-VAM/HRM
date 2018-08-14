@@ -32,12 +32,13 @@ import click
 @click.command()
 @click.option('--id', type=int)
 @click.option('--aggregate_factor', default=None, type=int)
+@click.option('--min_pop', default=0, type=float)
 @click.option('--minlat', default=None, type=float)
 @click.option('--maxlat', default=None, type=float)
 @click.option('--minlon', default=None, type=float)
 @click.option('--maxlon', default=None, type=float)
 @click.option('--shapefile', default=None, type=str)
-def main(id, aggregate_factor, minlat, maxlat, minlon, maxlon, shapefile):
+def main(id, aggregate_factor, min_pop, minlat, maxlat, minlon, maxlon, shapefile):
 
     # ----------------- #
     # SETUP #############
@@ -68,7 +69,7 @@ def main(id, aggregate_factor, minlat, maxlat, minlon, maxlon, shapefile):
         aggregate_factor = config["base_raster_aggregation"][0]
 
     if aggregate_factor > 1:
-        print('INFO: aggregating raster ...')
+        print('INFO: aggregating raster with factor {}'.format(aggregate_factor))
         base_raster = "../tmp/local_raster.tif"
         aggregate(raster, base_raster, aggregate_factor)
     else:
@@ -99,9 +100,9 @@ def main(id, aggregate_factor, minlat, maxlat, minlon, maxlon, shapefile):
                      })
 
     final_raster = "../tmp/final_raster.tif"
-    minimum_pop = 100  # only score areas where there are at agg factor living
+    print('INFO: Remiving tiles with population under {}'.format(min_pop))  # only score areas where there are at agg factor living
     with rasterio.open(final_raster, "w", **out_meta) as dest:
-        out_image[out_image < minimum_pop] = dest.nodata
+        out_image[out_image < min_pop] = dest.nodata
         dest.write(out_image)
         list_j, list_i = np.where(out_image[0] != dest.nodata)
 
