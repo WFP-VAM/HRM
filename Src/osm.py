@@ -1,11 +1,7 @@
-
-from utils import df_boundaries
-
-
 class OSM_extractor:
 
-    def __init__(self, df):
-        self.minlat, self.maxlat, self.minlon, self.maxlon = df_boundaries(df)
+    def __init__(self, minlon, minlat, maxlon, maxlat):
+        self.minlat, self.maxlat, self.minlon, self.maxlon = minlon, minlat, maxlon, maxlat
 
     def download(self, tag_key='amenity', tag_value='school'):
         '''
@@ -51,7 +47,6 @@ class OSM_extractor:
         gdf.to_file("../Data/Geofiles/OSM/location_{}_{}_{}_{}_{}_{}.shp".format(tag_key, tag_value, self.minlat, self.maxlat, self.minlon, self.maxlon), driver='ESRI Shapefile')
 
         return gdf
-
 
     def distance_to_nearest2(self, df, points_gdf, lat_col="gpsLatitude", lon_col="gpsLongitude"):
         '''

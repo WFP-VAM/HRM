@@ -49,7 +49,7 @@ def run(id):
     # WorldPop Raster too fine, aggregate #
     from utils import aggregate
     if aggregate_factor > 1:
-        print('INFO: aggregating raster ...')
+        print('INFO: aggregating raster {}'.format(raster))
         base_raster = "../tmp/local_raster.tif"
         aggregate(raster, base_raster, aggregate_factor)
     else:
@@ -125,7 +125,7 @@ def run(id):
     # ---------------- #
     # add OSM features #
     # ---------------- #
-    OSM = OSM_extractor(data)
+    OSM = OSM_extractor(minlon, minlat, maxlon, maxlat)
     tags = {"amenity": ["school", "hospital"], "natural": ["tree"]}
     osm_gdf = {}
     osm_features = []

@@ -166,7 +166,7 @@ def main(id, aggregate_factor, min_pop, minlat, maxlat, minlon, maxlon, shapefil
     # ---------------- #
     # add OSM features #
     # ---------------- #
-    OSM = OSM_extractor(dataset_df)
+    OSM = OSM_extractor(minlon, minlat, maxlon, maxlat)
     tags = {"amenity": ["school", "hospital"], "natural": ["tree"]}
     osm_gdf = {}
     osm_features = []
