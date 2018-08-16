@@ -133,19 +133,15 @@ def main(id, aggregate_factor, min_pop, minlat, maxlat, minlon, maxlon, shapefil
             GRID.download_images(list_i, list_j, step, sat, start_date, end_date, zoom_vhr=16, img_size_sentinel=5000)
             print('INFO: images downloaded.')
 
-            if os.path.exists("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline)):
-                print('INFO: already scored.')
-                features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline))
-            else:
-                print('INFO: scoring ...')
-                # extract the features
-                network = NNExtractor(id, sat, GRID.image_dir, sat, step, GRID)
-                print('INFO: extractor instantiated.')
+            print('INFO: scoring ...')
+            # extract the features
+            network = NNExtractor(id, sat, GRID.image_dir, sat, step, GRID)
+            print('INFO: extractor instantiated.')
 
-                features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
-                # normalize the features
+            features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
+            # normalize the features
 
-                features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
+            features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
 
             features = features.drop('index', 1)
             data = data.merge(features, on=["i", "j"])

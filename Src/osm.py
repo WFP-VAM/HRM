@@ -1,7 +1,7 @@
 class OSM_extractor:
 
     def __init__(self, minlon, minlat, maxlon, maxlat):
-        self.minlat, self.maxlat, self.minlon, self.maxlon = minlon, minlat, maxlon, maxlat
+        self.minlon, self.minlat, self.maxlon, self.maxlat = minlon, minlat, maxlon, maxlat
 
     def download(self, tag_key='amenity', tag_value='school'):
         '''
