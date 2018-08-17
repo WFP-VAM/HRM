@@ -155,7 +155,9 @@ def run(id):
     features_list = list(sorted(set(data.columns) - set(data_cols) - set(['i', 'j'])))
 
     # Standardize Features (0 mean and 1 std)
-    data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].std()
+    #data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].std()
+    print("Normalizing : max")
+    data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].max()
 
     data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id), index=False)
 
@@ -218,6 +220,12 @@ def run(id):
 
     # save model for production
     Ensemble_pipeline.fit(X.values, y)
+
+    # Best n_neighbors (kNN)
+    print(Ensemble_pipeline.regr_[0].named_steps['gridsearchcv'].best_params_)
+    # Best alpha (Ridge)
+    print(Ensemble_pipeline.regr_[1].named_steps['gridsearchcv'].best_params_)
+
     from sklearn.externals import joblib
     joblib.dump(Ensemble_pipeline, '../Models/Ensemble_model_config_id_{}.pkl'.format(id))
     print(str(np.datetime64('now')), 'INFO: model saved.')
