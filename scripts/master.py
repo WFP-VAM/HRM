@@ -222,9 +222,9 @@ def run(id):
     Ensemble_pipeline.fit(X.values, y)
 
     # Best n_neighbors (kNN)
-    print(Ensemble_pipeline.regr_[0].named_steps['gridsearchcv'].best_params_)
+    print('INFO: number of neighbours chosen: ', Ensemble_pipeline.regr_[0].named_steps['gridsearchcv'].best_params_)
     # Best alpha (Ridge)
-    print(Ensemble_pipeline.regr_[1].named_steps['gridsearchcv'].best_params_)
+    print('INFO: regularization param chosen: ', Ensemble_pipeline.regr_[1].named_steps['gridsearchcv'].best_params_)
 
     from sklearn.externals import joblib
     joblib.dump(Ensemble_pipeline, '../Models/Ensemble_model_config_id_{}.pkl'.format(id))
