@@ -193,7 +193,9 @@ def main(id, aggregate_factor, min_pop, minlat, maxlat, minlon, maxlon, shapefil
     features_list = list(sorted(set(data.columns) - set(data_cols) - set(['i', 'j'])))
 
     # Standardize Features (0 mean and 1 std)
-    data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].std()
+    # TODO: use mean and max from training
+    print("INFO: Normalizing by the max")
+    data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].max()
 
     data.to_csv("../Data/Features/features_all_id_{}_{}.csv".format(id, pipeline), index=False)
 
@@ -214,6 +216,14 @@ def main(id, aggregate_factor, min_pop, minlat, maxlat, minlon, maxlon, shapefil
     tifgenerator(outfile=outfile,
                  raster_path=final_raster,
                  df=results)
+
+    outfile = "../Data/Results/scalerout_{}_kNN.tif".format(id)
+    results['yhat_kNN'] = ensemble_pipeline.regr_[0].predict(X.values)
+    tifgenerator(outfile=outfile, raster_path=final_raster, df=results, value='yhat_kNN')
+
+    outfile = "../Data/Results/scalerout_{}_Ridge.tif".format(id)
+    results['yhat_Ridge'] = ensemble_pipeline.regr_[1].predict(X.values)
+    tifgenerator(outfile=outfile, raster_path=final_raster, df=results, value='yhat_Ridge')
 
     if shapefile is not None:
         input_rst = "../Data/Results/scalerout_{}.tif".format(id)
