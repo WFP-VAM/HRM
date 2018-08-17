@@ -193,8 +193,8 @@ def main(id, aggregate_factor, min_pop, minlat, maxlat, minlon, maxlon, shapefil
     features_list = list(sorted(set(data.columns) - set(data_cols) - set(['i', 'j'])))
 
     # Standardize Features (0 mean and 1 std)
-    #data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].std()
-    print("Normalizing : max")
+    # TODO: use mean and max from training
+    print("INFO: Normalizing by the max")
     data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].max()
 
     data.to_csv("../Data/Features/features_all_id_{}_{}.csv".format(id, pipeline), index=False)
