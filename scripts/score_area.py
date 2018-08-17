@@ -44,8 +44,6 @@ def main(id, aggregate_factor, min_pop, minlat, maxlat, minlon, maxlon, shapefil
     # SETUP #############
     # ----------------- #
 
-    print("new script")
-
     print(str(np.datetime64('now')), " INFO: config id =", id)
 
     with open('../private_config.yml', 'r') as cfgfile:
