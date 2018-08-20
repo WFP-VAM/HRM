@@ -236,6 +236,9 @@ class RasterGrid:
 
         if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
             gee_tif = sentinel_utils.download_and_unzip(buffer, 3, 6, file_path)
+            while gee_tif is None:
+                # Sometimes the GEE API returns a bad zip file, try again
+                gee_tif = sentinel_utils.download_and_unzip(buffer, 3, 6, file_path)
             try:
                 sentinel_utils.rgbtiffstojpg(gee_tif, file_path, file_name)
             except Exception as e:  # TODO: JB specify which exception
