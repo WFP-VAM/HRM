@@ -83,10 +83,10 @@ def gee_raster_mean(df, gee_raster, lat_col="gpsLatitude", lon_col="gpsLongitude
 
 def download_and_unzip(buffer, a, b, path):
     unzipped = []
-    from zipfile import ZipFile, BadZipfile
+    import zipfile
     try:
-        zip_file = ZipFile(buffer)
-    except BadZipFile: # Often happens with GEE API
+        zip_file = zipfile.ZipFile(buffer)
+    except zipfile.BadZipFile:  # Often happens with GEE API
         print("bad_zip")
         return None
     files = zip_file.namelist()
