@@ -238,6 +238,8 @@ class RasterGrid:
             gee_tif = sentinel_utils.download_and_unzip(buffer, 3, 6, file_path)
             while gee_tif is None:
                 # Sometimes the GEE API returns a bad zip file, try again
+                ur = urllib.request.urlopen(url).read()
+                buffer = BytesIO(ur)
                 gee_tif = sentinel_utils.download_and_unzip(buffer, 3, 6, file_path)
             try:
                 sentinel_utils.rgbtiffstojpg(gee_tif, file_path, file_name)
