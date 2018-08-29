@@ -19,7 +19,7 @@ def gee_url(geojson, start_date, end_date):
             collectionList.size().getInfo()
             lock = 1
         except:  # ee.ee_exception.EEException:
-            print('INFO: found no images with {}% cloud cover. Going to {}%'.format(cloud_cover, cloud_cover+10))
+            print('INFO: found no images with {} cloud cover. Going to {}'.format(cloud_cover, cloud_cover + 10))
             cloud_cover = cloud_cover + 10
 
     image1 = sentinel.mosaic()
