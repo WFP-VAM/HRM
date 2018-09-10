@@ -4,7 +4,7 @@ from img_utils import get_cell_idx
 import gdal
 import numpy as np
 import sentinel_utils
-from utils import squaretogeojson
+from utils import squaretogeojson, retry
 
 
 with open('../private_config.yml', 'r') as cfgfile:
@@ -231,7 +231,11 @@ class RasterGrid:
         from scipy.misc.pilutil import imread
         from io import BytesIO
 
-        ur = urllib.request.urlopen(url).read()
+        @retry(Exception, tries=4)
+        def urlopen_with_retry(url):
+            return urllib.request.urlopen(url).read()
+
+        ur = urlopen_with_retry(url)
         buffer = BytesIO(ur)
 
         if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
