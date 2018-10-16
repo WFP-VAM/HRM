@@ -15,20 +15,19 @@ class NNExtractor:
     -----
     Handles the feature extraction from a pre-trained NN.
     """
-    def __init__(self, id, sat, image_dir, model_type, step, GRID):
+    def __init__(self, id, image_dir, model_type, step, GRID):
         """
         Initializes the NNExtractor object where the model to be used is defined.
         :param config: the config file
         """
         self.id = id
-        self.sat = sat
         self.model_type = model_type
         self.image_dir = image_dir
         self.step = step
         self.GRID = GRID
 
         if self.model_type == 'Google':
-            print("INFO: loading JB's crappy model for Google Images ...")  # TODO: JB load your model here
+            print("INFO: loading model for Google Images ...")
             self.net = load_model('../Models/nightGoo.h5', compile=False)
             self.net.layers.pop()
             self.net.layers.pop()
@@ -126,7 +125,7 @@ class NNExtractor:
         out = pd.DataFrame(scaler.fit_transform(out))
 
         # Renaming columns to have the name of source of satellite image
-        out.columns = [str(col) + '_{}'.format(self.sat) for col in out.columns]
+        out.columns = [str(col) + '_{}'.format(self.model_type) for col in out.columns]
 
         out['index'] = features['index']
         # retrieve i and j

@@ -1,35 +1,7 @@
 import pandas as pd
 import gdal
-import shapefile
 from shapely.geometry import shape, Point
 import numpy as np
-
-
-def zonal_stats(path_to_shape_file, lon, lat, val):
-    """
-    given a shapefile and a list of coordinates and values, it returns the mean of the values for
-    each polygoon.
-    :param path_to_shape_file: string, path to shapefile
-    :param lon: list of longitudes
-    :param lat: list of latitudes
-    :param val: list of values
-    :return: list of means (one for each polygon)
-    """
-
-    def vals_in_poly(lon, lat, vals, pol):
-        v = []
-        for lo, la, val in zip(lon, lat, vals):
-            if pol.contains(Point(lo, lat)):
-                v.append(val)
-        return np.mean(v)
-
-    # loop over the polygons
-    shp = shapefile.Reader(path_to_shape_file)
-    value_means = []
-    for poly in shp.shapes():
-        polygon = shape(poly)
-        value_means.append(vals_in_poly(lon, lat, val, polygon))
-    return value_means
 
 
 def tifgenerator(outfile, raster_path, df, value='yhat'):
@@ -77,7 +49,6 @@ def aggregate(input_rst, output_rst, scale):
     input_gr = gr.from_file(input_rst)
 
     # No data values are replaced with 0 to prevent summing them in each block.
-    print(len(input_gr.raster.data.astype(np.float32) == np.float32(input_gr.nodata_value)))
     input_gr.raster.data[input_gr.raster.data.astype(np.float32) == np.float32(input_gr.nodata_value)] = 0
     input_gr.nodata_value = 0
 

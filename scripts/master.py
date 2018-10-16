@@ -98,7 +98,7 @@ def run(id):
             else:
                 print('INFO: scoring ...')
                 # extract the features
-                network = NNExtractor(id, sat, GRID.image_dir, sat, step, GRID)
+                network = NNExtractor(id, GRID.image_dir, sat, step, GRID)
                 print('INFO: extractor instantiated.')
 
                 features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
