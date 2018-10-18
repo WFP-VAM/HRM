@@ -31,15 +31,13 @@ import click
 # PARAMETERS #
 @click.command()
 @click.option('--id', type=int)
-@click.option('--aggregate_factor', default=None, type=int)
+@click.option('--aggregate_factor', default=1, type=int)
 @click.option('--min_pop', default=0, type=float)
-@click.option('--minlat', default=None, type=float)
-@click.option('--maxlat', default=None, type=float)
-@click.option('--minlon', default=None, type=float)
-@click.option('--maxlon', default=None, type=float)
+@click.option('--bbox', nargs=4, default=None, type=float, help='bounding box <minlat> <maxlat> <minlon> <maxlon>')
 @click.option('--shapefile', default=None, type=str)
-def main(id, aggregate_factor, min_pop, minlat, maxlat, minlon, maxlon, shapefile):
+def main(id, aggregate_factor, min_pop, bbox, shapefile):
 
+    print(bbox)
     # ----------------- #
     # SETUP #############
     # ----------------- #
@@ -82,10 +80,7 @@ def main(id, aggregate_factor, min_pop, minlat, maxlat, minlon, maxlon, shapefil
     data_cols = dataset_df.columns.values
 
     # create geometry
-    if (minlat is None) and (maxlat is None) and (minlon is None) and (maxlon is None):
-        minlat, maxlat, minlon, maxlon = df_boundaries(dataset_df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
-
-    area = points_to_polygon(minlon, minlat, maxlon, maxlat)
+    if bbox is not None: area = points_to_polygon(bbox[0], bbox[1], bbox[2], bbox[3])
 
     # crop raster
     with rasterio.open(base_raster) as src:

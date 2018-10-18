@@ -138,7 +138,7 @@ class RasterGrid:
 
         return x_size, top_left_x_coords, top_left_y_coords, centroid_x_coords, centroid_y_coords, bands_data
 
-    def download_images(self, list_i, list_j, step, provider, start_date="2017-01-01", end_date="2018-01-01", zoom_vhr=16, img_size_sentinel=5000):
+    def download_images(self, list_i, list_j, step, provider, start_date, end_date, zoom_vhr=16, img_size_sentinel=5000):
         """
         Function
         --------
@@ -239,7 +239,7 @@ class RasterGrid:
         buffer = BytesIO(ur)
 
         if (provider == 'Sentinel') or (provider == 'Sentinel_maxNDVI'):
-            gee_tif = sentinel_utils.download_and_unzip(buffer, 3, 6, file_path)
+            gee_tif = sentinel_utils.download_and_unzip(buffer, 3), 6, file_path
             count = 0
             while gee_tif is None:
                 # Sometimes the GEE API returns a bad zip file, try again

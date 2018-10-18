@@ -76,7 +76,7 @@ def run(id):
 
     print("Number of clusters: {} ".format(len(data)))
 
-    list_i, list_j, pipeline = data["i"], data["j"], 'evaluation'
+    pipeline = 'evaluation'
 
     # ------------------------------------------------------------- #
     # download images from Google and Sentinel and Extract Features #

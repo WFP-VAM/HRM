@@ -1,6 +1,4 @@
-import pandas as pd
 import gdal
-from shapely.geometry import shape, Point
 import numpy as np
 
 
@@ -58,26 +56,26 @@ def aggregate(input_rst, output_rst, scale):
 
 
 def squaretogeojson(lon, lat, d):
+    """ Given a pair of coordinates and a zise it returns the geometry."""
     from math import pi, cos
     r_earth = 6378000
     minlon = lon - ((d / 2) / r_earth) * (180 / pi)
     minlat = lat - ((d / 2) / r_earth) * (180 / pi) / cos(lon * pi / 180)
     maxlon = lon + ((d / 2) / r_earth) * (180 / pi)
     maxlat = lat + ((d / 2) / r_earth) * (180 / pi) / cos(lon * pi / 180)
-    #return minx,miny,maxx,maxy
+    # return minx,miny,maxx,maxy
     square = points_to_polygon(minlon, minlat, maxlon, maxlat)
     return square
 
 
 def df_boundaries(df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude"):
-    '''
+    """
     Get GPS coordinates of the boundary box of a DataFrame and add some buffer around it.
-    '''
-    from numpy import round
-    minlat = df["gpsLatitude"].min()
-    maxlat = df["gpsLatitude"].max()
-    minlon = df["gpsLongitude"].min()
-    maxlon = df["gpsLongitude"].max()
+    """
+    minlat = df[lat_col].min()
+    maxlat = df[lat_col].max()
+    minlon = df[lon_col].min()
+    maxlon = df[lon_col].max()
 
     lat_buffer = (maxlat - minlat) * buffer
     lon_buffer = (maxlon - minlon) * buffer
@@ -233,3 +231,46 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
         return f_retry  # true decorator
 
     return deco_retry
+
+
+def gee_url(geojson, start_date, end_date):
+    """ Retrieves a Sentinel-2 image URL for the area and dates specified.
+
+    Args:
+        geojson: area of interest
+        start_date (str): take images from ...
+        end_date (str): take images to ...
+
+    Returns:
+        str: URL to the image.
+    """
+    import ee
+    ee.Initialize()
+
+    lock = 0
+    cloud_cover = 10
+    while lock == 0:
+        sentinel = ee.ImageCollection('COPERNICUS/S2') \
+            .filterDate(start_date, end_date) \
+            .select('B2', 'B3', 'B4') \
+            .filterBounds(geojson) \
+            .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', cloud_cover) \
+            .sort('GENERATION_TIME') \
+            .sort('CLOUDY_PIXEL_PERCENTAGE', False)
+
+        collectionList = sentinel.toList(sentinel.size())
+        # check if there are images, otherwise increase accepteable cloud cover
+        try:  # if it has zero images this line will return an EEException
+            collectionList.size().getInfo()
+            lock = 1
+        except:  # ee.ee_exception.EEException:
+            print('INFO: found no images with {} cloud cover. Going to {}'.format(cloud_cover, cloud_cover + 10))
+            cloud_cover = cloud_cover + 10
+
+    image1 = sentinel.mosaic()
+    path = image1.getDownloadUrl({
+        'scale': 10,
+        'crs': 'EPSG:4326',
+        'region': geojson
+    })
+    return path
