@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-#
-from Src.data_source import DataSource
+from data_source import DataSource
 import os
 import yaml
-from Src.utils import retry
+from utils import retry
 from urllib.request import urlopen
-from Src.utils import squaretogeojson, gee_url
+from utils import squaretogeojson, gee_url
 from io import BytesIO
 import tensorflow as tf
 import numpy as np
 
-with open('private_config.yml', 'r') as cfgfile:
+with open('../private_config.yml', 'r') as cfgfile:
     tokens = yaml.load(cfgfile)
 
 
@@ -26,7 +26,7 @@ class SentinelImages(DataSource):
 
         """ loads the model. """
         print("INFO: loading model for Sentinel images.")
-        self.net = tf.keras.models.load_model('Models/nightSent.h5', compile=False)
+        self.net = tf.keras.models.load_model('../Models/nightSent.h5', compile=False)
         self.net.layers.pop()
         self.net.layers.pop()
         self.net.layers.pop()
@@ -85,6 +85,7 @@ class SentinelImages(DataSource):
         """
         _cnt, _total = 0, len(lon)  # counter and total number of images.
 
+        features = []
         for i, j in zip(lon, lat):
             _cnt += 1
 
@@ -96,11 +97,22 @@ class SentinelImages(DataSource):
             image_preprocess = np.expand_dims(image_preprocess, axis=0)
             image_preprocess = np.divide(image_preprocess, 255.)
 
-            features = self.net.predict(np.array(image_preprocess).reshape(1, 400, 400, 3))
+            features.append(self.net.predict(np.array(image_preprocess).reshape(1, 400, 400, 3)))
 
             if _cnt % 10 == 0: print("Feature extraction : {} tiles out of {}".format(_cnt, _total), end='\r')
 
-            return features
+        #  TODO: save transforms for predicting.
+        # reduce dimensionality
+        from sklearn.decomposition import PCA
+        pca = PCA(n_components=10)
+        out = pca.fit_transform(np.array(features).reshape(len(features), 256))
+
+        # normalize the features
+        from sklearn import preprocessing
+        scaler = preprocessing.StandardScaler()
+        out = scaler.fit_transform(out)
+
+        return out
 
     @staticmethod
     def _download_and_unzip(buffer, a, b, path):
@@ -149,4 +161,4 @@ class SentinelImages(DataSource):
 def test_SentinelImages():
     simages = SentinelImages('test/')
     simages.download([12.407305, 6.864997], [41.821816, 45.832565], start_date='2017-01-01', end_date='2018-01-01')
-    simages.featurize([12.407305, 6.864997], [41.821816, 45.832565], start_date='2017-01-01', end_date='2018-01-01')
+    f = simages.featurize([12.407305, 6.864997], [41.821816, 45.832565], start_date='2017-01-01', end_date='2018-01-01')
