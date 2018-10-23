@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-#
 from data_source import DataSource
 import os
-import yaml
 from utils import retry
 from urllib.request import urlopen
 from io import BytesIO
 from scipy.misc.pilutil import imread, imsave
 import tensorflow as tf
 import numpy as np
-
-with open('../private_config.yml', 'r') as cfgfile:
-    tokens = yaml.load(cfgfile)
 
 
 class GoogleImages(DataSource):
@@ -73,7 +69,7 @@ class GoogleImages(DataSource):
                 center_point = str(j) + "," + str(i)
 
                 url = """https://maps.googleapis.com/maps/api/staticmap?center={}&zoom={}&size={}&maptype={}&key={}""".\
-                    format(center_point, zoom_level, map_size, imagery_set, tokens['Google'])
+                    format(center_point, zoom_level, map_size, imagery_set, os.environ['Google_key'])
 
                 buffer = BytesIO(_urlopen_with_retry(url))
 

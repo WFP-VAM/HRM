@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-#
 from data_source import DataSource
 import os
-import yaml
 from urllib.request import urlopen
 from utils import squaretogeojson, gee_url, retry
 from io import BytesIO
 import tensorflow as tf
 import numpy as np
-
-with open('../private_config.yml', 'r') as cfgfile:
-    tokens = yaml.load(cfgfile)
 
 
 class SentinelImages(DataSource):
