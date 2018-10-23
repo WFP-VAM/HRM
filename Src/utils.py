@@ -274,3 +274,17 @@ def gee_url(geojson, start_date, end_date):
         'region': geojson
     })
     return path
+
+
+def s3_download(bucket, file, dest):
+    """ Given a bucket name, file and destination filepath it downlaods the file from S3"""
+    import boto3
+    import os
+    boto3.client(
+            's3',
+            aws_access_key_id=os.environ['aws_access_key_id'],
+            aws_secret_access_key=os.environ['aws_secret_access_key']
+        )
+    s3 = boto3.resource('s3')
+    s3.Bucket(bucket).download_file(file, dest)
+    print("INFO: file downloaded to ", dest)

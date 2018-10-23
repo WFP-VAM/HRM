@@ -2,11 +2,10 @@
 from data_source import DataSource
 import os
 from urllib.request import urlopen
-from utils import squaretogeojson, gee_url, retry
+from utils import squaretogeojson, gee_url, retry, s3_download
 from io import BytesIO
 import tensorflow as tf
 import numpy as np
-import boto3
 
 
 class SentinelImages(DataSource):
@@ -22,14 +21,8 @@ class SentinelImages(DataSource):
 
         """ loads the model. """
         print("INFO: downloading model. ")
-        boto3.client(
-            's3',
-            aws_access_key_id=os.environ['aws_access_key_id'],
-            aws_secret_access_key=os.environ['aws_secret_access_key']
-        )
-        bucket = 'hrm-models'
-        s3 = boto3.resource('s3')
-        s3.Bucket(bucket).download_file('nightSent.h5', '../Models/nightSent.h5')
+        s3_download('hrm-models', 'nightSent.h5', '../Models/nightSent.h5')
+
         print("INFO: loading model for Sentinel images.")
         self.net = tf.keras.models.load_model('../Models/nightSent.h5', compile=False)
         self.net.layers.pop()

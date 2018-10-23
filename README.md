@@ -1,5 +1,4 @@
-# High Resolution Mapping of Food Security
-
+# High Resolution Mapping of Food Security [![Build Status](https://travis-ci.org/WFP-VAM/HRM.svg?branch=master)](https://travis-ci.org/WFP-VAM/HRM)
 for information on the project, please refer to the [GitHub page](https://wfp-vam.github.io/HRM/).
 
 The application takes as input geo-referenced survey data, then for every survey _cluster_:

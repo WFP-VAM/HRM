@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-#
 from data_source import DataSource
 import os
-from utils import retry
+from utils import retry, s3_download
 from urllib.request import urlopen
 from io import BytesIO
 from scipy.misc.pilutil import imread, imsave
 import tensorflow as tf
 import numpy as np
-import boto3
+
 
 class GoogleImages(DataSource):
     """overloading the DataSource class."""
@@ -22,14 +22,8 @@ class GoogleImages(DataSource):
 
         """ loads the model. """
         print("INFO: downloading model. ")
-        boto3.client(
-            's3',
-            aws_access_key_id=os.environ['aws_access_key_id'],
-            aws_secret_access_key=os.environ['aws_secret_access_key']
-        )
-        bucket = 'hrm-models'
-        s3 = boto3.resource('s3')
-        s3.Bucket(bucket).download_file('nightGoo.h5', '../Models/nightGoo.h5')
+        s3_download('hrm-models', 'nightGoo.h5', '../Models/nightGoo.h5')
+
         print("INFO: loading model for Google Images ...")
         self.net = tf.keras.models.load_model('../Models/nightGoo.h5', compile=False)
         self.net.layers.pop()
