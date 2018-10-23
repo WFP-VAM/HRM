@@ -144,10 +144,3 @@ class GoogleImages(DataSource):
                     new_j.append(j + b)
 
         return new_i, new_j
-
-
-# unit-test
-def test_GoogleImages():
-    gimages = GoogleImages('test/')
-    gimages.download([12.407305, 6.864997], [41.821816, 45.832565], step=True)
-    f = gimages.featurize([12.407305, 6.864997], [41.821816, 45.832565], step=True)

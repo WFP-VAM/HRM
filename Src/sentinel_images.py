@@ -2,9 +2,8 @@
 from data_source import DataSource
 import os
 import yaml
-from utils import retry
 from urllib.request import urlopen
-from utils import squaretogeojson, gee_url
+from utils import squaretogeojson, gee_url, retry
 from io import BytesIO
 import tensorflow as tf
 import numpy as np
@@ -44,6 +43,9 @@ class SentinelImages(DataSource):
             start_date (str): take images from ...
             end_date (str): take images to ...
             img_size (int): size in meters of the image.
+
+        Example:
+            simages.download([12.407305, 6.864997], [41.821816, 45.832565], start_date='2017-01-01', end_date='2018-01-01')
         """
 
         @retry(Exception, tries=4)
@@ -82,6 +84,9 @@ class SentinelImages(DataSource):
 
         Returns:
             covariates for the coordinates pair.
+
+        Example:
+            simages.featurize([12.407305, 6.864997], [41.821816, 45.832565], start_date='2017-01-01', end_date='2018-01-01')
         """
         _cnt, _total = 0, len(lon)  # counter and total number of images.
 
@@ -156,9 +161,3 @@ class SentinelImages(DataSource):
         rgb = np.dstack((b4, b3, b2))
         del b2, b3, b4
         sm.toimage(rgb, cmin=np.percentile(rgb, 2), cmax=np.percentile(rgb, 98)).save(path + name)
-
-# unit-test
-def test_SentinelImages():
-    simages = SentinelImages('test/')
-    simages.download([12.407305, 6.864997], [41.821816, 45.832565], start_date='2017-01-01', end_date='2018-01-01')
-    f = simages.featurize([12.407305, 6.864997], [41.821816, 45.832565], start_date='2017-01-01', end_date='2018-01-01')
