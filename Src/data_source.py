@@ -24,7 +24,7 @@ class DataSource:
             lon (list): list of longitudes.
             lat (lsit): list of latitudes.
         """
-        pass
+        raise NotImplementedError
 
     def featurize(self,  lon, lat):
         """ Returns the covariate for each location
@@ -34,4 +34,4 @@ class DataSource:
         Returns:
             covariates for each lon/lat pair.
         """
-        pass
+        raise NotImplementedError
