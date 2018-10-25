@@ -20,7 +20,7 @@ pandas==0.20.3
 Pillow==5.0.0
 protobuf==3.5.1
 psycopg2==2.7.3.2
-pyOpenSSL==17.2.0
+pyopenssl>=17.5.0
 pyshp==1.2.12
 pytest==3.8.1
 PyYAML==3.12
