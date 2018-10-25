@@ -1,35 +1,5 @@
-import pandas as pd
 import gdal
-import shapefile
-from shapely.geometry import shape, Point
 import numpy as np
-
-
-def zonal_stats(path_to_shape_file, lon, lat, val):
-    """
-    given a shapefile and a list of coordinates and values, it returns the mean of the values for
-    each polygoon.
-    :param path_to_shape_file: string, path to shapefile
-    :param lon: list of longitudes
-    :param lat: list of latitudes
-    :param val: list of values
-    :return: list of means (one for each polygon)
-    """
-
-    def vals_in_poly(lon, lat, vals, pol):
-        v = []
-        for lo, la, val in zip(lon, lat, vals):
-            if pol.contains(Point(lo, lat)):
-                v.append(val)
-        return np.mean(v)
-
-    # loop over the polygons
-    shp = shapefile.Reader(path_to_shape_file)
-    value_means = []
-    for poly in shp.shapes():
-        polygon = shape(poly)
-        value_means.append(vals_in_poly(lon, lat, val, polygon))
-    return value_means
 
 
 def tifgenerator(outfile, raster_path, df, value='yhat'):
@@ -77,7 +47,6 @@ def aggregate(input_rst, output_rst, scale):
     input_gr = gr.from_file(input_rst)
 
     # No data values are replaced with 0 to prevent summing them in each block.
-    print(len(input_gr.raster.data.astype(np.float32) == np.float32(input_gr.nodata_value)))
     input_gr.raster.data[input_gr.raster.data.astype(np.float32) == np.float32(input_gr.nodata_value)] = 0
     input_gr.nodata_value = 0
 
@@ -87,26 +56,26 @@ def aggregate(input_rst, output_rst, scale):
 
 
 def squaretogeojson(lon, lat, d):
+    """ Given a pair of coordinates and a zise it returns the geometry."""
     from math import pi, cos
     r_earth = 6378000
     minlon = lon - ((d / 2) / r_earth) * (180 / pi)
     minlat = lat - ((d / 2) / r_earth) * (180 / pi) / cos(lon * pi / 180)
     maxlon = lon + ((d / 2) / r_earth) * (180 / pi)
     maxlat = lat + ((d / 2) / r_earth) * (180 / pi) / cos(lon * pi / 180)
-    #return minx,miny,maxx,maxy
+    # return minx,miny,maxx,maxy
     square = points_to_polygon(minlon, minlat, maxlon, maxlat)
     return square
 
 
 def df_boundaries(df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude"):
-    '''
+    """
     Get GPS coordinates of the boundary box of a DataFrame and add some buffer around it.
-    '''
-    from numpy import round
-    minlat = df["gpsLatitude"].min()
-    maxlat = df["gpsLatitude"].max()
-    minlon = df["gpsLongitude"].min()
-    maxlon = df["gpsLongitude"].max()
+    """
+    minlat = df[lat_col].min()
+    maxlat = df[lat_col].max()
+    minlon = df[lon_col].min()
+    maxlon = df[lon_col].max()
 
     lat_buffer = (maxlat - minlat) * buffer
     lon_buffer = (maxlon - minlon) * buffer
@@ -262,3 +231,60 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
         return f_retry  # true decorator
 
     return deco_retry
+
+
+def gee_url(geojson, start_date, end_date):
+    """ Retrieves a Sentinel-2 image URL for the area and dates specified.
+
+    Args:
+        geojson: area of interest
+        start_date (str): take images from ...
+        end_date (str): take images to ...
+
+    Returns:
+        str: URL to the image.
+    """
+    import ee
+    ee.Initialize()
+
+    lock = 0
+    cloud_cover = 10
+    while lock == 0:
+        sentinel = ee.ImageCollection('COPERNICUS/S2') \
+            .filterDate(start_date, end_date) \
+            .select('B2', 'B3', 'B4') \
+            .filterBounds(geojson) \
+            .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', cloud_cover) \
+            .sort('GENERATION_TIME') \
+            .sort('CLOUDY_PIXEL_PERCENTAGE', False)
+
+        collectionList = sentinel.toList(sentinel.size())
+        # check if there are images, otherwise increase accepteable cloud cover
+        try:  # if it has zero images this line will return an EEException
+            collectionList.size().getInfo()
+            lock = 1
+        except:  # ee.ee_exception.EEException:
+            print('INFO: found no images with {} cloud cover. Going to {}'.format(cloud_cover, cloud_cover + 10))
+            cloud_cover = cloud_cover + 10
+
+    image1 = sentinel.mosaic()
+    path = image1.getDownloadUrl({
+        'scale': 10,
+        'crs': 'EPSG:4326',
+        'region': geojson
+    })
+    return path
+
+
+def s3_download(bucket, file, dest):
+    """ Given a bucket name, file and destination filepath it downlaods the file from S3"""
+    import boto3
+    import os
+    session = boto3.Session(
+        aws_access_key_id=os.environ['aws_access_key_id'],
+        aws_secret_access_key=os.environ['aws_secret_access_key'],
+        region_name='eu-central-1', )
+
+    s3 = session.resource('s3')
+    s3.Bucket(bucket).download_file(file, dest)
+    print("INFO: file downloaded to ", dest)

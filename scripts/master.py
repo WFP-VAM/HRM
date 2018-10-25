@@ -16,7 +16,6 @@ except FileNotFoundError:
     pass
 sys.path.append(os.path.join("..", "Src"))
 from img_lib import RasterGrid
-from nn_extractor import NNExtractor
 from osm import OSM_extractor
 from utils import df_boundaries, points_to_polygon
 
@@ -76,47 +75,66 @@ def run(id):
 
     print("Number of clusters: {} ".format(len(data)))
 
-    list_i, list_j, pipeline = data["i"], data["j"], 'evaluation'
+    pipeline = 'evaluation'
 
-    # ------------------------------------------------------------- #
-    # download images from Google and Sentinel and Extract Features #
-    # ------------------------------------------------------------- #
-    if config["satellite_config"][0]["satellite_images"] != 'N':
+    # ------------------------------- #
+    # get features from Google images #
+    # ------------------------------- #
+    features_path = "../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline)
+    data_path = "../Data/Satellite/"
+    from google_images import GoogleImages
+    gimages = GoogleImages(data_path)
+    # download the images from the relevant API
+    gimages.download(np.round(data['gpsLongitude'], 5), np.round(data['gpsLatitude'], 5))
+    if os.path.exists(features_path):
+        print('INFO: already scored.')
+        features = pd.read_csv(features_path.format(id, pipeline))
+    else:
+        print('INFO: scoring ...')
+        # extract the features
+        print('INFO: extractor instantiated.')
+        features = gimages.featurize(np.round(data['gpsLongitude'], 5), np.round(data['gpsLatitude'], 5))
+        # normalize the features
+        features = pd.DataFrame(features)
+        features.columns = [str(col) + '_Google' for col in features.columns]
+        features["i"], features["j"] = data["i"], data["j"]
+        features.to_csv("../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline), index=False)
 
-        start_date = config["satellite_config"][0]["start_date"]
-        end_date = config["satellite_config"][0]["end_date"]
+    data = data.merge(features, on=["i", "j"])
+    print('INFO: features extracted.')
 
-        for sat in ['Google', 'Sentinel']:
-            print('INFO: routine for provider: ', sat)
-            # downlaod the images from the relevant API
-            GRID.download_images(list_i, list_j, step, sat, start_date, end_date, zoom_vhr=16, img_size_sentinel=5000)
-            print('INFO: images downloaded.')
+    # --------------------------------- #
+    # get features from Sentinel images #
+    # --------------------------------- #
+    features_path = "../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline)
+    data_path = "../Data/Satellite/"
+    start_date = config["satellite_config"][0]["start_date"]
+    end_date = config["satellite_config"][0]["end_date"]
 
-            if os.path.exists("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline)):
-                print('INFO: already scored.')
-                features = pd.read_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline))
-            else:
-                print('INFO: scoring ...')
-                # extract the features
-                network = NNExtractor(id, sat, GRID.image_dir, sat, step, GRID)
-                print('INFO: extractor instantiated.')
+    from sentinel_images import SentinelImages
+    simages = SentinelImages(data_path)
+    # download the images from the relevant API
+    simages.download(np.round(data['gpsLongitude'], 5), np.round(data['gpsLatitude'], 5), start_date, end_date)
+    if os.path.exists(features_path):
+        print('INFO: already scored.')
+        features = pd.read_csv(features_path.format(id, pipeline))
+    else:
+        print('INFO: scoring ...')
+        # extract the features
+        print('INFO: extractor instantiated.')
+        features = simages.featurize(np.round(data['gpsLongitude'], 5), np.round(data['gpsLatitude'], 5), start_date, end_date)
+        # normalize the features
+        features = pd.DataFrame(features)
+        features.columns = [str(col) + '_Sentinel' for col in features.columns]
+        features["i"], features["j"] = data["i"], data["j"]
+        features.to_csv("../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline), index=False)
 
-                features = network.extract_features(list_i, list_j, sat, start_date, end_date, pipeline)
-                # normalize the features
-
-                features.to_csv("../Data/Features/features_{}_id_{}_{}.csv".format(sat, id, pipeline), index=False)
-
-            features = features.drop('index', 1)
-            data = data.merge(features, on=["i", "j"])
-
-        data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id), index=False)
-
-        print('INFO: features extracted.')
+    data = data.merge(features, on=["i", "j"])
+    print('INFO: features extracted.')
 
     # --------------- #
     # add nightlights #
     # --------------- #
-
     from nightlights import Nightlights
 
     NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date_start, nightlights_date_end)
