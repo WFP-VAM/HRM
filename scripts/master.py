@@ -15,7 +15,7 @@ try:
 except FileNotFoundError:
     pass
 sys.path.append(os.path.join("..", "Src"))
-from img_lib import RasterGrid
+from base_layer import BaseLayer
 from osm import OSM_extractor
 from utils import df_boundaries, points_to_polygon
 
@@ -44,32 +44,28 @@ def run(id):
     s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
     if config['satellite_config'][0].get('satellite_images') == 'Y': step = config['satellite_config'][0].get("satellite_step")
 
-    # ----------------------------------- #
-    # WorldPop Raster too fine, aggregate #
-    from utils import aggregate
-    if aggregate_factor > 1:
-        print('INFO: aggregating raster {}'.format(raster))
-        base_raster = "../tmp/local_raster.tif"
-        aggregate(raster, base_raster, aggregate_factor)
-    else:
-        base_raster = raster
-
-    # -------- #
-    # DATAPREP #
-    # -------- #
+    # --------------------- #
+    # Setting up playground #
+    # --------------------- #
     data = pd.read_csv(dataset)
     data_cols = data.columns.values
 
-    # grid
-    GRID = RasterGrid(base_raster)
-    list_i, list_j = GRID.get_gridcoordinates(data)
+    # base layer
+    GRID = BaseLayer(raster,
+                     np.round(data['gpsLongitude'], 5),
+                     np.round(data['gpsLatitude'], 5))
+    # TODO: we should enforce the most accurate i and j when training, i.e. aggregate = 1?
+    if aggregate_factor > 1:
+        print('INFO: aggregating raster x {}'.format(aggregate_factor))
+        GRID = GRID.aggregate(aggregate_factor)
 
     # OPTIONAL: REPLACING THE CLUSTER COORDINATES BY THE CORRESPONDING GRID CENTER COORDINATES
     # data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
 
-    data["i"], data["j"] = list_i, list_j
+    data["i"], data["j"] = GRID.i, GRID.j
 
     # Get Polygon Geojson of the boundaries
+    # TODO: maybe go into BaseLayer class?
     minlat, maxlat, minlon, maxlon = df_boundaries(data, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
     area = points_to_polygon(minlon, minlat, maxlon, maxlat)
 
@@ -85,7 +81,7 @@ def run(id):
     from google_images import GoogleImages
     gimages = GoogleImages(data_path)
     # download the images from the relevant API
-    gimages.download(np.round(data['gpsLongitude'], 5), np.round(data['gpsLatitude'], 5))
+    gimages.download(GRID.lon, GRID.lat)
     if os.path.exists(features_path):
         print('INFO: already scored.')
         features = pd.read_csv(features_path.format(id, pipeline))
@@ -93,7 +89,7 @@ def run(id):
         print('INFO: scoring ...')
         # extract the features
         print('INFO: extractor instantiated.')
-        features = gimages.featurize(np.round(data['gpsLongitude'], 5), np.round(data['gpsLatitude'], 5))
+        features = gimages.featurize(GRID.lon, GRID.lat)
         # normalize the features
         features = pd.DataFrame(features)
         features.columns = [str(col) + '_Google' for col in features.columns]
@@ -114,7 +110,7 @@ def run(id):
     from sentinel_images import SentinelImages
     simages = SentinelImages(data_path)
     # download the images from the relevant API
-    simages.download(np.round(data['gpsLongitude'], 5), np.round(data['gpsLatitude'], 5), start_date, end_date)
+    simages.download(GRID.lon, GRID.lat, start_date, end_date)
     if os.path.exists(features_path):
         print('INFO: already scored.')
         features = pd.read_csv(features_path.format(id, pipeline))
@@ -122,7 +118,7 @@ def run(id):
         print('INFO: scoring ...')
         # extract the features
         print('INFO: extractor instantiated.')
-        features = simages.featurize(np.round(data['gpsLongitude'], 5), np.round(data['gpsLatitude'], 5), start_date, end_date)
+        features = simages.featurize(GRID.lon, GRID.lat, start_date, end_date)
         # normalize the features
         features = pd.DataFrame(features)
         features.columns = [str(col) + '_Sentinel' for col in features.columns]
