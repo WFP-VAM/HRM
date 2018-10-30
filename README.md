@@ -67,9 +67,6 @@ Data
 + Validation on more datasets and usecases.
 + Adding features coming from other sources 
   + Ex: conflict GIS maps or CDR data (WorldPop approach) 
-  
-### Ridge Regression
-![coefficientsa as a function of the L2 parameter Alpha for VGG16 features](https://github.com/WFP-VAM/HRM/blob/master/Plots/alpha_for_VGG16_features.png)
 
 ### Contacts
 For more info to collaborate, use or just to know more reach us at jeanbaptiste.pasquier@wfp.org and lorenzo.riches@wfp.org or submit an issue.
