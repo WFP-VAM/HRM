@@ -22,16 +22,13 @@ class GoogleImages(DataSource):
 
         """ loads the model. """
         print("INFO: downloading model. ")
-        s3_download('hrm-models', 'nightGoo.h5', '../Models/nightGoo.h5')
+        s3_download('hrm-models', 'Google.h5', '../Models/Google.h5')
 
         print("INFO: loading model for Google Images ...")
-        self.net = tf.keras.models.load_model('../Models/nightGoo.h5', compile=False)
-        self.net.layers.pop()
-        self.net.layers.pop()
-        self.net.layers.pop()
-        self.net.layers.pop()
-        x = tf.keras.layers.GlobalAveragePooling2D(name='output_maxpool')(self.net.layers[-1].output)
-        self.net = tf.keras.models.Model(inputs=self.net.input, outputs=x)
+        self.net = tf.keras.models.load_model('../Models/Google.h5', compile=False)
+        self.net = tf.keras.models.Model(
+            inputs=self.net.input,
+            outputs=self.net.get_layer('features').output)
 
     def download(self, lon, lat, step=False):
         """ given the list of coordinates, it downloads the corresponding satellite images.
@@ -120,7 +117,7 @@ class GoogleImages(DataSource):
         # reduce dimensionality
         from sklearn.decomposition import PCA
         pca = PCA(n_components=10)
-        out = pca.fit_transform(np.array(features).reshape(len(features), 256))
+        out = pca.fit_transform(np.array(features).reshape(len(features), -1))
 
         # normalize the features
         from sklearn import preprocessing
