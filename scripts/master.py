@@ -38,7 +38,6 @@ def run(id):
     dataset = config.get("dataset_filename")[0]
     indicator = config["indicator"][0]
     raster = config["satellite_grid"][0]
-    aggregate_factor = config["base_raster_aggregation"][0]
     scope = config["scope"][0]
     nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), config["nightlights_date"][0].get("end")
     s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
@@ -49,20 +48,16 @@ def run(id):
     # --------------------- #
     data = pd.read_csv(dataset)
     data_cols = data.columns.values
+    data['gpsLongitude'] = np.round(data['gpsLongitude'], 5)
+    data['gpsLatitude'] = np.round(data['gpsLatitude'], 5)
+
+    # avoid duplicates
+    data = data[['gpsLongitude', 'gpsLatitude', indicator]].groupby(['gpsLongitude', 'gpsLatitude'], as_index=False).mean()
 
     # base layer
-    GRID = BaseLayer(raster,
-                     np.round(data['gpsLongitude'], 5),
-                     np.round(data['gpsLatitude'], 5))
-    # TODO: we should enforce the most accurate i and j when training, i.e. aggregate = 1?
-    if aggregate_factor > 1:
-        print('INFO: aggregating raster x {}'.format(aggregate_factor))
-        GRID = GRID.aggregate(aggregate_factor)
-
-    # OPTIONAL: REPLACING THE CLUSTER COORDINATES BY THE CORRESPONDING GRID CENTER COORDINATES
-    # data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
-
-    data["i"], data["j"] = GRID.i, GRID.j
+    GRID = BaseLayer(raster, data['gpsLongitude'], data['gpsLatitude'])
+    data['i'], data['j'] = GRID.i, GRID.j
+    # TODO: we should enforce the most accurate i and j when training, i.e. aggregate = 1? but still group on on the coordinates
 
     # Get Polygon Geojson of the boundaries
     # TODO: maybe go into BaseLayer class?
@@ -93,7 +88,7 @@ def run(id):
         # normalize the features
         features = pd.DataFrame(features)
         features.columns = [str(col) + '_Google' for col in features.columns]
-        features["i"], features["j"] = data["i"], data["j"]
+        features["i"], features["j"] = GRID.i, GRID.j
         features.to_csv("../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline), index=False)
 
     data = data.merge(features, on=["i", "j"])
@@ -122,7 +117,7 @@ def run(id):
         # normalize the features
         features = pd.DataFrame(features)
         features.columns = [str(col) + '_Sentinel' for col in features.columns]
-        features["i"], features["j"] = data["i"], data["j"]
+        features["i"], features["j"] = GRID.i, GRID.j
         features.to_csv("../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline), index=False)
 
     data = data.merge(features, on=["i", "j"])
@@ -133,8 +128,9 @@ def run(id):
     # --------------- #
     from nightlights import Nightlights
 
-    NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date_start, nightlights_date_end)
-    data['nightlights'] = NGT.nightlights_values(data)
+    nlights = Nightlights('../Data/Geofiles/')
+    nlights.download(area, nightlights_date_start, nightlights_date_end)
+    data['nightlights'] = nlights.featurize(GRID.lon, GRID.lat)
 
     # ---------------- #
     # add OSM features #

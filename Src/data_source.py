@@ -17,20 +17,23 @@ class DataSource:
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
 
-    def download(self, lon, lat):
+    def download(self, **kwargs):
         """ Download the data relevant to the area of interest (aoi)
 
         Args:
             lon (list): list of longitudes.
             lat (lsit): list of latitudes.
+            or
+            area (str): GeoJSON setting the area of interest.
         """
         raise NotImplementedError
 
-    def featurize(self,  lon, lat):
+    def featurize(self, lon, lat):
         """ Returns the covariate for each location
         Args:
             lon (list): list of longitudes.
             lat (lsit): list of latitudes.
+
         Returns:
             covariates for each lon/lat pair.
         """

@@ -81,11 +81,11 @@ class GoogleImages(DataSource):
                     imsave(os.path.join(self.directory, file_name), image[50:450, :, :])
 
     def featurize(self, lon, lat, step=False):
-        """ Given a lon lat pair, it extract the features from the image (if there) using the NN.
+        """ Given lon lat lists, it extract the features from the image (if there) using the NN.
 
         Args:
             lon (list): list of longitudes.
-            lat (lsit): list of latitudes.
+            lat (list): list of latitudes.
             step (bool): if you want to add buffer images. SMore accurate but slow.
 
         Returns:
