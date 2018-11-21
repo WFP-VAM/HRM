@@ -127,7 +127,7 @@ class GoogleImages(DataSource):
         return out
 
     @staticmethod
-    def add_steps(lon, lat, step = 0.009):
+    def add_steps(lon, lat, step=0.009):
         """
         returns the augmented set of coordinates for all the 9 images adjacent to the center.
         0.009 ~ 1km at the equator.
