@@ -6,6 +6,7 @@ from utils import squaretogeojson, gee_url, retry, s3_download
 from io import BytesIO
 import tensorflow as tf
 import numpy as np
+from PIL import Image
 
 
 class SentinelImages(DataSource):
@@ -21,16 +22,13 @@ class SentinelImages(DataSource):
 
         """ loads the model. """
         print("INFO: downloading model. ")
-        s3_download('hrm-models', 'nightSent.h5', '../Models/nightSent.h5')
+        s3_download('hrm-models', 'Sentinel.h5', '../Models/Sentinel.h5')
 
-        print("INFO: loading model for Sentinel images.")
-        self.net = tf.keras.models.load_model('../Models/nightSent.h5', compile=False)
-        self.net.layers.pop()
-        self.net.layers.pop()
-        self.net.layers.pop()
-        self.net.layers.pop()
-        x = tf.keras.layers.GlobalAveragePooling2D(name='output_maxpool')(self.net.layers[-1].output)
-        self.net = tf.keras.models.Model(inputs=self.net.input, outputs=x)
+        print("INFO: loading model for Sentinel Images ...")
+        self.net = tf.keras.models.load_model('../Models/Sentinel.h5', compile=False)
+        self.net = tf.keras.models.Model(
+            inputs=self.net.input,
+            outputs=self.net.get_layer('features').output)
 
     def download(self, lon, lat, start_date=None, end_date=None, img_size=5000):
         """
@@ -96,12 +94,10 @@ class SentinelImages(DataSource):
             file_name = str(i) + '_' + str(j) + "_" + str(start_date) + "_" + str(end_date) + "_" + str(img_size) + '.jpg'
             img_path = os.path.join(self.directory, file_name)
 
-            img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))
-            image_preprocess = tf.keras.preprocessing.image.img_to_array(img)
-            image_preprocess = np.expand_dims(image_preprocess, axis=0)
-            image_preprocess = np.divide(image_preprocess, 255.)
+            image = Image.open(img_path, 'r')
+            image = np.array(image)[:500, :500, :] / 255.
 
-            features.append(self.net.predict(np.array(image_preprocess).reshape(1, 400, 400, 3)))
+            features.append(self.net.predict(image.reshape(1, 500, 500, 3)))
 
             if _cnt % 10 == 0: print("Feature extraction : {} tiles out of {}".format(_cnt, _total), end='\r')
 
@@ -109,7 +105,7 @@ class SentinelImages(DataSource):
         # reduce dimensionality
         from sklearn.decomposition import PCA
         pca = PCA(n_components=10)
-        out = pca.fit_transform(np.array(features).reshape(len(features), 256))
+        out = pca.fit_transform(np.array(features).reshape(len(features), -1))
 
         # normalize the features
         from sklearn import preprocessing
