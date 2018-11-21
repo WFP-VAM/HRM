@@ -110,11 +110,6 @@ class SentinelImages(DataSource):
         pca = PCA(n_components=10)
         out = pca.fit_transform(np.array(features).reshape(len(features), -1))
 
-        # normalize the features
-        from sklearn import preprocessing
-        scaler = preprocessing.StandardScaler()
-        out = scaler.fit_transform(out)
-
         return out
 
     @staticmethod
@@ -129,7 +124,6 @@ class SentinelImages(DataSource):
         files = zip_file.namelist()
         for i in range(a, b):
             zip_file.extract(files[i], path + "/tiff/")
-            # print("{} downloaded and unzippped".format(files[i]))
             unzipped.append(files[i])
         return unzipped
 

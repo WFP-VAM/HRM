@@ -41,7 +41,7 @@ class GoogleImages(DataSource):
 
         Args:
             lon (list): list of longitudes.
-            lat (lsit): list of latitudes.
+            lat (list): list of latitudes.
             step (bool): if you want to add buffer images. SMore accurate but slow.
         """
         if step:
@@ -98,7 +98,7 @@ class GoogleImages(DataSource):
             print('INFO: adding steps to coordinates set.')
             lon, lat = self.add_steps(lon, lat)
 
-        _cnt, _total = 0, len(lon) # counter and total number of images.
+        _cnt, _total = 0, len(lon)  # counter and total number of images.
 
         features = []
         for i, j in zip(lon, lat):
@@ -121,11 +121,6 @@ class GoogleImages(DataSource):
         from sklearn.decomposition import PCA
         pca = PCA(n_components=10)
         out = pca.fit_transform(np.array(features).reshape(len(features), -1))
-
-        # normalize the features
-        from sklearn import preprocessing
-        scaler = preprocessing.StandardScaler()
-        out = scaler.fit_transform(out)
 
         return out
 
