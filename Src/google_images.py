@@ -8,6 +8,9 @@ from scipy.misc.pilutil import imread, imsave
 import tensorflow as tf
 import numpy as np
 
+MODEL = 'nightGoo.h5'  # Google.h5
+LAYER = 'dense_1'  # features
+
 
 class GoogleImages(DataSource):
     """overloading the DataSource class."""
@@ -22,13 +25,13 @@ class GoogleImages(DataSource):
 
         """ loads the model. """
         print("INFO: downloading model. ")
-        s3_download('hrm-models', 'Google.h5', '../Models/Google.h5')
+        s3_download('hrm-models', MODEL, '../Models/{}'.format(MODEL))
 
         print("INFO: loading model for Google Images ...")
-        self.net = tf.keras.models.load_model('../Models/Google.h5', compile=False)
+        self.net = tf.keras.models.load_model('../Models/{}'.format(MODEL), compile=False)
         self.net = tf.keras.models.Model(
             inputs=self.net.input,
-            outputs=self.net.get_layer('features').output)
+            outputs=self.net.get_layer(LAYER).output)
 
     def download(self, lon, lat, step=False):
         """ given the list of coordinates, it downloads the corresponding satellite images.
