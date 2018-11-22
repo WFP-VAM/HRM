@@ -74,7 +74,7 @@ class S2indexes:
 
         return [str(self.area["coordinates"]) + "NDVI_max.tif", str(self.area["coordinates"]) + "NDBI_max.tif", str(self.area["coordinates"]) + "NDWI_max.tif"]
 
-    def rms_values(self, df, lon_col='gpsLongitude', lat_col='gpsLatitude'):
+    def rms_values(self, longitudes, latitudes):
         """
         Given a dataset with latitude and longitude columns, it returns the nightlight value at each point.
         :param df: DataFrame
@@ -91,20 +91,16 @@ class S2indexes:
             print('Remote Sensing Indexes Raster too big!')
             raise
 
-        def val_extract(row):
+        veg, build, wat = [], [], []
+        for lon, lat in zip(longitudes, latitudes):
 
-            try:  # TODO: BUFFER!
-                i, j = NDVI.index(row[lon_col], row[lat_col])
-                veg = NDVI.read(1)[i, j]
-                build = NDBI.read(1)[i, j]
-                wat = NDWI.read(1)[i, j]
-                return veg, build, wat
+            # try:  # TODO: BUFFER!
+            i, j = NDVI.index(lon, lat)
+            # except IndexError as e:
+            #     print(e, lon, ", ", row[lat_col])
+            #
+            veg.append(NDVI.read(1)[i, j])
+            build.append(NDBI.read(1)[i, j])
+            wat.append(NDWI.read(1)[i, j])
 
-            except IndexError as e:
-                print(e, row[lon_col], ", ", row[lat_col])
-                veg = 0
-                build = 0
-                wat = 0
-                return veg, build, wat
-
-        return df.apply(val_extract, axis=1)
+        return veg, build, wat

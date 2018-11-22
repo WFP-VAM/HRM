@@ -8,6 +8,9 @@ from scipy.misc.pilutil import imread, imsave
 import tensorflow as tf
 import numpy as np
 
+MODEL = 'nightGoo.h5'  # Google.h5
+LAYER = 'dense_1'  # features
+
 
 class GoogleImages(DataSource):
     """overloading the DataSource class."""
@@ -22,13 +25,13 @@ class GoogleImages(DataSource):
 
         """ loads the model. """
         print("INFO: downloading model. ")
-        s3_download('hrm-models', 'Google.h5', '../Models/Google.h5')
+        s3_download('hrm-models', MODEL, '../Models/{}'.format(MODEL))
 
         print("INFO: loading model for Google Images ...")
-        self.net = tf.keras.models.load_model('../Models/Google.h5', compile=False)
+        self.net = tf.keras.models.load_model('../Models/{}'.format(MODEL), compile=False)
         self.net = tf.keras.models.Model(
             inputs=self.net.input,
-            outputs=self.net.get_layer('features').output)
+            outputs=self.net.get_layer(LAYER).output)
 
     def download(self, lon, lat, step=False):
         """ given the list of coordinates, it downloads the corresponding satellite images.
@@ -38,7 +41,7 @@ class GoogleImages(DataSource):
 
         Args:
             lon (list): list of longitudes.
-            lat (lsit): list of latitudes.
+            lat (list): list of latitudes.
             step (bool): if you want to add buffer images. SMore accurate but slow.
         """
         if step:
@@ -81,11 +84,11 @@ class GoogleImages(DataSource):
                     imsave(os.path.join(self.directory, file_name), image[50:450, :, :])
 
     def featurize(self, lon, lat, step=False):
-        """ Given a lon lat pair, it extract the features from the image (if there) using the NN.
+        """ Given lon lat lists, it extract the features from the image (if there) using the NN.
 
         Args:
             lon (list): list of longitudes.
-            lat (lsit): list of latitudes.
+            lat (list): list of latitudes.
             step (bool): if you want to add buffer images. SMore accurate but slow.
 
         Returns:
@@ -95,7 +98,7 @@ class GoogleImages(DataSource):
             print('INFO: adding steps to coordinates set.')
             lon, lat = self.add_steps(lon, lat)
 
-        _cnt, _total = 0, len(lon) # counter and total number of images.
+        _cnt, _total = 0, len(lon)  # counter and total number of images.
 
         features = []
         for i, j in zip(lon, lat):
@@ -119,15 +122,10 @@ class GoogleImages(DataSource):
         pca = PCA(n_components=10)
         out = pca.fit_transform(np.array(features).reshape(len(features), -1))
 
-        # normalize the features
-        from sklearn import preprocessing
-        scaler = preprocessing.StandardScaler()
-        out = scaler.fit_transform(out)
-
         return out
 
     @staticmethod
-    def add_steps(lon, lat, step = 0.009):
+    def add_steps(lon, lat, step=0.009):
         """
         returns the augmented set of coordinates for all the 9 images adjacent to the center.
         0.009 ~ 1km at the equator.

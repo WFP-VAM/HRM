@@ -48,18 +48,18 @@ class OSM_extractor:
 
         return gdf
 
-    def distance_to_nearest2(self, df, points_gdf, lat_col="gpsLatitude", lon_col="gpsLongitude"):
-        '''
-        Ditance for a point in a pandas dataframe to the nearest point in a geodataframe.
-        '''
-        # To do: Use a spatial index for faster computation
-        from shapely.ops import nearest_points
-        from shapely.geometry import Point
-        geom_union = points_gdf.unary_union
-        point = Point(df[lon_col], df[lat_col])
-        nearest_point = nearest_points(point, geom_union)[1]
-        distance = nearest_point.distance(point)
-        return distance
+    # def distance_to_nearest2(self, df, points_gdf, lat_col="gpsLatitude", lon_col="gpsLongitude"):
+    #     '''
+    #     Ditance for a point in a pandas dataframe to the nearest point in a geodataframe.
+    #     '''
+    #     # To do: Use a spatial index for faster computation
+    #     from shapely.ops import nearest_points
+    #     from shapely.geometry import Point
+    #     geom_union = points_gdf.unary_union
+    #     point = Point(df[lon_col], df[lat_col])
+    #     nearest_point = nearest_points(point, geom_union)[1]
+    #     distance = nearest_point.distance(point)
+    #     return distance
 
     def gpd_to_tree(self, points_gdf):
         import scipy.spatial as spatial
@@ -69,12 +69,13 @@ class OSM_extractor:
         point_tree = spatial.cKDTree(gps)
         return point_tree
 
-    def distance_to_nearest(self, df, point_tree, lat_col="gpsLatitude", lon_col="gpsLongitude"):
-        '''
-        Ditance between a point in a pandas dataframe and the nearest point in a scipy kd-tree.
-        '''
-        distance = point_tree.query([df[lon_col], df[lat_col]], k=1)[0]
-        return distance
+    def distance_to_nearest(self, latitudes, longitudes, point_tree):
+        """ Ditance between a point in a pandas dataframe and the nearest point in a scipy kd-tree.
+        """
+        distances = []
+        for lon, lat in zip(longitudes, latitudes):
+            distances.append(point_tree.query([lon, lat], k=1)[0])
+        return distances
 
     def density(self, df, points_gdf, distance=5000, lat_col="gpsLatitude", lon_col="gpsLongitude"):
         '''

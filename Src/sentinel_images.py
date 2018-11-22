@@ -8,6 +8,9 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 
+MODEL = 'nightSent.h5'  # Sentinel.h5
+LAYER = 'dense_1'  # features
+IMG_SIZE = 400  # 500
 
 class SentinelImages(DataSource):
     """overloading the DataSource class."""
@@ -22,13 +25,13 @@ class SentinelImages(DataSource):
 
         """ loads the model. """
         print("INFO: downloading model. ")
-        s3_download('hrm-models', 'Sentinel.h5', '../Models/Sentinel.h5')
+        s3_download('hrm-models', MODEL, '../Models/{}'.format(MODEL))
 
         print("INFO: loading model for Sentinel Images ...")
-        self.net = tf.keras.models.load_model('../Models/Sentinel.h5', compile=False)
+        self.net = tf.keras.models.load_model('../Models/{}'.format(MODEL), compile=False)
         self.net = tf.keras.models.Model(
             inputs=self.net.input,
-            outputs=self.net.get_layer('features').output)
+            outputs=self.net.get_layer(LAYER).output)
 
     def download(self, lon, lat, start_date=None, end_date=None, img_size=5000):
         """
@@ -95,9 +98,9 @@ class SentinelImages(DataSource):
             img_path = os.path.join(self.directory, file_name)
 
             image = Image.open(img_path, 'r')
-            image = np.array(image)[:500, :500, :] / 255.
+            image = np.array(image)[:IMG_SIZE, :IMG_SIZE, :] / 255.
 
-            features.append(self.net.predict(image.reshape(1, 500, 500, 3)))
+            features.append(self.net.predict(image.reshape(1, IMG_SIZE, IMG_SIZE, 3)))
 
             if _cnt % 10 == 0: print("Feature extraction : {} tiles out of {}".format(_cnt, _total), end='\r')
 
@@ -106,11 +109,6 @@ class SentinelImages(DataSource):
         from sklearn.decomposition import PCA
         pca = PCA(n_components=10)
         out = pca.fit_transform(np.array(features).reshape(len(features), -1))
-
-        # normalize the features
-        from sklearn import preprocessing
-        scaler = preprocessing.StandardScaler()
-        out = scaler.fit_transform(out)
 
         return out
 
@@ -126,7 +124,6 @@ class SentinelImages(DataSource):
         files = zip_file.namelist()
         for i in range(a, b):
             zip_file.extract(files[i], path + "/tiff/")
-            # print("{} downloaded and unzippped".format(files[i]))
             unzipped.append(files[i])
         return unzipped
 

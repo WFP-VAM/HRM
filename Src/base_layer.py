@@ -53,12 +53,12 @@ class BaseLayer:
         list_j = []
         for x, y in zip(lon, lat):
             try:
-                i = np.where(self.top_left_x_coords < x)[0][-1]
-                j = np.where(self.top_left_y_coords > y)[0][-1]
+                list_i.append(np.where(self.top_left_x_coords < x)[0][-1])
+                list_j.append(np.where(self.top_left_y_coords > y)[0][-1])
+
             except IndexError:
                 print("Coordinates {},{} out of Country bounds".format(x, y))
-            list_i.append(i)
-            list_j.append(j)
+
 
         return (list_i, list_j)
 

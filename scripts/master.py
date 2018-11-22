@@ -17,7 +17,7 @@ except FileNotFoundError:
 sys.path.append(os.path.join("..", "Src"))
 from base_layer import BaseLayer
 from osm import OSM_extractor
-from utils import df_boundaries, points_to_polygon
+from utils import boundaries, points_to_polygon
 
 
 def run(id):
@@ -38,7 +38,6 @@ def run(id):
     dataset = config.get("dataset_filename")[0]
     indicator = config["indicator"][0]
     raster = config["satellite_grid"][0]
-    aggregate_factor = config["base_raster_aggregation"][0]
     scope = config["scope"][0]
     nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), config["nightlights_date"][0].get("end")
     s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
@@ -48,28 +47,23 @@ def run(id):
     # Setting up playground #
     # --------------------- #
     data = pd.read_csv(dataset)
-    data_cols = data.columns.values
+    print(str(np.datetime64('now')), 'INFO: original dataset: ', data.shape[0])
+    data['gpsLongitude'] = np.round(data['gpsLongitude'], 5)
+    data['gpsLatitude'] = np.round(data['gpsLatitude'], 5)
+
+    # avoid duplicates
+    data = data[['gpsLongitude', 'gpsLatitude', indicator]].groupby(['gpsLongitude', 'gpsLatitude']).mean()
 
     # base layer
-    GRID = BaseLayer(raster,
-                     np.round(data['gpsLongitude'], 5),
-                     np.round(data['gpsLatitude'], 5))
+    GRID = BaseLayer(raster, data.index.get_level_values('gpsLongitude'), data.index.get_level_values('gpsLatitude'))
     # TODO: we should enforce the most accurate i and j when training, i.e. aggregate = 1?
-    if aggregate_factor > 1:
-        print('INFO: aggregating raster x {}'.format(aggregate_factor))
-        GRID = GRID.aggregate(aggregate_factor)
-
-    # OPTIONAL: REPLACING THE CLUSTER COORDINATES BY THE CORRESPONDING GRID CENTER COORDINATES
-    # data['gpsLongitude'], data['gpsLatitude'] = coords_x, coords_y
-
-    data["i"], data["j"] = GRID.i, GRID.j
 
     # Get Polygon Geojson of the boundaries
     # TODO: maybe go into BaseLayer class?
-    minlat, maxlat, minlon, maxlon = df_boundaries(data, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude")
+    minlat, maxlat, minlon, maxlon = boundaries(GRID.lat, GRID.lon, buffer=0.05)
     area = points_to_polygon(minlon, minlat, maxlon, maxlat)
 
-    print("Number of clusters: {} ".format(len(data)))
+    print(str(np.datetime64('now')), "INFO: Number of clusters: {} ".format(len(data)))
 
     pipeline = 'evaluation'
 
@@ -79,25 +73,25 @@ def run(id):
     features_path = "../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline)
     data_path = "../Data/Satellite/"
     from google_images import GoogleImages
-    gimages = GoogleImages(data_path)
-    # download the images from the relevant API
-    gimages.download(GRID.lon, GRID.lat)
+
     if os.path.exists(features_path):
         print('INFO: already scored.')
-        features = pd.read_csv(features_path.format(id, pipeline))
+        features = pd.read_csv(
+            features_path.format(id, pipeline),
+            index_col=['gpsLongitude', 'gpsLatitude'],
+            float_precision='round_trip')
     else:
-        print('INFO: scoring ...')
+        gimages = GoogleImages(data_path)
+        # download the images from the relevant API
+        gimages.download(GRID.lon, GRID.lat)
         # extract the features
-        print('INFO: extractor instantiated.')
-        features = gimages.featurize(GRID.lon, GRID.lat)
-        # normalize the features
-        features = pd.DataFrame(features)
-        features.columns = [str(col) + '_Google' for col in features.columns]
-        features["i"], features["j"] = data["i"], data["j"]
-        features.to_csv("../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline), index=False)
+        features = pd.DataFrame(gimages.featurize(GRID.lon, GRID.lat), index=data.index)
 
-    data = data.merge(features, on=["i", "j"])
-    print('INFO: features extracted.')
+        features.columns = [str(col) + '_Google' for col in features.columns]
+        features.to_csv("../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline))
+
+    data = data.join(features)
+    print('INFO: features extracted')
 
     # --------------------------------- #
     # get features from Sentinel images #
@@ -108,33 +102,38 @@ def run(id):
     end_date = config["satellite_config"][0]["end_date"]
 
     from sentinel_images import SentinelImages
-    simages = SentinelImages(data_path)
-    # download the images from the relevant API
-    simages.download(GRID.lon, GRID.lat, start_date, end_date)
+
     if os.path.exists(features_path):
         print('INFO: already scored.')
-        features = pd.read_csv(features_path.format(id, pipeline))
+        features = pd.read_csv(
+            features_path.format(id, pipeline),
+            index_col=['gpsLongitude', 'gpsLatitude'],
+            float_precision='round_trip')
     else:
+        simages = SentinelImages(data_path)
+        # download the images from the relevant API
+        simages.download(GRID.lon, GRID.lat, start_date, end_date)
         print('INFO: scoring ...')
         # extract the features
         print('INFO: extractor instantiated.')
-        features = simages.featurize(GRID.lon, GRID.lat, start_date, end_date)
-        # normalize the features
-        features = pd.DataFrame(features)
-        features.columns = [str(col) + '_Sentinel' for col in features.columns]
-        features["i"], features["j"] = data["i"], data["j"]
-        features.to_csv("../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline), index=False)
+        features = pd.DataFrame(simages.featurize(GRID.lon, GRID.lat, start_date, end_date), index=data.index)
 
-    data = data.merge(features, on=["i", "j"])
-    print('INFO: features extracted.')
+        features.columns = [str(col) + '_Sentinel' for col in features.columns]
+        features.to_csv("../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline))
+
+    data = data.join(features)
+    print('INFO: features extracted')
 
     # --------------- #
     # add nightlights #
     # --------------- #
     from nightlights import Nightlights
 
-    NGT = Nightlights(area, '../Data/Geofiles/nightlights/', nightlights_date_start, nightlights_date_end)
-    data['nightlights'] = NGT.nightlights_values(data)
+    nlights = Nightlights('../Data/Geofiles/')
+    nlights.download(area, nightlights_date_start, nightlights_date_end)
+    features = pd.DataFrame(nlights.featurize(GRID.lon, GRID.lat), columns=['nightlights'], index=data.index)
+
+    data = data.join(features)
 
     # ---------------- #
     # add OSM features #
@@ -142,18 +141,16 @@ def run(id):
     OSM = OSM_extractor(minlon, minlat, maxlon, maxlat)
     tags = {"amenity": ["school", "hospital"], "natural": ["tree"]}
     osm_gdf = {}
-    osm_features = []
 
     for key, values in tags.items():
         for value in values:
             osm_gdf["value"] = OSM.download(key, value)
             osm_tree = OSM.gpd_to_tree(osm_gdf["value"])
-            dist = data.apply(OSM.distance_to_nearest, args=(osm_tree,), axis=1)
-            data['distance_{}'.format(value)] = dist.apply(lambda x: np.log(0.0001 + x))
-            osm_features.append('distance_{}'.format(value))
+            dist = OSM.distance_to_nearest(GRID.lat, GRID.lon, osm_tree)
+            data['distance_{}'.format(value)] = [np.log(0.0001 + x) for x in dist]
 
     # ---------------- #
-    #   NDBI,NDVI,NDWI #
+    # NDBI, NDVI, NDWI #
     # ---------------- #
     print('INFO: getting NDBI, NDVI, NDWI ...')
 
@@ -161,32 +158,31 @@ def run(id):
 
     S2 = S2indexes(area, '../Data/Geofiles/NDs/', s2_date_start, s2_date_end, scope)
     S2.download()
-    data[['max_NDVI', 'max_NDBI', 'max_NDWI']] = S2.rms_values(data).apply(pd.Series)
+    data['max_NDVI'], data['max_NDBI'], data['max_NDWI'] = S2.rms_values(GRID.lon, GRID.lat)
     # --------------- #
     # save features   #
     # --------------- #
     # features to be use in the linear model
-    features_list = list(sorted(set(data.columns) - set(data_cols) - set(['i', 'j'])))
+    features_list = list(sorted(set(data.columns) - set(['i', 'j', indicator])))
 
-    # Standardize Features (0 mean and 1 std)
-    #data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].std()
+    # Scale Features
     print("Normalizing : max")
     data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].max()
 
-    data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id), index=False)
+    data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id))
 
     # --------------- #
     # model indicator #
     # --------------- #
     # shuffle dataset
-    data = data.sample(frac=1, random_state=1783).reset_index(drop=True)  # shuffle data
+    data = data.sample(frac=1, random_state=1783)  # shuffle data
 
     # if set in the config, take log of indicator
     if config['log'][0]:
         data[indicator] = np.log(data[indicator])
 
     from modeller import Modeller
-    X, y = data[features_list + ["gpsLatitude", "gpsLongitude"]], data[indicator]
+    X, y = data[features_list].reset_index(), data[indicator]
     modeller = Modeller(X, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20)
 
     kNN_pipeline = modeller.make_model_pipeline('kNN')
@@ -227,10 +223,9 @@ def run(id):
     from sklearn.model_selection import cross_val_predict
     results = pd.DataFrame({
         'yhat': cross_val_predict(Ensemble_pipeline, X.values, y),
-        'y': data[indicator].values,
-        'lat': data['gpsLatitude'],
-        'lon': data['gpsLongitude']})
-    results.to_csv('../Data/Results/config_{}.csv'.format(id), index=False)
+        'y': data[indicator].values},
+        index=data.index)
+    results.to_csv('../Data/Results/config_{}.csv'.format(id))
 
     # save model for production
     Ensemble_pipeline.fit(X.values, y)

@@ -68,14 +68,14 @@ def squaretogeojson(lon, lat, d):
     return square
 
 
-def df_boundaries(df, buffer=0.05, lat_col="gpsLatitude", lon_col="gpsLongitude"):
+def boundaries(latitudes, longitudes, buffer=0.05):
     """
     Get GPS coordinates of the boundary box of a DataFrame and add some buffer around it.
     """
-    minlat = df[lat_col].min()
-    maxlat = df[lat_col].max()
-    minlon = df[lon_col].min()
-    maxlon = df[lon_col].max()
+    minlat = latitudes.min()
+    maxlat = latitudes.max()
+    minlon = longitudes.min()
+    maxlon = longitudes.max()
 
     lat_buffer = (maxlat - minlat) * buffer
     lon_buffer = (maxlon - minlon) * buffer
