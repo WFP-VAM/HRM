@@ -78,7 +78,7 @@ class ACLED(DataSource):
         density = gdf[gdf.within(poly)][property].sum()
         return density
 
-    def featurize(self, longitudes, latitudes, property, buffer=5000):
+    def featurize(self, longitudes, latitudes, property, buffer=50000):
         gdf = gpd.read_file(self.path)
         features = []
         for lat, lon in zip(latitudes, longitudes):
