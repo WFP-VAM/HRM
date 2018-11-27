@@ -59,7 +59,7 @@ class Modeller:
             parameters = {"alpha": [0.001, 0.01, 0.1, 1, 10, 100, 1000]}
             estimator = Ridge()
             cols = self.rs_features_indices
-        gridsearch = GridSearchCV(estimator=estimator, param_grid=parameters, cv=inner_cv, scoring=self.scoring)
+        gridsearch = GridSearchCV(estimator=estimator, param_grid=parameters, cv=inner_cv, scoring=self.scoring, iid=False)
         pipeline = make_pipeline(ColumnSelector(cols=cols), gridsearch)
         return pipeline
 
