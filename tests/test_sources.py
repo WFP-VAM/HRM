@@ -4,6 +4,7 @@ sys.path.append("../Src/")
 # -----------------------------------
 from sentinel_images import SentinelImages
 
+
 def test_SentinelImages():
     """ Testing the module that extracts the information from Sentinel Images. """
     simages = SentinelImages('../tmp/')
@@ -13,6 +14,7 @@ def test_SentinelImages():
 
 # -----------------------------------
 from google_images import GoogleImages
+
 
 def test_GoogleImages():
     """ Testing the module that extracts the information from Google Images. """
@@ -25,6 +27,7 @@ def test_GoogleImages():
 from nightlights import Nightlights
 from utils import points_to_polygon
 
+
 def test_Nightlights():
     """ Testing the module that extracts nightlight values. """
     nlights = Nightlights('../tmp')
@@ -34,3 +37,18 @@ def test_Nightlights():
     nlights.download(area, '2016-01-01', '2017-01-01')
     f = nlights.featurize([-9.3, -9.28], [10.37, 10.39])
     assert (f[0]+f[1])/2 > 0.1
+
+
+# -----------------------------------
+from acled import ACLED
+
+
+def test_Acled():
+    """ Testing the module that extracts ACLED data. """
+    acled = ACLED("../tmp")
+    acled.download("TGO", '2017-01-01', '2018-01-01')
+    d = {}
+    for property in ["fatalities", "n_events", "violence_civ"]:
+        d[property] = acled.featurize([1.183056], [9.553300], property)
+
+    assert sum(d[item][0] for item in d) > 0

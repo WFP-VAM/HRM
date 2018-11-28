@@ -64,7 +64,6 @@ class Nightlights(DataSource):
         url = img.getDownloadURL({'crs': 'EPSG:4326', 'region': area})
         self.file = self.directory+self.download_and_unzip(BytesIO(urllib.request.urlopen(url).read()), self.directory)
 
-
     def featurize(self, lon, lat):
         """ Given lon lat lists, it returns the nightlight value at each point.
         Args:

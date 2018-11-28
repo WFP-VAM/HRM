@@ -42,6 +42,7 @@ def run(id):
     nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), config["nightlights_date"][0].get("end")
     s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
     if config['satellite_config'][0].get('satellite_images') == 'Y': step = config['satellite_config'][0].get("satellite_step")
+    ISO = config["iso3"][0]
 
     # --------------------- #
     # Setting up playground #
@@ -153,12 +154,27 @@ def run(id):
     # NDBI, NDVI, NDWI #
     # ---------------- #
     print('INFO: getting NDBI, NDVI, NDWI ...')
-
     from rms_indexes import S2indexes
 
     S2 = S2indexes(area, '../Data/Geofiles/NDs/', s2_date_start, s2_date_end, scope)
     S2.download()
     data['max_NDVI'], data['max_NDBI'], data['max_NDWI'] = S2.rms_values(GRID.lon, GRID.lat)
+
+    # --------------- #
+    # add ACLED #
+    # --------------- #
+    from acled import ACLED
+
+    acled = ACLED("../Data/Geofiles/ACLED/")
+    acled.download(ISO, start_date, end_date)
+    d = {}
+    for property in ["fatalities", "n_events", "violence_civ"]:
+        d[property] = acled.featurize(GRID.lon, GRID.lat, property)
+
+    features = pd.DataFrame(d, index=data.index)
+
+    data = data.join(features)
+
     # --------------- #
     # save features   #
     # --------------- #
