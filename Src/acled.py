@@ -11,35 +11,47 @@ from osmnx.core import bbox_from_point
 
 class ACLED(DataSource):
 
-    def __init__(self, dir, country_ISO, date_from, date_to):
-        self.country_ISO = country_ISO
-        self.date_from = date_from
-        self.date_to = date_to
-        self.dir = dir
-        if not os.path.exists(self.dir):
-            os.makedirs(self.dir)
-        self.path = os.path.join(self.dir, "events_{}_{}_{}.json".format(self.country_ISO, self.date_from, self.date_to))
+    def __init__(self, directory):
+        DataSource.__init__(self, directory)
 
-    def download(self):
-        """
-        Downloads all the ACLED events for a given country and date range
+        """ Overload the directory path. """
+        self.directory = directory
+        if not os.path.exists(self.directory):
+            os.makedirs(self.directory)
+
+        self.path = None
+
+    def download(self, country_ISO, date_from, date_to):
+        """ Downloads all the ACLED events for a given country and date range
         Group the events by unique pair of coordinates and calculate:
             - The number of unique events
             - The sum of fatalities
             - The number of events of type Violence against civilians
         Save the resulting geojson
+        Args:
+            country_ISO: ISO code of the country of interest.
+            date_from (str): consider only lights from this date.
+            date_to (str): consider only lights up to this date.
         """
+        self.path = os.path.join(
+            self.directory,
+            "events_{}_{}_{}.json".format(country_ISO, date_from, date_to))
+
         if os.path.exists(self.path):
             print('INFO: ACLED data already downloaded')
             return
 
-        url = "https://api.acleddata.com/acled/read.csv"
-        parameters = {"limit": 0, "iso3": self.country_ISO, "fields": "iso|event_type|fatalities|latitude|longitude"}
-        parameters["event_date"] = "{" + self.date_from + "|" + self.date_to + "}"
-        parameters["event_date_where"] = "BETWEEN"
-        response = requests.get(url, params=parameters)
+        URL = "https://api.acleddata.com/acled/read.csv"
+        parameters = {
+            "limit": 0,
+            "iso3": country_ISO,
+            "fields": "iso|event_type|fatalities|latitude|longitude",
+            "event_date": "{" + date_from + "|" + date_to + "}",
+            "event_date_where": "BETWEEN"
+        }
 
-        data = response.content
+        data = requests.get(URL, params=parameters).content
+
         data = pd.read_csv(io.StringIO(data.decode('utf-8')))
 
         print("INFO: Downloaded ", len(data), "ACLED events")

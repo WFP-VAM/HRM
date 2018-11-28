@@ -154,7 +154,6 @@ def run(id):
     # NDBI, NDVI, NDWI #
     # ---------------- #
     print('INFO: getting NDBI, NDVI, NDWI ...')
-
     from rms_indexes import S2indexes
 
     S2 = S2indexes(area, '../Data/Geofiles/NDs/', s2_date_start, s2_date_end, scope)
@@ -166,12 +165,12 @@ def run(id):
     # --------------- #
     from acled import ACLED
 
-    acled = ACLED("../Data/Geofiles/ACLED/", ISO, start_date, end_date)
-    acled.download()
-    fatalities = acled.featurize(GRID.lon, GRID.lat, "fatalities")
-    n_events = acled.featurize(GRID.lon, GRID.lat, "n_events")
-    violence_civ = acled.featurize(GRID.lon, GRID.lat, "violence_civ")
-    d = {'fatalities': fatalities, 'n_events': n_events, 'violence_civ': violence_civ}
+    acled = ACLED("../Data/Geofiles/ACLED/")
+    acled.download(ISO, start_date, end_date)
+    d = {}
+    for property in ["fatalities", "n_events", "violence_civ"]:
+        d[property] = acled.featurize(GRID.lon, GRID.lat, property)
+
     features = pd.DataFrame(d, index=data.index)
 
     data = data.join(features)
