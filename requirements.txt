@@ -37,4 +37,3 @@ tensorflow==1.4.0
 uritemplate==3.0.0
 urllib3==1.22
 osmnx==0.8
-georasters==0.5
