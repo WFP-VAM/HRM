@@ -48,14 +48,6 @@ class OSM_extractor:
 
         return gdf
 
-    def gpd_to_tree(self, points_gdf):
-        import scipy.spatial as spatial
-        gps = []
-        for x in points_gdf["geometry"]:
-            gps.append(x.coords[:][0])
-        point_tree = spatial.cKDTree(gps)
-        return point_tree
-
     def distance_to_nearest(self, latitudes, longitudes, gdf):
         """ Ditance between a point in a pandas dataframe and the nearest point in a scipy kd-tree.
         """

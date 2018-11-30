@@ -183,6 +183,9 @@ def run(id):
     # features to be use in the linear model
     features_list = list(sorted(set(data.columns) - set(['i', 'j', indicator])))
 
+    #Save non-scaled features
+    data.to_csv("../Data/Features/features_all_id_{}_evaluation_nonscaled.csv".format(id))
+
     # Scale Features
     print("Normalizing : max")
     data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].max()
