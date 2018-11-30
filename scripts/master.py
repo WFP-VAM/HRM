@@ -146,8 +146,7 @@ def run(id):
     for key, values in tags.items():
         for value in values:
             osm_gdf["value"] = OSM.download(key, value)
-            osm_tree = OSM.gpd_to_tree(osm_gdf["value"])
-            dist = OSM.distance_to_nearest(GRID.lat, GRID.lon, osm_tree)
+            dist = OSM.distance_to_nearest(GRID.lat, GRID.lon, osm_gdf["value"])
             data['distance_{}'.format(value)] = [np.log(0.0001 + x) for x in dist]
 
     # ---------------- #
@@ -169,11 +168,11 @@ def run(id):
     acled.download(ISO, start_date, end_date)
     d = {}
     for property in ["fatalities", "n_events", "violence_civ"]:
-        for k in [1000, 5000, 10000, 50000, 100000, 200000]:
-            d[property + str(k)] = acled.featurize(GRID.lon, GRID.lat, property, buffer=k)
+        for k in [10000, 100000]:
+            d[property + "_" + str(k)] = acled.featurize(GRID.lon, GRID.lat, property=property, function='density', buffer=k)
 
-    d["weighted_sum_fatalities_by_dist"] = acled.featurize2(GRID.lon, GRID.lat, "fatalities")
-    d["distance_to_acled_event"] = acled.featurize3(GRID.lon, GRID.lat)
+    d["weighted_sum_fatalities_by_dist"] = acled.featurize(GRID.lon, GRID.lat, property="fatalities", function='weighted_kNN')
+    d["distance_to_acled_event"] = acled.featurize(GRID.lon, GRID.lat, function='distance')
 
     features = pd.DataFrame(d, index=data.index)
     data = data.join(features)

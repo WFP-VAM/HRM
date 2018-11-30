@@ -91,44 +91,37 @@ class ACLED(DataSource):
         density = gdf[gdf.within(poly)][property].sum()
         return density
 
-    @staticmethod
-    def __train_KNN(gdf, property):
-        from sklearn.neighbors import KNeighborsRegressor
-        gdf_lats = gdf["geometry"].y
-        gfd_lons = gdf["geometry"].x
-        X = np.array([gdf_lats, gfd_lons]).T
-        y = np.array(gdf[property])
-        kNN = KNeighborsRegressor(n_neighbors=10, weights='distance')
-        kNN.fit(X, y)
-        return kNN
-
-    def featurize(self, longitudes, latitudes, property, buffer=50000):
+    def featurize(self, longitudes, latitudes, function, property=None, buffer=50000):
         gdf = gpd.read_file(self.path)
         features = []
-        for lat, lon in zip(latitudes, longitudes):
-            density = self.__sum_within_bbox(lat, lon, buffer, gdf, property)
-            features.append(density)
-        return features
+        if function == 'density':
+            for lat, lon in zip(latitudes, longitudes):
+                density = self.__sum_within_bbox(lat, lon, buffer, gdf, property)
+                features.append(density)
+        elif function == 'distance':
+            from sklearn.neighbors import NearestNeighbors
+            gdf_lats = gdf["geometry"].y
+            gfd_lons = gdf["geometry"].x
+            X = np.array([gdf_lats, gfd_lons]).T
+            nbrs = NearestNeighbors(n_neighbors=1, algorithm='kd_tree').fit(X)
+            features = []
+            for lat, lon in zip(latitudes, longitudes):
+                X = np.array([[lat, lon]])
+                a, _ = nbrs.kneighbors(X)
+                features.append(a[[0]][0][0])
+        elif function == 'weighted_kNN':
+            from sklearn.neighbors import NearestNeighbors
+            from sklearn.neighbors import KNeighborsRegressor
+            gdf_lats = gdf["geometry"].y
+            gfd_lons = gdf["geometry"].x
+            X = np.array([gdf_lats, gfd_lons]).T
+            y = np.array(gdf[property])
+            fitted_kNN = KNeighborsRegressor(n_neighbors=10, weights='distance').fit(X, y)
+            nbrs = NearestNeighbors(n_neighbors=10).fit(X)
+            for lat, lon in zip(latitudes, longitudes):
+                X = np.array([[lat, lon]])
+                a, _ = nbrs.kneighbors(X)
+                b = fitted_kNN.predict(X)
+                features.append(b[0] * a.sum())
 
-    def featurize2(self, longitudes, latitudes, property):
-        gdf = gpd.read_file(self.path)
-        features = []
-        fitted_kNN = self.__train_KNN(gdf, property)
-        for lat, lon in zip(latitudes, longitudes):
-            X = np.array([[lat, lon]])
-            features.append(fitted_kNN.predict(X)[0])
-        return features
-
-    def featurize3(self, longitudes, latitudes):
-        from sklearn.neighbors import NearestNeighbors
-        gdf = gpd.read_file(self.path)
-        gdf_lats = gdf["geometry"].y
-        gfd_lons = gdf["geometry"].x
-        X = np.array([gdf_lats, gfd_lons]).T
-        nbrs = NearestNeighbors(n_neighbors=1, algorithm='kd_tree').fit(X)
-        features = []
-        for lat, lon in zip(latitudes, longitudes):
-            X = np.array([[lat, lon]])
-            a, _ = nbrs.kneighbors(X)
-            features.append(a[[0]][0][0])
         return features
