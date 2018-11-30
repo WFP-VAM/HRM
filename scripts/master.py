@@ -165,7 +165,7 @@ def run(id):
     from acled import ACLED
 
     acled = ACLED("../Data/Geofiles/ACLED/")
-    acled.download(ISO, start_date, end_date)
+    acled.download(ISO, nightlights_date_start, nightlights_date_end)
     d = {}
     for property in ["fatalities", "n_events", "violence_civ"]:
         for k in [10000, 100000]:
@@ -233,7 +233,7 @@ def run(id):
     values (current_date, {}, {}, {}, {}, {}, {}, {}, {}) """.format(
         config['id'][0],
         Ensemble_R2_mean, Ensemble_R2_std, kNN_R2_mean, kNN_R2_std, Ridge_R2_mean, Ridge_R2_std, 0)
-    #engine.execute(query)
+    engine.execute(query)
 
     # ------------------------- #
     # write predictions to file #
