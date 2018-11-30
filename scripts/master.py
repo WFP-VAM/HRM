@@ -169,7 +169,7 @@ def run(id):
     acled.download(ISO, start_date, end_date)
     d = {}
     for property in ["fatalities", "n_events", "violence_civ"]:
-        for k in [1000, 5000, 10000, 50000]:
+        for k in [1000, 5000, 10000, 50000, 100000, 200000]:
             d[property + str(k)] = acled.featurize(GRID.lon, GRID.lat, property, buffer=k)
 
     d["weighted_sum_fatalities_by_dist"] = acled.featurize2(GRID.lon, GRID.lat, "fatalities")
@@ -184,13 +184,11 @@ def run(id):
     # features to be use in the linear model
     features_list = list(sorted(set(data.columns) - set(['i', 'j', indicator])))
 
-
-
-    data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id))
-
     # Scale Features
     print("Normalizing : max")
     data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].max()
+
+    data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id))
 
     # --------------- #
     # model indicator #
