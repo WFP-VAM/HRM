@@ -49,7 +49,7 @@ class OSM_extractor:
         return gdf
 
     def distance_to_nearest(self, latitudes, longitudes, gdf):
-        """ Ditance between a point in a pandas dataframe and the nearest point in a scipy kd-tree.
+        """ Ditance between a point in a pandas dataframe and the nearest point in a geopandas geodataframe.
         """
         from sklearn.neighbors import NearestNeighbors
         import numpy as np

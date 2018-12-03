@@ -92,6 +92,15 @@ class ACLED(DataSource):
         return density
 
     def featurize(self, longitudes, latitudes, function, property=None, buffer=50000):
+        """
+        Computes features from a geodataframe for a list of longitudes and latitudes.
+        For each lat, lon it:
+            If function equal to density: computes the sum of a specific attribute for the points
+             within a bbox of side length equal to buffer around the .
+            If function equal to distance: computes the distance to the closest point.
+            If function equal to weighted_kNN: computes the sum of the 10 closest point for a specific attribute
+            weighted by the distance to the points.
+        """
         gdf = gpd.read_file(self.path)
         features = []
         if function == 'density':
