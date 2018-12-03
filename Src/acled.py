@@ -7,6 +7,7 @@ import io
 import geopandas as gpd
 from shapely.geometry import Point, Polygon
 from osmnx.core import bbox_from_point
+import numpy as np
 
 
 class ACLED(DataSource):
@@ -90,10 +91,46 @@ class ACLED(DataSource):
         density = gdf[gdf.within(poly)][property].sum()
         return density
 
-    def featurize(self, longitudes, latitudes, property, buffer=50000):
+    def featurize(self, longitudes, latitudes, function, property=None, buffer=50000):
+        """
+        Computes features from a geodataframe for a list of longitudes and latitudes.
+        For each lat, lon it:
+            If function equal to density: computes the sum of a specific attribute for the points
+             within a bbox of side length equal to buffer around the .
+            If function equal to distance: computes the distance to the closest point.
+            If function equal to weighted_kNN: computes the sum of the 10 closest point for a specific attribute
+            weighted by the distance to the points.
+        """
         gdf = gpd.read_file(self.path)
         features = []
-        for lat, lon in zip(latitudes, longitudes):
-            density = self.__sum_within_bbox(lat, lon, buffer, gdf, property)
-            features.append(density)
+        if function == 'density':
+            for lat, lon in zip(latitudes, longitudes):
+                density = self.__sum_within_bbox(lat, lon, buffer, gdf, property)
+                features.append(density)
+        elif function == 'distance':
+            from sklearn.neighbors import NearestNeighbors
+            gdf_lats = gdf["geometry"].y
+            gfd_lons = gdf["geometry"].x
+            X = np.array([gdf_lats, gfd_lons]).T
+            nbrs = NearestNeighbors(n_neighbors=1, algorithm='kd_tree').fit(X)
+            features = []
+            for lat, lon in zip(latitudes, longitudes):
+                X = np.array([[lat, lon]])
+                a, _ = nbrs.kneighbors(X)
+                features.append(a[[0]][0][0])
+        elif function == 'weighted_kNN':
+            from sklearn.neighbors import NearestNeighbors
+            from sklearn.neighbors import KNeighborsRegressor
+            gdf_lats = gdf["geometry"].y
+            gfd_lons = gdf["geometry"].x
+            X = np.array([gdf_lats, gfd_lons]).T
+            y = np.array(gdf[property])
+            fitted_kNN = KNeighborsRegressor(n_neighbors=10, weights='distance').fit(X, y)
+            nbrs = NearestNeighbors(n_neighbors=10).fit(X)
+            for lat, lon in zip(latitudes, longitudes):
+                X = np.array([[lat, lon]])
+                a, _ = nbrs.kneighbors(X)
+                b = fitted_kNN.predict(X)
+                features.append(b[0] * a.sum())
+
         return features

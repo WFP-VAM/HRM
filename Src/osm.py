@@ -48,48 +48,18 @@ class OSM_extractor:
 
         return gdf
 
-    # def distance_to_nearest2(self, df, points_gdf, lat_col="gpsLatitude", lon_col="gpsLongitude"):
-    #     '''
-    #     Ditance for a point in a pandas dataframe to the nearest point in a geodataframe.
-    #     '''
-    #     # To do: Use a spatial index for faster computation
-    #     from shapely.ops import nearest_points
-    #     from shapely.geometry import Point
-    #     geom_union = points_gdf.unary_union
-    #     point = Point(df[lon_col], df[lat_col])
-    #     nearest_point = nearest_points(point, geom_union)[1]
-    #     distance = nearest_point.distance(point)
-    #     return distance
-
-    def gpd_to_tree(self, points_gdf):
-        import scipy.spatial as spatial
-        gps = []
-        for x in points_gdf["geometry"]:
-            gps.append(x.coords[:][0])
-        point_tree = spatial.cKDTree(gps)
-        return point_tree
-
-    def distance_to_nearest(self, latitudes, longitudes, point_tree):
-        """ Ditance between a point in a pandas dataframe and the nearest point in a scipy kd-tree.
+    def distance_to_nearest(self, latitudes, longitudes, gdf):
+        """ Ditance between a point in a pandas dataframe and the nearest point in a geopandas geodataframe.
         """
-        distances = []
-        for lon, lat in zip(longitudes, latitudes):
-            distances.append(point_tree.query([lon, lat], k=1)[0])
-        return distances
-
-    def density(self, df, points_gdf, distance=5000, lat_col="gpsLatitude", lon_col="gpsLongitude"):
-        '''
-        Number of points in a geodataframe within a box around a point in a dataframe.
-        '''
-        # To do: Use a spatial index for faster computation
-        from osmnx.core import bbox_from_point
-        from shapely.geometry import Polygon
-        point = (df[lon_col], df[lat_col])
-        north, south, east, west = bbox_from_point(point, distance)
-        point1 = (east, south)
-        point2 = (west, south)
-        point3 = (west, north)
-        point4 = (east, north)
-        poly = Polygon([point1, point2, point3, point4])
-        n = points_gdf.within(poly).sum()
-        return n
+        from sklearn.neighbors import NearestNeighbors
+        import numpy as np
+        gdf_lats = gdf["geometry"].y
+        gfd_lons = gdf["geometry"].x
+        X = np.array([gdf_lats, gfd_lons]).T
+        nbrs = NearestNeighbors(n_neighbors=1, algorithm='kd_tree').fit(X)
+        features = []
+        for lat, lon in zip(latitudes, longitudes):
+            X = np.array([[lat, lon]])
+            a, _ = nbrs.kneighbors(X)
+            features.append(a[[0]][0][0])
+        return features

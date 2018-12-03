@@ -146,8 +146,7 @@ def run(id):
     for key, values in tags.items():
         for value in values:
             osm_gdf["value"] = OSM.download(key, value)
-            osm_tree = OSM.gpd_to_tree(osm_gdf["value"])
-            dist = OSM.distance_to_nearest(GRID.lat, GRID.lon, osm_tree)
+            dist = OSM.distance_to_nearest(GRID.lat, GRID.lon, osm_gdf["value"])
             data['distance_{}'.format(value)] = [np.log(0.0001 + x) for x in dist]
 
     # ---------------- #
@@ -166,13 +165,16 @@ def run(id):
     from acled import ACLED
 
     acled = ACLED("../Data/Geofiles/ACLED/")
-    acled.download(ISO, start_date, end_date)
+    acled.download(ISO, nightlights_date_start, nightlights_date_end)
     d = {}
     for property in ["fatalities", "n_events", "violence_civ"]:
-        d[property] = acled.featurize(GRID.lon, GRID.lat, property)
+        for k in [10000, 100000]:
+            d[property + "_" + str(k)] = acled.featurize(GRID.lon, GRID.lat, property=property, function='density', buffer=k)
+
+    d["weighted_sum_fatalities_by_dist"] = acled.featurize(GRID.lon, GRID.lat, property="fatalities", function='weighted_kNN')
+    d["distance_to_acled_event"] = acled.featurize(GRID.lon, GRID.lat, function='distance')
 
     features = pd.DataFrame(d, index=data.index)
-
     data = data.join(features)
 
     # --------------- #
@@ -180,6 +182,9 @@ def run(id):
     # --------------- #
     # features to be use in the linear model
     features_list = list(sorted(set(data.columns) - set(['i', 'j', indicator])))
+
+    #Save non-scaled features
+    data.to_csv("../Data/Features/features_all_id_{}_evaluation_nonscaled.csv".format(id))
 
     # Scale Features
     print("Normalizing : max")
