@@ -7,9 +7,13 @@ from io import BytesIO
 from scipy.misc.pilutil import imread, imsave
 import tensorflow as tf
 import numpy as np
+from PIL import Image
 
-MODEL = 'nightGoo.h5'  # Google.h5
-LAYER = 'dense_1'  # features
+# vgg16 performs better in predicting nightlights but produces worse scoring features
+MODEL = 'google_cnn.h5'  # google_vgg16.h5 (much slower)
+# TODO: we can allow a parameter in the config for the model to use, as long as the layer is called 'features'
+LAYER = 'features'  # features
+IMG_SIZE = 256
 
 
 class GoogleImages(DataSource):
@@ -107,12 +111,10 @@ class GoogleImages(DataSource):
             file_name = str(i) + '_' + str(j) + '_' + str(16) + '.jpg'
             img_path = os.path.join(self.directory, file_name)
 
-            img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))
-            image_preprocess = tf.keras.preprocessing.image.img_to_array(img)
-            image_preprocess = np.expand_dims(image_preprocess, axis=0)
-            image_preprocess = np.divide(image_preprocess, 255.)
+            image = Image.open(img_path, 'r')
+            image = np.array(image)[:IMG_SIZE, :IMG_SIZE, :] / 255.
 
-            features.append(self.net.predict(np.array(image_preprocess).reshape(1, 400, 400, 3)))
+            features.append(self.net.predict(np.array(image).reshape(1, IMG_SIZE, IMG_SIZE, 3)))
 
             if _cnt % 10 == 0: print("Feature extraction : {} tiles out of {}".format(_cnt, _total), end='\r')
 
