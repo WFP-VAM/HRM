@@ -1,4 +1,3 @@
-pyqt5
 click==6.7
 earthengine-api==0.1.135
 geojson==2.3.0

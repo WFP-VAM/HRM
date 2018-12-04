@@ -19,7 +19,7 @@ before_install:
 env:
   - GDAL_DATA=/usr/share/gdal/2.2/
 install:
-  - conda create -n test-environment -c conda-forge python=$TRAVIS_PYTHON_VERSION pip nose cython numpy matplotlib pandas gdal scipy fiona osmnx boto3 tensorflow=1.12 pillow
+  - conda create -n test-environment -c conda-forge python=$TRAVIS_PYTHON_VERSION pip nose cython numpy matplotlib pandas gdal scipy fiona osmnx boto3 tensorflow=1.12 pillow qt
   - source activate test-environment
   - pip install -r requirements.txt
 
