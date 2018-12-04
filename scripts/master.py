@@ -84,9 +84,9 @@ def run(id):
     else:
         gimages = GoogleImages(data_path)
         # download the images from the relevant API
-        gimages.download(GRID.lon, GRID.lat)
+        gimages.download(GRID.lon, GRID.lat, step=step)
         # extract the features
-        features = pd.DataFrame(gimages.featurize(GRID.lon, GRID.lat), index=data.index)
+        features = pd.DataFrame(gimages.featurize(GRID.lon, GRID.lat, step=step), index=data.index)
 
         features.columns = [str(col) + '_Google' for col in features.columns]
         features.to_csv("../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline))

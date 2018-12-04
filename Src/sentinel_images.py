@@ -8,9 +8,10 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 
-MODEL = 'nightSent.h5'  # Sentinel.h5
-LAYER = 'dense_1'  # features
-IMG_SIZE = 400  # 500
+MODEL = 'sentinel_cnn.h5'  # Sentinel.h5
+LAYER = 'features'  # features
+IMG_SIZE = 256  # 500
+
 
 class SentinelImages(DataSource):
     """overloading the DataSource class."""
@@ -34,8 +35,7 @@ class SentinelImages(DataSource):
             outputs=self.net.get_layer(LAYER).output)
 
     def download(self, lon, lat, start_date=None, end_date=None, img_size=5000):
-        """
-        given the list of coordinates, it downloads the corresponding satellite images.
+        """given the list of coordinates, it downloads the corresponding satellite images.
 
         Args:
             lon (list): list of longitudes.
@@ -98,7 +98,13 @@ class SentinelImages(DataSource):
             img_path = os.path.join(self.directory, file_name)
 
             image = Image.open(img_path, 'r')
-            image = np.array(image)[:IMG_SIZE, :IMG_SIZE, :] / 255.
+            image = image.crop((  # crop center
+                int(image.size[0] / 2 - IMG_SIZE / 2),
+                int(image.size[1] / 2 - IMG_SIZE / 2),
+                int(image.size[0] / 2 + IMG_SIZE / 2),
+                int(image.size[1] / 2 + IMG_SIZE / 2)
+            ))
+            image = np.array(image)/ 255.
 
             features.append(self.net.predict(image.reshape(1, IMG_SIZE, IMG_SIZE, 3)))
 

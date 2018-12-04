@@ -87,13 +87,13 @@ class GoogleImages(DataSource):
                     print('file path: ', os.path.join(self.directory, file_name))
                     imsave(os.path.join(self.directory, file_name), image[50:450, :, :])
 
-    def featurize(self, lon, lat, step=False):
+    def featurize(self, lon, lat, step=0):
         """ Given lon lat lists, it extract the features from the image (if there) using the NN.
 
         Args:
             lon (list): list of longitudes.
             lat (list): list of latitudes.
-            step (bool): if you want to add buffer images. SMore accurate but slow.
+            step (bool): if you want to add buffer images (9 in total). More accurate but slow.
 
         Returns:
             covariates for the coordinates pair.
@@ -112,11 +112,26 @@ class GoogleImages(DataSource):
             img_path = os.path.join(self.directory, file_name)
 
             image = Image.open(img_path, 'r')
-            image = np.array(image)[:IMG_SIZE, :IMG_SIZE, :] / 255.
-
+            image = image.crop((  # crop center
+                int(image.size[0] / 2 - IMG_SIZE / 2),
+                int(image.size[1] / 2 - IMG_SIZE / 2),
+                int(image.size[0] / 2 + IMG_SIZE / 2),
+                int(image.size[1] / 2 + IMG_SIZE / 2)
+            ))
+            image = np.array(image)/ 255.
             features.append(self.net.predict(np.array(image).reshape(1, IMG_SIZE, IMG_SIZE, 3)))
 
             if _cnt % 10 == 0: print("Feature extraction : {} tiles out of {}".format(_cnt, _total), end='\r')
+
+        if step:
+            # take the average for the 9 images around the original lon,lat
+            f = np.copy(features)
+            features = []
+            for c in range(0, int(len(f)/9)):
+                lower_bound = c*9
+                features.append(np.mean(f[lower_bound:(lower_bound+9)], axis=0))
+
+            features = np.array(features)
 
         #  TODO: save transforms for predicting.
         # reduce dimensionality

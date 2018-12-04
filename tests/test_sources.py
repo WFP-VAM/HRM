@@ -1,16 +1,18 @@
 import sys
 sys.path.append("../Src/")
 
+COORDS_X = [12.407305, 6.864997, 12.407305, 32.544209, 18.572159, 11.493380, 12.407305, 6.864997, 12.407305, 32.544209]
+COORDS_Y = [41.821816, 45.832565, 41.821816, 15.539874, 4.367064, 3.848012, 41.821816, 45.832565, 41.821816, 15.539874]
 # -----------------------------------
 from sentinel_images import SentinelImages
 
 
 def test_SentinelImages():
     """ Testing the module that extracts the information from Sentinel Images. """
-    simages = SentinelImages('../tmp/')
-    simages.download([12.407305, 6.864997], [41.821816, 45.832565], start_date='2017-01-01', end_date='2018-01-01')
-    f = simages.featurize([12.407305, 6.864997], [41.821816, 45.832565], start_date='2017-01-01', end_date='2018-01-01')
-    assert f.shape == (2, 2)
+    simages = SentinelImages('../tests/')
+    simages.download(COORDS_X, COORDS_Y, start_date='2017-01-01', end_date='2018-01-01')
+    f = simages.featurize(COORDS_X, COORDS_Y, start_date='2017-01-01', end_date='2018-01-01')
+    assert f.shape == (len(COORDS_X), len(COORDS_Y))
 
 # -----------------------------------
 from google_images import GoogleImages
@@ -18,10 +20,10 @@ from google_images import GoogleImages
 
 def test_GoogleImages():
     """ Testing the module that extracts the information from Google Images. """
-    gimages = GoogleImages('../tmp/')
-    gimages.download([12.407305, 6.864997], [41.821816, 45.832565], step=False)
-    f = gimages.featurize([12.407305, 6.864997], [41.821816, 45.832565], step=False)
-    assert f.shape == (2, 2)
+    gimages = GoogleImages('../tests/')
+    gimages.download(COORDS_X, COORDS_Y, step=False)
+    f = gimages.featurize(COORDS_X, COORDS_Y, step=False)
+    assert f.shape == (len(COORDS_X), len(COORDS_Y))
 
 # -----------------------------------
 from nightlights import Nightlights
@@ -30,7 +32,7 @@ from utils import points_to_polygon
 
 def test_Nightlights():
     """ Testing the module that extracts nightlight values. """
-    nlights = Nightlights('../tmp')
+    nlights = Nightlights('../tests')
 
     # get area of interest
     area = points_to_polygon(-9.348335, 10.349370, -9.254608, 10.413534)
@@ -45,7 +47,7 @@ from acled import ACLED
 
 def test_Acled():
     """ Testing the module that extracts ACLED data. """
-    acled = ACLED("../tmp")
+    acled = ACLED("../tests")
     acled.download("TGO", '2017-01-01', '2018-01-01')
     d = {}
     for property in ["fatalities", "n_events", "violence_civ"]:
