@@ -7,14 +7,14 @@ COORDS_X = [12.407305, 6.864997, 12.407305, 32.544209, 18.572159, 11.493380, 12.
 COORDS_Y = [41.821816, 45.832565, 41.821816, 15.539874, 4.367064, 3.848012, 41.821816, 45.832565, 41.821816, 15.539874]
 # -----------------------------------
 
-
-def test_SentinelImages():
-    """ Testing the module that extracts the information from Sentinel Images. """
-    si = pytest.importorskip('sentinel_images')
-    simages = si.SentinelImages('../tests/')
-    simages.download(COORDS_X, COORDS_Y, start_date='2017-01-01', end_date='2018-01-01')
-    f = simages.featurize(COORDS_X, COORDS_Y, start_date='2017-01-01', end_date='2018-01-01')
-    assert f.shape == (len(COORDS_X), len(COORDS_Y))
+#  TODO: earthengine-api cannot test on Travis cause authentication.
+# def test_SentinelImages():
+#     """ Testing the module that extracts the information from Sentinel Images. """
+#     si = pytest.importorskip('sentinel_images')
+#     simages = si.SentinelImages('../tests/')
+#     simages.download(COORDS_X, COORDS_Y, start_date='2017-01-01', end_date='2018-01-01')
+#     f = simages.featurize(COORDS_X, COORDS_Y, start_date='2017-01-01', end_date='2018-01-01')
+#     assert f.shape == (len(COORDS_X), len(COORDS_Y))
 
 # -----------------------------------s
 
