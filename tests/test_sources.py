@@ -29,18 +29,18 @@ def test_GoogleImages():
 
 # -----------------------------------
 
-
-def test_Nightlights():
-    """ Testing the module that extracts nightlight values. """
-    ni = pytest.importorskip('nightlights')
-    utils = pytest.importorskip('utils')
-
-    nlights = ni.Nightlights('../tests')
-    # get area of interest
-    area = utils.points_to_polygon(-9.348335, 10.349370, -9.254608, 10.413534)
-    nlights.download(area, '2016-01-01', '2017-01-01')
-    f = nlights.featurize([-9.3, -9.28], [10.37, 10.39])
-    assert (f[0]+f[1])/2 > 0.1
+#  TODO: earthengine-api cannot test on Travis cause authentication.
+# def test_Nightlights():
+#     """ Testing the module that extracts nightlight values. """
+#     ni = pytest.importorskip('nightlights')
+#     utils = pytest.importorskip('utils')
+#
+#     nlights = ni.Nightlights('../tests')
+#     # get area of interest
+#     area = utils.points_to_polygon(-9.348335, 10.349370, -9.254608, 10.413534)
+#     nlights.download(area, '2016-01-01', '2017-01-01')
+#     f = nlights.featurize([-9.3, -9.28], [10.37, 10.39])
+#     assert (f[0]+f[1])/2 > 0.1
 
 
 # -----------------------------------
