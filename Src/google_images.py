@@ -7,9 +7,13 @@ from io import BytesIO
 from scipy.misc.pilutil import imread, imsave
 import tensorflow as tf
 import numpy as np
+from PIL import Image
 
-MODEL = 'nightGoo.h5'  # Google.h5
-LAYER = 'dense_1'  # features
+# vgg16 performs better in predicting nightlights but produces worse scoring features
+MODEL = 'google_cnn.h5'  # google_vgg16.h5 (much slower)
+# TODO: we can allow a parameter in the config for the model to use, as long as the layer is called 'features'
+LAYER = 'features'  # features
+IMG_SIZE = 256
 
 
 class GoogleImages(DataSource):
@@ -83,13 +87,13 @@ class GoogleImages(DataSource):
                     print('file path: ', os.path.join(self.directory, file_name))
                     imsave(os.path.join(self.directory, file_name), image[50:450, :, :])
 
-    def featurize(self, lon, lat, step=False):
+    def featurize(self, lon, lat, step=0):
         """ Given lon lat lists, it extract the features from the image (if there) using the NN.
 
         Args:
             lon (list): list of longitudes.
             lat (list): list of latitudes.
-            step (bool): if you want to add buffer images. SMore accurate but slow.
+            step (bool): if you want to add buffer images (9 in total). More accurate but slow.
 
         Returns:
             covariates for the coordinates pair.
@@ -107,14 +111,27 @@ class GoogleImages(DataSource):
             file_name = str(i) + '_' + str(j) + '_' + str(16) + '.jpg'
             img_path = os.path.join(self.directory, file_name)
 
-            img = tf.keras.preprocessing.image.load_img(img_path, target_size=(400, 400))
-            image_preprocess = tf.keras.preprocessing.image.img_to_array(img)
-            image_preprocess = np.expand_dims(image_preprocess, axis=0)
-            image_preprocess = np.divide(image_preprocess, 255.)
-
-            features.append(self.net.predict(np.array(image_preprocess).reshape(1, 400, 400, 3)))
+            image = Image.open(img_path, 'r')
+            image = image.crop((  # crop center
+                int(image.size[0] / 2 - IMG_SIZE / 2),
+                int(image.size[1] / 2 - IMG_SIZE / 2),
+                int(image.size[0] / 2 + IMG_SIZE / 2),
+                int(image.size[1] / 2 + IMG_SIZE / 2)
+            ))
+            image = np.array(image)/ 255.
+            features.append(self.net.predict(np.array(image).reshape(1, IMG_SIZE, IMG_SIZE, 3)))
 
             if _cnt % 10 == 0: print("Feature extraction : {} tiles out of {}".format(_cnt, _total), end='\r')
+
+        if step:
+            # take the average for the 9 images around the original lon,lat
+            f = np.copy(features)
+            features = []
+            for c in range(0, int(len(f)/9)):
+                lower_bound = c*9
+                features.append(np.mean(f[lower_bound:(lower_bound+9)], axis=0))
+
+            features = np.array(features)
 
         #  TODO: save transforms for predicting.
         # reduce dimensionality
