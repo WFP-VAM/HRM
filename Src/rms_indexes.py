@@ -1,7 +1,8 @@
 import ee
-import urllib
+from zipfile import ZipFile
 from io import BytesIO
 import os
+import requests
 
 
 class S2indexes:
@@ -10,15 +11,18 @@ class S2indexes:
         """
         given an area defined by a geoJSON, it returns rasters of
          remote sensing indexes at the specified date at granularuity defined by the scope parameter
-        :param area: geoJSON, use squaretogeojson to generate
-        :param dir: directory where to save the easter
-        :param date: nightlights for what point in time?
+        Args:
+            area: geoJSON, use squaretogeojson to generate
+            dir: directory where to save the easter
+            date_from, date_end: nightlights for what point in time?
+            scope (str): country or urban?
         """
         self.area = area
         self.dir = dir
         self.date_from = date_from
         self.date_end = date_end
         self.scope = scope
+        self.files = None
 
     def download(self):
         print('INFO: downloading rms indexes for area of interest ...')
@@ -58,29 +62,27 @@ class S2indexes:
             else:
                 print('INFO: NDs scope -> country')
                 scale = 5000
-            url = img.getDownloadUrl({'crs': 'EPSG:4326', 'region': self.area, 'scale': scale})
-            self.files = self.unzip(BytesIO(urllib.request.urlopen(url).read()), self.dir, self.area)
 
-    def unzip(self, buffer, dir, area):
+            for b in ['NDVI_max', 'NDBI_max', 'NDWI_max']:
+                url = img.select(b).getDownloadUrl({'crs': 'EPSG:4326', 'region': self.area, 'scale': scale})
+                print('url: ', url)
+                r = requests.get(url)
 
-        from zipfile import ZipFile
+                z = ZipFile(BytesIO(r.content))
+                z.extract(z.namelist()[1], self.dir)
+                os.rename(self.dir + z.namelist()[1], self.dir + str(self.area["coordinates"]) + b+'.tif')
 
-        zip_file = ZipFile(buffer)
-        files = zip_file.namelist()
-        for i, j in zip(files[-3:], ["NDVI_max.tif", "NDBI_max.tif", "NDWI_max.tif"]):
-            print(i, j)
-            zip_file.extract(i, dir)
-            os.rename(dir + i, dir + str(area["coordinates"]) + j)
-
-        return [str(self.area["coordinates"]) + "NDVI_max.tif", str(self.area["coordinates"]) + "NDBI_max.tif", str(self.area["coordinates"]) + "NDWI_max.tif"]
+            self.files = [str(self.area["coordinates"]) + "NDVI_max.tif", str(self.area["coordinates"]) + "NDBI_max.tif",
+             str(self.area["coordinates"]) + "NDWI_max.tif"]
 
     def rms_values(self, longitudes, latitudes):
         """
         Given a dataset with latitude and longitude columns, it returns the nightlight value at each point.
-        :param df: DataFrame
-        :param lon_col: column names for longitude
-        :param lat_col: column name of latitude
-        :return: Series
+        Args:
+            longitudes: list of longitudes
+            latitudes: list of latitudes
+        Returns:
+            Series
         """
         import rasterio
         try:
@@ -94,11 +96,7 @@ class S2indexes:
         veg, build, wat = [], [], []
         for lon, lat in zip(longitudes, latitudes):
 
-            # try:  # TODO: BUFFER!
             i, j = NDVI.index(lon, lat)
-            # except IndexError as e:
-            #     print(e, lon, ", ", row[lat_col])
-            #
             veg.append(NDVI.read(1)[i, j])
             build.append(NDBI.read(1)[i, j])
             wat.append(NDWI.read(1)[i, j])
