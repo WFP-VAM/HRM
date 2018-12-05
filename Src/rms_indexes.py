@@ -65,9 +65,7 @@ class S2indexes:
 
             for b in ['NDVI_max', 'NDBI_max', 'NDWI_max']:
                 url = img.select(b).getDownloadUrl({'crs': 'EPSG:4326', 'region': self.area, 'scale': scale})
-                print('url: ', url)
                 r = requests.get(url)
-
                 z = ZipFile(BytesIO(r.content))
                 z.extract(z.namelist()[1], self.dir)
                 os.rename(self.dir + z.namelist()[1], self.dir + str(self.area["coordinates"]) + b+'.tif')
@@ -90,7 +88,7 @@ class S2indexes:
             NDBI = rasterio.open(self.dir + self.files[1])
             NDWI = rasterio.open(self.dir + self.files[2])
         except MemoryError:
-            print('Remote Sensing Indexes Raster too big!')
+            print('Remote sensing indexes rasters too big!')
             raise
 
         veg, build, wat = [], [], []
