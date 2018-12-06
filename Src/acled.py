@@ -120,17 +120,54 @@ class ACLED(DataSource):
                 features.append(a[[0]][0][0])
         elif function == 'weighted_kNN':
             from sklearn.neighbors import NearestNeighbors
-            from sklearn.neighbors import KNeighborsRegressor
             gdf_lats = gdf["geometry"].y
             gfd_lons = gdf["geometry"].x
             X = np.array([gdf_lats, gfd_lons]).T
             y = np.array(gdf[property])
-            fitted_kNN = KNeighborsRegressor(n_neighbors=10, weights='distance').fit(X, y)
             nbrs = NearestNeighbors(n_neighbors=10).fit(X)
             for lat, lon in zip(latitudes, longitudes):
-                X = np.array([[lat, lon]])
-                a, _ = nbrs.kneighbors(X)
-                b = fitted_kNN.predict(X)
-                features.append(b[0] * a.sum())
+                X_pred = np.array([[lat, lon]])
+                dist, c = nbrs.kneighbors(X_pred)  # distance (in degrees) and index of the nearest neighbor
+                feature = (y[c][dist != 0] * 1 / dist[dist != 0]).sum()  # weight by the inverse of the distance
+                features.append(feature)
+        elif function == 'weighted_kNN_2':
+            from sklearn.neighbors import NearestNeighbors
+            gdf_lats = gdf["geometry"].y
+            gfd_lons = gdf["geometry"].x
+            X = np.array([gdf_lats, gfd_lons]).T
+            y = np.array(gdf[property])
+            nbrs = NearestNeighbors(n_neighbors=10).fit(X)
+            for lat, lon in zip(latitudes, longitudes):
+                X_pred = np.array([[lat, lon]])
+                dist, c = nbrs.kneighbors(X_pred)  # distance (in degrees) and index of the nearest neighbor
+                feature = (y[c][dist != 0] * 1 / (1 + dist[dist != 0])).sum()  # weight by the inverse of the distance
+                features.append(feature)
+        elif function == 'weighted_kNN_3':
+            from sklearn.neighbors import NearestNeighbors
+            gdf_lats = gdf["geometry"].y
+            gfd_lons = gdf["geometry"].x
+            X = np.array([gdf_lats, gfd_lons]).T
+            y = np.array(gdf[property])
+            nbrs = NearestNeighbors(n_neighbors=10).fit(X)
+            for lat, lon in zip(latitudes, longitudes):
+                X_pred = np.array([[lat, lon]])
+                dist, c = nbrs.kneighbors(X_pred)  # distance (in degrees) and index of the nearest neighbor
+                dist = dist / 10
+                feature = (y[c][dist != 0] * 1 / (1 + dist[dist != 0])).sum()  # weight by the inverse of the distance
+                features.append(feature)
+        elif function == 'weighted_kNN_4':
+            from sklearn.neighbors import NearestNeighbors
+            gdf_lats = gdf["geometry"].y
+            gfd_lons = gdf["geometry"].x
+            X = np.array([gdf_lats, gfd_lons]).T
+            y = np.array(gdf[property])
+            nbrs = NearestNeighbors(n_neighbors=10).fit(X)
+            for lat, lon in zip(latitudes, longitudes):
+                X_pred = np.array([[lat, lon]])
+                dist, c = nbrs.kneighbors(X_pred)  # distance (in degrees) and index of the nearest neighbor
+                dist = dist * 10
+                feature = (y[c][dist != 0] * 1 / (1 + dist[dist != 0])).sum()  # weight by the inverse of the distance
+                features.append(feature)
+
 
         return features

@@ -172,8 +172,12 @@ def run(id):
             d[property + "_" + str(k)] = acled.featurize(GRID.lon, GRID.lat, property=property, function='density', buffer=k)
 
     d["weighted_sum_fatalities_by_dist"] = acled.featurize(GRID.lon, GRID.lat, property="fatalities", function='weighted_kNN')
+    d["weighted_sum_fatalities_by_dist2"] = acled.featurize(GRID.lon, GRID.lat, property="fatalities", function='weighted_kNN_2')
+    d["weighted_sum_fatalities_by_dist3"] = acled.featurize(GRID.lon, GRID.lat, property="fatalities", function='weighted_kNN_3')
+    d["weighted_sum_fatalities_by_dist4"] = acled.featurize(GRID.lon, GRID.lat, property="fatalities", function='weighted_kNN_4')
     d["distance_to_acled_event"] = acled.featurize(GRID.lon, GRID.lat, function='distance')
 
+    print(d)
     features = pd.DataFrame(d, index=data.index)
     data = data.join(features)
 
