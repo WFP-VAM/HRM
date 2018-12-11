@@ -70,7 +70,7 @@ def squaretogeojson(lon, lat, d):
 
 def boundaries(latitudes, longitudes, buffer=0.05):
     """
-    Get GPS coordinates of the boundary box of a DataFrame and add some buffer around it.
+    Get GPS coordinates of the boundary box from list of lons and lats and add some buffer around it.
     """
     minlat = latitudes.min()
     maxlat = latitudes.max()

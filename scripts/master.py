@@ -89,7 +89,7 @@ def run(id):
         features = pd.DataFrame(gimages.featurize(GRID.lon, GRID.lat, step=step), index=data.index)
 
         features.columns = [str(col) + '_Google' for col in features.columns]
-        features.to_csv("../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline))
+        features.to_csv(features_path)
 
     data = data.join(features)
     print('INFO: features extracted')
@@ -120,7 +120,7 @@ def run(id):
         features = pd.DataFrame(simages.featurize(GRID.lon, GRID.lat, start_date, end_date), index=data.index)
 
         features.columns = [str(col) + '_Sentinel' for col in features.columns]
-        features.to_csv("../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline))
+        features.to_csv(features_path)
 
     data = data.join(features)
     print('INFO: features extracted')
