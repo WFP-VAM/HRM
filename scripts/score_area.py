@@ -82,9 +82,9 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
         print("INFO: using AOI from dataset.")
         # use dataset's extent
         dataset_df = pd.read_csv(dataset)
-        dataset_bounds = boundaries(dataset_df['gpsLatitude'], dataset_df['gpsLongitude'])
-        area = points_to_polygon(dataset_bounds[0], dataset_bounds[1], dataset_bounds[2], dataset_bounds[3])
-        del dataset_df, dataset_bounds
+        minlat, maxlat, minlon, maxlon = boundaries(dataset_df['gpsLatitude'], dataset_df['gpsLongitude'])
+        area = points_to_polygon(minlat=minlat, minlon=minlon, maxlat=maxlat, maxlon=maxlon)
+        del dataset_df, minlat, maxlat, minlon, maxlon
 
     # crop raster
     with rasterio.open(base_raster) as src:
