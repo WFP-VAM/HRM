@@ -41,7 +41,14 @@ def run(id):
     scope = config["scope"][0]
     nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), config["nightlights_date"][0].get("end")
     s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
-    if config['satellite_config'][0].get('satellite_images') == 'Y': step = config['satellite_config'][0].get("satellite_step")
+    if config['satellite_config'][0].get('satellite_images') == 'Y':
+        print('INFO: satellite images from Google and Sentinel-2')
+        step = config['satellite_config'][0].get("satellite_step")
+    elif config['satellite_config'][0].get('satellite_images') == 'G':
+        print('INFO: only Google satellite images.')
+        step = config['satellite_config'][0].get("satellite_step")
+    elif config['satellite_config'][0].get('satellite_images') == 'N':
+        print('INFO: no satellite images')
     ISO = config["iso3"][0]
 
     # --------------------- #
@@ -71,59 +78,61 @@ def run(id):
     # ------------------------------- #
     # get features from Google images #
     # ------------------------------- #
-    features_path = "../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline)
-    data_path = "../Data/Satellite/"
-    from google_images import GoogleImages
+    if config['satellite_config'][0].get('satellite_images') in ['Y', 'G']:
+        features_path = "../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline)
+        data_path = "../Data/Satellite/"
+        from google_images import GoogleImages
 
-    if os.path.exists(features_path):
-        print('INFO: already scored.')
-        features = pd.read_csv(
-            features_path.format(id, pipeline),
-            index_col=['gpsLongitude', 'gpsLatitude'],
-            float_precision='round_trip')
-    else:
-        gimages = GoogleImages(data_path)
-        # download the images from the relevant API
-        gimages.download(GRID.lon, GRID.lat, step=step)
-        # extract the features
-        features = pd.DataFrame(gimages.featurize(GRID.lon, GRID.lat, step=step), index=data.index)
+        if os.path.exists(features_path):
+            print('INFO: already scored.')
+            features = pd.read_csv(
+                features_path.format(id, pipeline),
+                index_col=['gpsLongitude', 'gpsLatitude'],
+                float_precision='round_trip')
+        else:
+            gimages = GoogleImages(data_path)
+            # download the images from the relevant API
+            gimages.download(GRID.lon, GRID.lat, step=step)
+            # extract the features
+            features = pd.DataFrame(gimages.featurize(GRID.lon, GRID.lat, step=step), index=data.index)
 
-        features.columns = [str(col) + '_Google' for col in features.columns]
-        features.to_csv("../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline))
+            features.columns = [str(col) + '_Google' for col in features.columns]
+            features.to_csv(features_path)
 
-    data = data.join(features)
-    print('INFO: features extracted')
+        data = data.join(features)
+        print('INFO: features extracted from Google satellite images')
 
     # --------------------------------- #
     # get features from Sentinel images #
     # --------------------------------- #
-    features_path = "../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline)
-    data_path = "../Data/Satellite/"
-    start_date = config["satellite_config"][0]["start_date"]
-    end_date = config["satellite_config"][0]["end_date"]
+    if config['satellite_config'][0].get('satellite_images') == 'Y':
+        features_path = "../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline)
+        data_path = "../Data/Satellite/"
+        start_date = config["satellite_config"][0]["start_date"]
+        end_date = config["satellite_config"][0]["end_date"]
 
-    from sentinel_images import SentinelImages
+        from sentinel_images import SentinelImages
 
-    if os.path.exists(features_path):
-        print('INFO: already scored.')
-        features = pd.read_csv(
-            features_path.format(id, pipeline),
-            index_col=['gpsLongitude', 'gpsLatitude'],
-            float_precision='round_trip')
-    else:
-        simages = SentinelImages(data_path)
-        # download the images from the relevant API
-        simages.download(GRID.lon, GRID.lat, start_date, end_date)
-        print('INFO: scoring ...')
-        # extract the features
-        print('INFO: extractor instantiated.')
-        features = pd.DataFrame(simages.featurize(GRID.lon, GRID.lat, start_date, end_date), index=data.index)
+        if os.path.exists(features_path):
+            print('INFO: already scored.')
+            features = pd.read_csv(
+                features_path.format(id, pipeline),
+                index_col=['gpsLongitude', 'gpsLatitude'],
+                float_precision='round_trip')
+        else:
+            simages = SentinelImages(data_path)
+            # download the images from the relevant API
+            simages.download(GRID.lon, GRID.lat, start_date, end_date)
+            print('INFO: scoring ...')
+            # extract the features
+            print('INFO: extractor instantiated.')
+            features = pd.DataFrame(simages.featurize(GRID.lon, GRID.lat, start_date, end_date), index=data.index)
 
-        features.columns = [str(col) + '_Sentinel' for col in features.columns]
-        features.to_csv("../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline))
+            features.columns = [str(col) + '_Sentinel' for col in features.columns]
+            features.to_csv(features_path)
 
-    data = data.join(features)
-    print('INFO: features extracted')
+        data = data.join(features)
+        print('INFO: features extracted from Sentinel images')
 
     # --------------- #
     # add nightlights #

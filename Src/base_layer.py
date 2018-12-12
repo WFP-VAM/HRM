@@ -20,7 +20,7 @@ class BaseLayer:
         i, j (list): lists of the raster's indices.
     """
 
-    def __init__(self, base_raster_file, lon, lat):
+    def __init__(self, base_raster_file, lon=None, lat=None):
         """
         Args:
             base_raster_file (str): path to the .tif raster to use.
@@ -37,8 +37,9 @@ class BaseLayer:
         self.centroid_y_coords, \
         self.bands_data = self._read_raster(self.path_to_raster)
 
-        self.lon, self.lat = lon, lat
-        self.i, self.j = self.get_gridcoordinates(lon, lat)
+        if lon is not None:
+            self.lon, self.lat = lon, lat
+            self.i, self.j = self.get_gridcoordinates(lon, lat)
 
     def get_gridcoordinates(self, lon, lat):
         """
@@ -59,8 +60,24 @@ class BaseLayer:
             except IndexError:
                 print("Coordinates {},{} out of Country bounds".format(x, y))
 
-
         return (list_i, list_j)
+
+    def get_gpscoordinates(self, list_i, list_j):
+        """ given a set of i and j it returns the lists on longitude and latitude from the grid.
+        Arge:
+            list_i: list of i (raster/grid references)
+            list_j: list of j (raster/grid references)
+        :return: two lists containing the gps coordinates corresponding to i and j.
+        """
+
+        lon = []
+        lat = []
+        # for all i and j
+        for i, j in zip(list_i, list_j):
+            lon.append(self.centroid_x_coords[i])
+            lat.append(self.centroid_y_coords[j])
+
+        return (lon, lat)
 
     def aggregate(self, scale):
         """
