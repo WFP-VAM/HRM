@@ -116,44 +116,49 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
 
     pipeline = 'scoring'
 
-    # ------------------------------------------------------------- #
+    # ------------------------------------------------ #
     # download images from Google and Extract Features #
-    # ------------------------------------------------------------- #
-    features_path = "../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline)
-    data_path = "../Data/Satellite/"
+    # ------------------------------------------------ #
+    if config['satellite_config'][0].get('satellite_images') in ['Y', 'G']:
+        features_path = "../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline)
+        data_path = "../Data/Satellite/"
 
-    gimages = GoogleImages(data_path)
-    # download the images from the relevant API
-    gimages.download(coords_x, coords_y, step=step)
-    # extract the features
-    features = pd.DataFrame(gimages.featurize(coords_x, coords_y, step=step), index=ix)
-    features.columns = [str(col) + '_Google' for col in features.columns]
-    features.to_csv(features_path)
-    print('INFO: features extracted.')
-    data = features.copy()
+        gimages = GoogleImages(data_path)
+        # download the images from the relevant API
+        gimages.download(coords_x, coords_y, step=step)
+        # extract the features
+        features = pd.DataFrame(gimages.featurize(coords_x, coords_y, step=step), index=ix)
+        features.columns = [str(col) + '_Google' for col in features.columns]
+        features.to_csv(features_path)
+        print('INFO: features extracted.')
+        data = features.copy()
     # ------------------------------------------------------------- #
     # download Sentinel images and Extract Features #
     # ------------------------------------------------------------- #
-    features_path = "../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline)
-    data_path = "../Data/Satellite/"
-    start_date = config["satellite_config"][0]["start_date"]
-    end_date = config["satellite_config"][0]["end_date"]
+    if config['satellite_config'][0].get('satellite_images') == 'Y':
+        features_path = "../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline)
+        data_path = "../Data/Satellite/"
+        start_date = config["satellite_config"][0]["start_date"]
+        end_date = config["satellite_config"][0]["end_date"]
 
-    from sentinel_images import SentinelImages
+        from sentinel_images import SentinelImages
 
-    simages = SentinelImages(data_path)
-    # download the images from the relevant API
-    simages.download(coords_x, coords_y, start_date, end_date)
-    print('INFO: scoring ...')
-    # extract the features
-    print('INFO: extractor instantiated.')
-    features = pd.DataFrame(simages.featurize(coords_x, coords_y, start_date, end_date), index=ix)
+        simages = SentinelImages(data_path)
+        # download the images from the relevant API
+        simages.download(coords_x, coords_y, start_date, end_date)
+        print('INFO: scoring ...')
+        # extract the features
+        print('INFO: extractor instantiated.')
+        features = pd.DataFrame(simages.featurize(coords_x, coords_y, start_date, end_date), index=ix)
 
-    features.columns = [str(col) + '_Sentinel' for col in features.columns]
-    features.to_csv(features_path)
+        features.columns = [str(col) + '_Sentinel' for col in features.columns]
+        features.to_csv(features_path)
 
-    data = data.join(features)
-    print('INFO: features extracted')
+        if data is not None:
+            data = data.join(features)
+        else:
+            data = features.copy()
+        print('INFO: features extracted')
 
     # --------------- #
     # add nightlights #
