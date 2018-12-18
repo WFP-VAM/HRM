@@ -33,7 +33,7 @@ import click
 @click.option('--id', type=int)
 @click.option('--aggregate_factor', default=1, type=int)
 @click.option('--min_pop', default=0, type=float)
-@click.option('--bbox', nargs=4, default=(0,0,0,0), required=False, type=float, help='bounding box <minlat> <maxlat> <minlon> <maxlon>')
+@click.option('--bbox', nargs=4, default=(0,0,0,0), required=False, type=float, help='bounding box <minlat> <minlon> <maxlat> <maxlon>')
 @click.option('--shapefile', default=None, type=str)
 def main(id, aggregate_factor, min_pop, bbox, shapefile):
 
@@ -56,7 +56,14 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
     s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
     ISO = config["iso3"][0]
     if config['satellite_config'][0].get('satellite_images') == 'Y':
+        print('INFO: satellite images from Google and Sentinel-2')
         step = config['satellite_config'][0].get("satellite_step")
+    elif config['satellite_config'][0].get('satellite_images') == 'G':
+        print('INFO: only Google satellite images.')
+        step = config['satellite_config'][0].get("satellite_step")
+    elif config['satellite_config'][0].get('satellite_images') == 'N':
+        print('INFO: no satellite images')
+
 
     # ----------------------------------- #
     # WorldPop Raster too granular (lots of images), aggregate #
@@ -77,14 +84,15 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
         print("INFO: using AOI from bbox")
         print(sum(bbox))
         # define AOI with manually defined bbox
-        area = points_to_polygon(bbox[0], bbox[1], bbox[2], bbox[3])
+        minlat, minlon, maxlat, maxlon = bbox[0], bbox[1], bbox[2], bbox[3]
+        area = points_to_polygon(minlat=minlat, minlon=minlon, maxlat=maxlat, maxlon=maxlon)
     else:
         print("INFO: using AOI from dataset.")
         # use dataset's extent
         dataset_df = pd.read_csv(dataset)
         minlat, maxlat, minlon, maxlon = boundaries(dataset_df['gpsLatitude'], dataset_df['gpsLongitude'])
         area = points_to_polygon(minlat=minlat, minlon=minlon, maxlat=maxlat, maxlon=maxlon)
-        del dataset_df, minlat, maxlat, minlon, maxlon
+        del dataset_df
 
     # crop raster
     with rasterio.open(base_raster) as src:
@@ -174,16 +182,14 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
     # ---------------- #
     # add OSM features #
     # ---------------- #
-    bounds = boundaries(coords_x, coords_y, buffer=0.05)
-    OSM = OSM_extractor(bounds[0], bounds[1], bounds[2], bounds[3])
+    OSM = OSM_extractor(minlon, minlat, maxlon, maxlat)
     tags = {"amenity": ["school", "hospital"], "natural": ["tree"]}
     osm_gdf = {}
 
     for key, values in tags.items():
         for value in values:
             osm_gdf["value"] = OSM.download(key, value)
-            osm_tree = OSM.gpd_to_tree(osm_gdf["value"])
-            dist = OSM.distance_to_nearest(coords_y, coords_x, osm_tree)
+            dist = OSM.distance_to_nearest(coords_y, coords_x, osm_gdf["value"])
             data['distance_{}'.format(value)] = [np.log(0.0001 + x) for x in dist]
 
     # ---------------- #
@@ -202,13 +208,16 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
     from acled import ACLED
 
     acled = ACLED("../Data/Geofiles/ACLED/")
-    acled.download(ISO, start_date, end_date)
+    acled.download(ISO, nightlights_date_start, nightlights_date_end)
     d = {}
     for property in ["fatalities", "n_events", "violence_civ"]:
-        d[property] = acled.featurize(coords_x, coords_y, property)
+        for k in [10000, 100000]:
+            d[property + "_" + str(k)] = acled.featurize(coords_x, coords_y, property=property, function='density', buffer=k)
 
-    features = pd.DataFrame(d, index=ix)
+    d["weighted_sum_fatalities_by_dist"] = acled.featurize(coords_x, coords_y, property="fatalities", function='weighted_kNN')
+    d["distance_to_acled_event"] = acled.featurize(coords_x, coords_y, function='distance')
 
+    features = pd.DataFrame(d, index=data.index)
     data = data.join(features)
 
     # --------------- #

@@ -49,11 +49,12 @@ def test_GoogleImages():
 def test_Acled():
     """ Testing the module that extracts ACLED data. """
     ad = pytest.importorskip('acled')
-
+    coords_x, coords_y = [1.183056], [9.553300]
     acled = ad.ACLED("../tests")
     acled.download("TGO", '2017-01-01', '2018-01-01')
     d = {}
     for property in ["fatalities", "n_events", "violence_civ"]:
-        d[property] = acled.featurize([1.183056], [9.553300], property)
+        for k in [10000, 100000]:
+            d[property + "_" + str(k)] = acled.featurize(coords_x, coords_y, property=property, function='density', buffer=k)
 
     assert sum(d[item][0] for item in d) > 0
