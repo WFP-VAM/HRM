@@ -142,7 +142,8 @@ def run(id):
     nlights = Nightlights('../Data/Geofiles/')
     nlights.download(area, nightlights_date_start, nightlights_date_end)
     features = pd.DataFrame(nlights.featurize(GRID.lon, GRID.lat), columns=['nightlights'], index=data.index)
-
+    # quantize nightlights
+    features['nightlights'] = pd.qcut(features['nightlights'], 5, labels=False, duplicates='drop')
     data = data.join(features)
 
     # ---------------- #
@@ -189,6 +190,8 @@ def run(id):
     # --------------- #
     # save features   #
     # --------------- #
+    # drop empty features
+    data.dropna(axis=1, how='all', inplace=True)
     # features to be use in the linear model
     features_list = list(sorted(set(data.columns) - set(['i', 'j', indicator])))
 

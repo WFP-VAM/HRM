@@ -25,7 +25,7 @@ class Nightlights(DataSource):
         Args:
             area: geoJSON, use src.points_to_poligon to generate.
             date_from (str): consider only lights from this date.
-            date_to (str): consider only lights up to this date.
+            date_end (str): consider only lights up to this date.
         """
 
         print('INFO: downloading nightlights for area of interest ...')
@@ -33,35 +33,19 @@ class Nightlights(DataSource):
         start = ee.Date(date_from)
         end = ee.Date(date_end)
 
-        # Create mask using DMSP-OLS to select settlements -----------------
-        popImgSet = ee.ImageCollection('NOAA/DMSP-OLS/NIGHTTIME_LIGHTS').\
-            select('stable_lights').\
-            filterDate('2010-01-01', date_end)
-
-        popImgmask = ee.Image(popImgSet.sort('system:index', False).first())
-
-        # Select VIIRS Nightlights images ----------------------------------
+        # Worldpop's population mask
+        popMask = ee.ImageCollection("WorldPop/POP").select('population').reduce('median').gt(0.3)
+        # VIIRS monthly product
         NLImgSet = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG').select('avg_rad').filterDate(start, end)
 
-        # Mask each NL image first by DMSP-OLS then to only select values greater than 0.3
+        # Mask each NL image by WorldPop's layer
         def maskImage(img):
-            return img.updateMask(popImgmask).updateMask(img.gte(0.3))
+            return img.updateMask(popMask)
 
-        NLImgSet = NLImgSet.map(maskImage)
-
-        # from collection to 1 image
-        first = ee.Image(NLImgSet.first())
-
-        def appendBand(img, previous):
-                return ee.Image(previous).addBands(img)
-
-        img = ee.Image(NLImgSet.iterate(appendBand, first))
-
-        # reduce (mean) pixel wise
-        img = img.reduce(ee.Reducer.mean())
+        NLImg = NLImgSet.map(maskImage).sum()
 
         # download
-        url = img.getDownloadURL({'crs': 'EPSG:4326', 'region': area})
+        url = NLImg.getDownloadURL({'crs': 'EPSG:4326', 'region': area, 'scale': 1000})
         self.file = self.directory+self.download_and_unzip(BytesIO(urllib.request.urlopen(url).read()), self.directory)
 
     def featurize(self, lon, lat):
