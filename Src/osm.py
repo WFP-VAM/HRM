@@ -4,11 +4,11 @@ class OSM_extractor:
         self.minlon, self.minlat, self.maxlon, self.maxlat = minlon, minlat, maxlon, maxlat
 
     def download(self, tag_key='amenity', tag_value='school'):
-        '''
+        """
         Get the json of coordinates (or the number of items) within a bbox for a specific osm tag.
         https://taginfo.openstreetmap.org/
         https://wiki.openstreetmap.org/wiki/Map_Features#Building
-        '''
+        """
         from osmnx.core import overpass_request
         from shapely.geometry import Point
         import geopandas as gpd
@@ -22,8 +22,6 @@ class OSM_extractor:
         query_osm = ('[out:json][maxsize:2000000000];'
                      '('
                      'node["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
-                     'way["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
-                     'relation["{tag_key}"="{tag_value}"]({minlat:.8f},{minlon:.8f},{maxlat:.8f},{maxlon:.8f});'
                      ');(._;>;);out center;'
                      ).format(minlat=self.minlat, maxlat=self.maxlat, minlon=self.minlon, maxlon=self.maxlon, tag_key=tag_key, tag_value=tag_value)
 
