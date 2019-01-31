@@ -30,9 +30,9 @@ class ACLED(DataSource):
             - The number of events of type Violence against civilians
         Save the resulting geojson
         Args:
-            country_ISO: ISO code of the country of interest.
-            date_from (str): consider only lights from this date.
-            date_to (str): consider only lights up to this date.
+            country_ISO: ISO number of the country of interest. Get them from https://www.acleddata.com/wp-content/uploads/dlm_uploads/2017/10/API-User-Guide-11.pdf
+            date_from (str): consider only events from this date.
+            date_to (str): consider only events up to this date.
         """
         self.path = os.path.join(
             self.directory,
@@ -44,8 +44,8 @@ class ACLED(DataSource):
 
         URL = "https://api.acleddata.com/acled/read.csv"
         parameters = {
-            "limit": 0,
-            "iso3": country_ISO,
+            "terms": "accept",
+            "iso": country_ISO,
             "fields": "iso|event_type|fatalities|latitude|longitude",
             "event_date": "{" + date_from + "|" + date_to + "}",
             "event_date_where": "BETWEEN"
@@ -55,7 +55,9 @@ class ACLED(DataSource):
 
         data = pd.read_csv(io.StringIO(data.decode('utf-8')))
 
-        print("INFO: Downloaded ", len(data), "ACLED events")
+        print("INFO: downloaded ", len(data), "ACLED events")
+        if len(data) == 0:
+            return
 
         sum_fatalities = data.groupby(['latitude', 'longitude'])["fatalities"].sum()
         count_all_events = data.groupby(['latitude', 'longitude']).size().rename("n_events")
@@ -101,7 +103,11 @@ class ACLED(DataSource):
             If function equal to weighted_kNN: computes the sum of the 10 closest point for a specific attribute
             weighted by the distance to the points.
         """
-        gdf = gpd.read_file(self.path)
+        if os.path.exists(self.path):
+            gdf = gpd.read_file(self.path)
+        else:
+            print('ACLED not downlaoded or zero events.')
+            return
         features = []
         if function == 'density':
             for lat, lon in zip(latitudes, longitudes):
@@ -131,6 +137,5 @@ class ACLED(DataSource):
                 dist = dist / 10
                 feature = (y[c][dist != 0] * 1 / (1 + dist[dist != 0])).sum()  # weight by the inverse of the distance
                 features.append(feature)
-
 
         return features
