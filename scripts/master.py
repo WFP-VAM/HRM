@@ -183,15 +183,19 @@ def run(id):
 
     d["weighted_sum_fatalities_by_dist"] = acled.featurize(GRID.lon, GRID.lat, property="fatalities", function='weighted_kNN')
     d["distance_to_acled_event"] = acled.featurize(GRID.lon, GRID.lat, function='distance')
-
+    # quantize ACLED
+    for c in d.keys():
+        d[c] = pd.qcut(d[c], 5, labels=False, duplicates='drop')
     features = pd.DataFrame(d, index=data.index)
     data = data.join(features)
 
     # --------------- #
     # save features   #
     # --------------- #
-    # drop empty features
-    data.dropna(axis=1, how='all', inplace=True)
+    # drop columns with only 1 value
+    print('INFO: {} columns. Dropping features with unique values (if any) ...'.format(len(data.columns)))
+    data = data[[col for col in data if not data[col].nunique() == 1]]
+    print('INFO: {} columns.'.format(len(data.columns)))
     # features to be use in the linear model
     features_list = list(sorted(set(data.columns) - set(['i', 'j', indicator])))
 
@@ -201,7 +205,6 @@ def run(id):
     # Scale Features
     print("Normalizing : max")
     data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].max()
-
     data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id))
 
     # --------------- #
