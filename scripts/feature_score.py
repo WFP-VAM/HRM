@@ -18,9 +18,8 @@ from evaluation_utils import r2_pearson
 @click.command()
 @click.option('--id')
 @click.option('--indicator', default=(None))
-@click.option('--scoring', default=('r2'))
 @click.option('--cv', default=(10))
-def individual_r2(id, indicator, scoring, cv):
+def individual_r2(id, indicator, cv):
     with open('../private_config.yml', 'r') as cfgfile:
         private_config = yaml.load(cfgfile)
 
@@ -55,15 +54,12 @@ def individual_r2(id, indicator, scoring, cv):
     if config['log'][0]:
         data[indicator] = np.log(data[indicator])
 
-    if scoring == 'r2_pearson':
-        scoring = r2_pearson
-
     X = data
     print("indicator: ", indicator)
     y = data[indicator]
     cv_loops = cv
     from modeller import Modeller
-    Modeller_all = Modeller(X, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring=scoring, cv_loops=cv_loops)
+    Modeller_all = Modeller(X, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], cv_loops=cv_loops)
 
     kNN_pipeline = Modeller_all.make_model_pipeline('kNN')
     kNN_scores = Modeller_all.compute_scores(kNN_pipeline, y)
@@ -83,44 +79,43 @@ def individual_r2(id, indicator, scoring, cv):
     Ensemble_R2_std = Ensemble_scores.std()
     print("Ensemble_R2_mean: ", round(Ensemble_R2_mean, 2), "Ensemble_R2_std: ", round(Ensemble_R2_std, 2))
 
-    Modeller_google = Modeller(X, rs_features=nn_features_google, spatial_features=["gpsLatitude", "gpsLongitude"], scoring=scoring, cv_loops=cv_loops)
+    Modeller_google = Modeller(X, rs_features=nn_features_google, spatial_features=["gpsLatitude", "gpsLongitude"], cv_loops=cv_loops)
     Ridge_pipeline = Modeller_google.make_model_pipeline('Ridge')
     Ridge_scores_google = Modeller_google.compute_scores(Ridge_pipeline, y)
     Ridge_R2_mean_google = Ridge_scores_google.mean()
     Ridge_R2_std_google = Ridge_scores_google.std()
     print("Ridge_R2_google_mean: ", round(Ridge_R2_mean_google, 2), "Ridge_R2_google_std: ", round(Ridge_R2_std_google, 2))
 
-    Modeller_sentinel = Modeller(X, rs_features=nn_features_sentinel, spatial_features=["gpsLatitude", "gpsLongitude"], scoring=scoring, cv_loops=cv_loops)
+    Modeller_sentinel = Modeller(X, rs_features=nn_features_sentinel, spatial_features=["gpsLatitude", "gpsLongitude"], cv_loops=cv_loops)
     Ridge_pipeline = Modeller_sentinel.make_model_pipeline('Ridge')
     Ridge_scores_sentinel = Modeller_sentinel.compute_scores(Ridge_pipeline, y)
     Ridge_R2_mean_sentinel = Ridge_scores_sentinel.mean()
     Ridge_R2_std_sentinel = Ridge_scores_sentinel.std()
     print("Ridge_R2_sentinel_mean: ", round(Ridge_R2_mean_sentinel, 2), "Ridge_R2_sentinel_std: ", round(Ridge_R2_std_sentinel, 2))
 
-    Modeller_nn = Modeller(X, rs_features=nn_features, spatial_features=["gpsLatitude", "gpsLongitude"], scoring=scoring, cv_loops=cv_loops)
+    Modeller_nn = Modeller(X, rs_features=nn_features, spatial_features=["gpsLatitude", "gpsLongitude"], cv_loops=cv_loops)
     Ridge_pipeline = Modeller_nn.make_model_pipeline('Ridge')
     Ridge_scores_nn = Modeller_nn.compute_scores(Ridge_pipeline, y)
     Ridge_R2_mean_nn = Ridge_scores_nn.mean()
     Ridge_R2_std_nn = Ridge_scores_nn.std()
     print("Ridge_R2_nn_mean: ", round(Ridge_R2_mean_nn, 2), "Ridge_R2_nn_std: ", round(Ridge_R2_std_nn, 2))
 
-    Modeller_no_nn = Modeller(X, rs_features=no_nn_features, spatial_features=["gpsLatitude", "gpsLongitude"], scoring=scoring, cv_loops=cv_loops)
+    Modeller_no_nn = Modeller(X, rs_features=no_nn_features, spatial_features=["gpsLatitude", "gpsLongitude"], cv_loops=cv_loops)
     Ridge_pipeline = Modeller_no_nn.make_model_pipeline('Ridge')
     Ridge_scores_no_nn = Modeller_no_nn.compute_scores(Ridge_pipeline, y)
     Ridge_R2_mean_no_nn = Ridge_scores_no_nn.mean()
     Ridge_R2_std_no_nn = Ridge_scores_no_nn.std()
     print("Ridge_R2_no_nn_mean: ", round(Ridge_R2_mean_no_nn, 2), "Ridge_R2_no_nn_std: ", round(Ridge_R2_std_no_nn, 2))
 
-
-    for feature in no_nn_features:
-        Modeller_feature = Modeller(X, rs_features=feature, scoring=scoring, cv_loops=cv_loops)
+    for feature in features_list:
+        Modeller_feature = Modeller(X, rs_features=feature, cv_loops=cv_loops)
         Ridge_pipeline = Modeller_feature.make_model_pipeline('Ridge')
         Ridge_scores_feature = Modeller_feature.compute_scores(Ridge_pipeline, y)
         Ridge_R2_mean_feature = Ridge_scores_feature.mean()
         Ridge_R2_std_feature = Ridge_scores_feature.std()
 
         all_but_feature = list(set(features_list) - set([feature]))
-        Modeller_all_but_feature = Modeller(X, rs_features=all_but_feature, scoring=scoring, cv_loops=cv_loops)
+        Modeller_all_but_feature = Modeller(X, rs_features=all_but_feature, cv_loops=cv_loops)
         Ridge_pipeline2 = Modeller_all_but_feature.make_model_pipeline('Ridge')
         Ridge_scores_all_but_feature = Modeller_all_but_feature.compute_scores(Ridge_pipeline2, y)
         Ridge_R2_mean_all_but_feature = Ridge_scores_all_but_feature.mean()

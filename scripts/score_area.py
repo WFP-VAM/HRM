@@ -36,7 +36,17 @@ import click
 @click.option('--bbox', nargs=4, default=(0,0,0,0), required=False, type=float, help='bounding box <minlat> <minlon> <maxlat> <maxlon>')
 @click.option('--shapefile', default=None, type=str)
 def main(id, aggregate_factor, min_pop, bbox, shapefile):
+    """ makes predictions is areas where we have no survey.
+    Args:
+        id (int): the config id
+        aggregate_factor (int): aggregate pixels to lower resolution by x much
+        min_pop: minimium population in pixel to score
+        bbox: bounding box <minlat> <minlon> <maxlat> <maxlon>, if omitted will use boundaries from dataset
+        shapefile: aggregate within shapefile's geometires
 
+    Example:
+        id, aggregate_factor, min_pop = 3075, 15, 500
+    """
     # read the configs for id
     print(str(np.datetime64('now')), " INFO: config id =", id)
 
@@ -176,6 +186,8 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
     nlights = Nightlights('../Data/Geofiles/')
     nlights.download(area, nightlights_date_start, nightlights_date_end)
     features = pd.DataFrame(nlights.featurize(coords_x, coords_y), columns=['nightlights'], index=ix)
+    # quantize nightlights
+    features['nightlights'] = pd.qcut(features['nightlights'], 5, labels=False, duplicates='drop')
 
     data = data.join(features)
 
@@ -216,6 +228,9 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
 
     d["weighted_sum_fatalities_by_dist"] = acled.featurize(coords_x, coords_y, property="fatalities", function='weighted_kNN')
     d["distance_to_acled_event"] = acled.featurize(coords_x, coords_y, function='distance')
+    # quantize ACLED
+    for c in d.keys():
+        d[c] = np.nan_to_num(pd.qcut(d[c], 5, labels=False, duplicates='drop'))
 
     features = pd.DataFrame(d, index=data.index)
     data = data.join(features)
@@ -223,12 +238,14 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
     # --------------- #
     # save features   #
     # --------------- #
+    print('INFO: {} columns.'.format(len(data.columns)))
     # features to be use in the linear model
     features_list = list(sorted(data.columns))
-    print('features list : \n', features_list)
+    print(features_list)
+    data.to_csv("../Data/Features/features_all_id_{}_{}_nonscaled.csv".format(id, pipeline))
     # Scale Features
     print("Normalizing : max")
-    data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].max()
+    data[features_list] = (data[features_list] - data[features_list].mean()) / (data[features_list].max()+0.001)
 
     data.to_csv("../Data/Features/features_all_id_{}_{}.csv".format(id, pipeline))
 

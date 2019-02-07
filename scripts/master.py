@@ -185,7 +185,8 @@ def run(id):
     d["distance_to_acled_event"] = acled.featurize(GRID.lon, GRID.lat, function='distance')
     # quantize ACLED
     for c in d.keys():
-        d[c] = pd.qcut(d[c], 5, labels=False, duplicates='drop')
+        d[c] = np.nan_to_num(pd.qcut(d[c], 5, labels=False, duplicates='drop'))
+
     features = pd.DataFrame(d, index=data.index)
     data = data.join(features)
 
@@ -204,7 +205,7 @@ def run(id):
 
     # Scale Features
     print("Normalizing : max")
-    data[features_list] = (data[features_list] - data[features_list].mean()) / data[features_list].max()
+    data[features_list] = (data[features_list] - data[features_list].mean()) / (data[features_list].max()+0.001)
     data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id))
 
     # --------------- #
