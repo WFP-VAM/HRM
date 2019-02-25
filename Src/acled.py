@@ -106,7 +106,7 @@ class ACLED(DataSource):
         if os.path.exists(self.path):
             gdf = gpd.read_file(self.path)
         else:
-            print('ACLED not downlaoded or zero events.')
+            print('ACLED not downloaded or zero events.')
             return
         features = []
         if function == 'density':
