@@ -244,6 +244,10 @@ def run(file, id=None):
 
 
 if __name__ == "__main__":
+    print("we are in \n:", os.getcwd())
+    print("and we have \n:", os.listdir("/app"))
+    print("and above \n:", os.listdir("../"))
+    print("and in data \n:", os.listdir("/app/Data/"))
 
     import tensorflow as tf
     for id in sys.argv[1:]:

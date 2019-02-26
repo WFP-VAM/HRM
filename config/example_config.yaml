@@ -2,7 +2,7 @@ id: 3075
 
 ### DATASET ###
 # filename of the dataset, it MUST have gpsLongitude, gpsLatitude abd the indicator. Must be .csv
-dataset_filename: ../Data/datasets/LSMS_Malawi_2016_ea.csv
+dataset_filename: /app/Data/datasets/LSMS_Malawi_2016_ea.csv
 # column name of the indicator we want to model
 indicator: log_med_exp_total_pcd
 

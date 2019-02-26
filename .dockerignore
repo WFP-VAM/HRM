@@ -1,0 +1,10 @@
+Notebooks
+Plots
+logs
+images
+Data
+tests
+.pytest_cache
+private_config.yml
+README.md
+*.tif
