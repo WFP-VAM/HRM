@@ -2,8 +2,7 @@ import gdal
 import numpy as np
 from sqlalchemy import create_engine
 import yaml
-import pandas as pd
-
+import json
 
 def tifgenerator(outfile, raster_path, df, value='yhat'):
     """
@@ -319,3 +318,23 @@ def get_config_db(id):
     d = [dict(r) for r in res][0]
 
     return d, engine
+
+
+def write_scores_to_file(scores_dict, id):
+    with open('../Data/Results/scores_{}.txt'.format(id), 'w') as file:
+        file.write(json.dumps(scores_dict))
+    print('INFO: scores written to ', 'Data/Results/scores_{}.txt'.format(id))
+
+
+def write_scores_to_db(scores_dict, id, engine):
+    query = """
+                insert into results_new (run_date, config_id, r2, r2_sd, r2_knn, r2_sd_knn, r2_features, r2_sd_features)
+                values (current_date, {}, {}, {}, {}, {}, {}, {}) """.format(
+        id,
+        scores_dict['ensemble_R2_mean'],
+        scores_dict['ensemble_R2_std'],
+        scores_dict['kNN_R2_mean'],
+        scores_dict['kNN_R2_std'],
+        scores_dict['ridge_R2_mean'],
+        scores_dict['ridge_R2_std'])
+    engine.execute(query)

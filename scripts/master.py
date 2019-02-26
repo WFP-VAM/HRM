@@ -15,7 +15,7 @@ except FileNotFoundError:
 sys.path.append(os.path.join("..", "Src"))
 from base_layer import BaseLayer
 from osm import OSM_extractor
-from utils import boundaries, points_to_polygon, get_config_db, get_config_file
+from utils import boundaries, points_to_polygon, get_config_db, get_config_file, write_scores_to_file, write_scores_to_db
 
 
 def run(file, id=None):
@@ -189,44 +189,38 @@ def run(file, id=None):
     # --------------- #
     # shuffle dataset
     data = data.sample(frac=1, random_state=1783)  # shuffle data
-
+    scores_dict = {} # placeholder to save the scores
     from modeller import Modeller
     X, y = data[features_list].reset_index(), data[config['indicator']]
     modeller = Modeller(X, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20)
 
     kNN_pipeline = modeller.make_model_pipeline('kNN')
     kNN_scores = modeller.compute_scores(kNN_pipeline, y)
-    kNN_R2_mean = kNN_scores.mean()
-    kNN_R2_std = kNN_scores.std()
-    print("kNN_R2_mean: ", kNN_R2_mean, "kNN_R2_std: ", kNN_R2_std)
+    scores_dict['kNN_R2_mean'] = round(kNN_scores.mean(), 2)
+    scores_dict['kNN_R2_std'] = round(kNN_scores.std(), 2)
+    print("kNN_R2_mean: ", scores_dict['kNN_R2_mean'], "kNN_R2_std: ", scores_dict['kNN_R2_std'])
 
     Ridge_pipeline = modeller.make_model_pipeline('Ridge')
     Ridge_scores = modeller.compute_scores(Ridge_pipeline, y)
-    Ridge_R2_mean = Ridge_scores.mean()
-    Ridge_R2_std = Ridge_scores.std()
-    print("Ridge_R2_mean: ", Ridge_R2_mean, "Ridge_R2_std: ", Ridge_R2_std)
+    scores_dict['ridge_R2_mean'] = round(Ridge_scores.mean(), 2)
+    scores_dict['ridge_R2_std'] = round(Ridge_scores.std(), 2)
+    print("Ridge_R2_mean: ", scores_dict['ridge_R2_mean'], "Ridge_R2_std: ", scores_dict['ridge_R2_std'])
 
     Ensemble_pipeline = modeller.make_ensemble_pipeline([kNN_pipeline, Ridge_pipeline])
     Ensemble_scores = modeller.compute_scores(Ensemble_pipeline, y)
-    Ensemble_R2_mean = Ensemble_scores.mean()
-    Ensemble_R2_std = Ensemble_scores.std()
-    print("Ensemble_R2_mean: ", Ensemble_R2_mean, "Ensemble_R2_std: ", Ensemble_R2_std)
+    scores_dict['ensemble_R2_mean'] = round(Ensemble_scores.mean(), 2)
+    scores_dict['ensemble_R2_std'] = round(Ensemble_scores.std(), 2)
+    print("Ensemble_R2_mean: ", scores_dict['ensemble_R2_mean'], "Ensemble_R2_std: ", scores_dict['ensemble_R2_std'])
 
-    # ------------------ #
-    # write scores to DB #
-    # ------------------ #
-
-    query = """
-    insert into results_new (run_date, config_id, r2, r2_sd, r2_knn, r2_sd_knn, r2_features, r2_sd_features, mape_rmsense)
-    values (current_date, {}, {}, {}, {}, {}, {}, {}, {}) """.format(
-        config['id'],
-        Ensemble_R2_mean, Ensemble_R2_std, kNN_R2_mean, kNN_R2_std, Ridge_R2_mean, Ridge_R2_std, 0)
-    engine.execute(query)
+    # save results
+    if id is None:
+        write_scores_to_file(scores_dict, config['id'])
+    else:
+        write_scores_to_db(scores_dict, config['id'], engine)
 
     # ------------------------- #
     # write predictions to file #
     # ------------------------- #
-
     print('INFO: writing predictions to disk ...')
 
     from sklearn.model_selection import cross_val_predict
@@ -234,7 +228,7 @@ def run(file, id=None):
         'yhat': cross_val_predict(Ensemble_pipeline, X.values, y),
         'y': data[config['indicator']].values},
         index=data.index)
-    results.to_csv('../Data/Results/config_{}.csv'.format(id))
+    results.to_csv('../Data/Results/config_{}.csv'.format(config['id']))
 
     # save model for production
     Ensemble_pipeline.fit(X.values, y)
@@ -256,8 +250,9 @@ if __name__ == "__main__":
         if id.isdigit():
             # use database for configs
             run(file=False, id=id)
-        elif type(id) == str:
+        else:
             # use yml for configs
+            print(os.getcwd())
             run(file=id)
 
     # rubbish collection
