@@ -14,7 +14,7 @@ The application takes as input geo-referenced survey data, then for every survey
 The trained models can then be used for making predictions in areas where no data is available. Use the [scripts/score_area.py](https://github.com/WFP-VAM/HRM/blob/master/scripts/score_area.py) for that. Work is in progress in the `application` directory for taking the method to produciton. 
   
 ### How to run the code:
-#### Set-up
+#### File-system
 Make sure to have the following file-system in place:
  ```
 config
@@ -35,18 +35,23 @@ Data
     └── Google   
 Models
   ```
- The mandatory files are 
+ The mandatory files are: 
 `Data/datasets/processed_survey.csv` this is your survey data! should contain at least 3 columns: "gpsLongitude","gpsLatitude" and one indicator. You can either work with individual survey data or aggregate the surveys to some geographic level. 
   
 `Data/Geofiles/Rasters/base_layer.tif` is a raster file that containing the area of interest and the population density. Survey points will be snapped to its grid and the pulled layers over-laid.Please use 100x100m resolution WorldPop's rasters, available at http://www.worldpop.org.uk/data/data_sources/. 
  
 `config/example_config` is the config file that you should fill in. Please use the template provided, fields list in there. 
 
-#### Train Model
+#### Credentials
+Because you will be pulling data from a number of sources, you will need to set up some credentials. 
+##### Earth Engine
+The most complex because it is using Google's OAuth2. Please follow [this link](https://developers.google.com/earth-engine/python_install_manual) to create your credentials file.
+ 
+### Train Model
 ```
 python master.py args 
 ```
-where args is one or more `example_config.yaml`. Each `.yaml` should be space sperated. Please run from the root directory of the application. For example to trigger for configs config_1.yaml, config_2.yaml and config_3.yaml do:
+where args is one or more `example_config.yaml`. Each `.yaml` should be space separated. Please run from the root directory of the application. For example to trigger for configs config_1.yaml, config_2.yaml and config_3.yaml do:
 ```
 python master.py config_1.yaml config_2.yaml config_3.yaml > log.txt &
 ```
@@ -59,5 +64,11 @@ This will:
 * save the full predictions on the left-out data.
 * save the trained model.
 
+#### With Docker
+Build with ``` docker build -t hrm . ``` then run with:
+```
+docker run -v ~/Desktop/HRM/HRM/Data:/app/Data -v ~/.config/earthengine:/root/.config/earthengine -t hrm ../config/example_config.yaml
+```
+First `-v` flag maps local directory `Data` to the same directory in the container. Second `-v` maps the earth engine credentials.
 ### Contacts
 For more info to collaborate, use or just to know more reach us at jeanbaptiste.pasquier@wfp.org and lorenzo.riches@wfp.org or submit an issue.
