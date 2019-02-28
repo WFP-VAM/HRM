@@ -8,6 +8,7 @@ from scipy.misc.pilutil import imread, imsave
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+import requests
 
 # vgg16 performs better in predicting nightlights but produces worse scoring features
 MODEL = 'google_cnn.h5'  # google_vgg16.h5 (much slower)
@@ -29,7 +30,10 @@ class GoogleImages(DataSource):
 
         """ loads the model. """
         print("INFO: downloading model. ")
-        s3_download('hrm-models', MODEL, '../Models/{}'.format(MODEL))
+        with requests.get('https://s3.eu-central-1.amazonaws.com/hrm-models/{}'.format(MODEL), stream=True) as r:
+            with open('../Models/{}'.format(MODEL), 'wb') as f:
+                f.write(r.content)
+        #s3_download('hrm-models', MODEL, '../Models/{}'.format(MODEL))
 
         print("INFO: loading model for Google Images ...")
         self.net = tf.keras.models.load_model('../Models/{}'.format(MODEL), compile=False)

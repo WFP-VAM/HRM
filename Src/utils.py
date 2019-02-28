@@ -1,6 +1,8 @@
 import gdal
 import numpy as np
-
+from sqlalchemy import create_engine
+import yaml
+import json
 
 def tifgenerator(outfile, raster_path, df, value='yhat'):
     """
@@ -135,7 +137,6 @@ def weighted_sum_by_polygon(input_shp, input_rst, weight_rst, output_shp):
         Save a copy of the shapefile to disk with the resulting weighted sum as a new attribute of each polygon.
     """
     import geopandas as gpd
-    import rasterio
     import rasterio.mask
     import json
     import numpy as np
@@ -146,8 +147,6 @@ def weighted_sum_by_polygon(input_shp, input_rst, weight_rst, output_shp):
     X = []
     Y = []
     gdf = gpd.read_file(input_shp)
-    #gdf['indicator'] = None
-    #gdf['population'] = None
 
     with rasterio.open(mult_rst) as src1:
         with rasterio.open(weight_rst) as src2:
@@ -284,7 +283,57 @@ def s3_download(bucket, file, dest):
         aws_access_key_id=os.environ['aws_access_key_id'],
         aws_secret_access_key=os.environ['aws_secret_access_key'],
         region_name='eu-central-1', )
-
     s3 = session.resource('s3')
     s3.Bucket(bucket).download_file(file, dest)
     print("INFO: file downloaded to ", dest)
+
+
+def get_config_file(file_name):
+    """ Given a file_name pointing to a yml is returns the configs """
+    import yaml
+
+    print('INFO: reading file {} for configs ...'.format(file_name))
+
+    with open(file_name, 'r') as stream:
+        try:
+            return yaml.load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+
+def get_config_db(id):
+    """ Given an id it returns the configs from the DB. """
+    print("INFO: pulling from DB configs for id =", id)
+
+    with open('../private_config.yml', 'r') as cfgfile:
+        private_config = yaml.load(cfgfile)
+
+    engine = create_engine("""postgresql+psycopg2://{}:{}@{}/{}"""
+                           .format(private_config['DB']['user'], private_config['DB']['password'],
+                                   private_config['DB']['host'], private_config['DB']['database']))
+
+    res = engine.execute("select * from config_new where id = {}".format(id))
+
+    d = [dict(r) for r in res][0]
+
+    return d, engine
+
+
+def write_scores_to_file(scores_dict, id):
+    with open('../Data/Results/scores_{}.txt'.format(id), 'w') as file:
+        file.write(json.dumps(scores_dict))
+    print('INFO: scores written to ', 'Data/Results/scores_{}.txt'.format(id))
+
+
+def write_scores_to_db(scores_dict, id, engine):
+    query = """
+                insert into results_new (run_date, config_id, r2, r2_sd, r2_knn, r2_sd_knn, r2_features, r2_sd_features)
+                values (current_date, {}, {}, {}, {}, {}, {}, {}) """.format(
+        id,
+        scores_dict['ensemble_R2_mean'],
+        scores_dict['ensemble_R2_std'],
+        scores_dict['kNN_R2_mean'],
+        scores_dict['kNN_R2_std'],
+        scores_dict['ridge_R2_mean'],
+        scores_dict['ridge_R2_std'])
+    engine.execute(query)

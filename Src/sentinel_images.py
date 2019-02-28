@@ -7,6 +7,7 @@ from io import BytesIO
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+import requests
 
 MODEL = 'sentinel_cnn.h5'  # Sentinel.h5
 LAYER = 'features'  # features
@@ -26,7 +27,10 @@ class SentinelImages(DataSource):
 
         """ loads the model. """
         print("INFO: downloading model. ")
-        s3_download('hrm-models', MODEL, '../Models/{}'.format(MODEL))
+        with requests.get('https://s3.eu-central-1.amazonaws.com/hrm-models/{}'.format(MODEL), stream=True) as r:
+            with open('../Models/{}'.format(MODEL), 'wb') as f:
+                f.write(r.content)
+        #s3_download('hrm-models', MODEL, '../Models/{}'.format(MODEL))
 
         print("INFO: loading model for Sentinel Images ...")
         self.net = tf.keras.models.load_model('../Models/{}'.format(MODEL), compile=False)

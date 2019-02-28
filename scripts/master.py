@@ -6,8 +6,6 @@
 """
 import os
 import sys
-from sqlalchemy import create_engine
-import yaml
 import pandas as pd
 import numpy as np
 try:
@@ -17,53 +15,31 @@ except FileNotFoundError:
 sys.path.append(os.path.join("..", "Src"))
 from base_layer import BaseLayer
 from osm import OSM_extractor
-from utils import boundaries, points_to_polygon
+from utils import boundaries, points_to_polygon, get_config_db, get_config_file, write_scores_to_file, write_scores_to_db
 
 
-def run(id):
+def run(file, id=None):
     # ----------------- #
     # SETUP #############
     # ----------------- #
-
-    print(str(np.datetime64('now')), " INFO: config id =", id)
-
-    with open('../private_config.yml', 'r') as cfgfile:
-        private_config = yaml.load(cfgfile)
-
-    engine = create_engine("""postgresql+psycopg2://{}:{}@{}/{}"""
-                           .format(private_config['DB']['user'], private_config['DB']['password'],
-                                   private_config['DB']['host'], private_config['DB']['database']))
-
-    config = pd.read_sql_query("select * from config_new where id = {}".format(id), engine)
-    dataset = config.get("dataset_filename")[0]
-    indicator = config["indicator"][0]
-    raster = config["satellite_grid"][0]
-    scope = config["scope"][0]
-    nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), config["nightlights_date"][0].get("end")
-    s2_date_start, s2_date_end = config["NDs_date"][0].get("start"), config["NDs_date"][0].get("end")
-    if config['satellite_config'][0].get('satellite_images') == 'Y':
-        print('INFO: satellite images from Google and Sentinel-2')
-        step = config['satellite_config'][0].get("satellite_step")
-    elif config['satellite_config'][0].get('satellite_images') == 'G':
-        print('INFO: only Google satellite images.')
-        step = config['satellite_config'][0].get("satellite_step")
-    elif config['satellite_config'][0].get('satellite_images') == 'N':
-        print('INFO: no satellite images')
-    ISO = config["iso3"][0]
+    if id is None:
+        config = get_config_file(file)
+    else:
+        config, engine = get_config_db(id)
 
     # --------------------- #
     # Setting up playground #
     # --------------------- #
-    data = pd.read_csv(dataset)
-    print(str(np.datetime64('now')), 'INFO: original dataset: ', data.shape[0])
+    data = pd.read_csv(config['dataset_filename'])
+    print(str(np.datetime64('now')), 'INFO: original dataset lenght: ', data.shape[0])
     data['gpsLongitude'] = np.round(data['gpsLongitude'], 5)
     data['gpsLatitude'] = np.round(data['gpsLatitude'], 5)
 
     # avoid duplicates
-    data = data[['gpsLongitude', 'gpsLatitude', indicator]].groupby(['gpsLongitude', 'gpsLatitude']).mean()
+    data = data[['gpsLongitude', 'gpsLatitude', config['indicator']]].groupby(['gpsLongitude', 'gpsLatitude']).mean()
 
     # base layer
-    GRID = BaseLayer(raster, data.index.get_level_values('gpsLongitude'), data.index.get_level_values('gpsLatitude'))
+    GRID = BaseLayer(config['base_raster'], data.index.get_level_values('gpsLongitude'), data.index.get_level_values('gpsLatitude'))
     # TODO: we should enforce the most accurate i and j when training, i.e. aggregate = 1?
 
     # Get Polygon Geojson of the boundaries
@@ -78,7 +54,7 @@ def run(id):
     # ------------------------------- #
     # get features from Google images #
     # ------------------------------- #
-    if config['satellite_config'][0].get('satellite_images') in ['Y', 'G']:
+    if config['satellite_config']['satellite_images'] in ['Y', 'G']:
         features_path = "../Data/Features/features_Google_id_{}_{}.csv".format(id, pipeline)
         data_path = "../Data/Satellite/"
         from google_images import GoogleImages
@@ -92,9 +68,9 @@ def run(id):
         else:
             gimages = GoogleImages(data_path)
             # download the images from the relevant API
-            gimages.download(GRID.lon, GRID.lat, step=step)
+            gimages.download(GRID.lon, GRID.lat, step=config['satellite_config']['satellite_step'])
             # extract the features
-            features = pd.DataFrame(gimages.featurize(GRID.lon, GRID.lat, step=step), index=data.index)
+            features = pd.DataFrame(gimages.featurize(GRID.lon, GRID.lat, step=config['satellite_config']['satellite_step']), index=data.index)
 
             features.columns = [str(col) + '_Google' for col in features.columns]
             features.to_csv(features_path)
@@ -105,7 +81,7 @@ def run(id):
     # --------------------------------- #
     # get features from Sentinel images #
     # --------------------------------- #
-    if config['satellite_config'][0].get('satellite_images') == 'Y':
+    if config['satellite_config']['satellite_images'] in ['Y','S']:
         features_path = "../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline)
         data_path = "../Data/Satellite/"
         start_date = config["satellite_config"][0]["start_date"]
@@ -140,7 +116,7 @@ def run(id):
     from nightlights import Nightlights
 
     nlights = Nightlights('../Data/Geofiles/')
-    nlights.download(area, nightlights_date_start, nightlights_date_end)
+    nlights.download(area, config['nightlights_date']['start'], config['nightlights_date']['end'])
     features = pd.DataFrame(nlights.featurize(GRID.lon, GRID.lat), columns=['nightlights'], index=data.index)
     # quantize nightlights
     features['nightlights'] = pd.qcut(features['nightlights'], 5, labels=False, duplicates='drop')
@@ -165,7 +141,7 @@ def run(id):
     print('INFO: getting NDBI, NDVI, NDWI ...')
     from rms_indexes import S2indexes
 
-    S2 = S2indexes(area, '../Data/Geofiles/NDs/', s2_date_start, s2_date_end, scope)
+    S2 = S2indexes(area, '../Data/Geofiles/NDs/', config['NDs_date']['start'], config['NDs_date']['end'], config['scope'])
     S2.download()
     data['max_NDVI'], data['max_NDBI'], data['max_NDWI'] = S2.rms_values(GRID.lon, GRID.lat)
 
@@ -175,7 +151,7 @@ def run(id):
     from acled import ACLED
 
     acled = ACLED("../Data/Geofiles/ACLED/")
-    acled.download(ISO, nightlights_date_start, nightlights_date_end)
+    acled.download(config['iso3'], config['nightlights_date']['start'], config['nightlights_date']['end'])
     d = {}
     for property in ["fatalities", "n_events", "violence_civ"]:
         for k in [10000, 100000]:
@@ -198,71 +174,61 @@ def run(id):
     data = data[[col for col in data if not data[col].nunique() == 1]]
     print('INFO: {} columns.'.format(len(data.columns)))
     # features to be use in the linear model
-    features_list = list(sorted(set(data.columns) - set(['i', 'j', indicator])))
+    features_list = list(sorted(set(data.columns) - set(['i', 'j', config['indicator']])))
 
     #Save non-scaled features
-    data.to_csv("../Data/Features/features_all_id_{}_evaluation_nonscaled.csv".format(id))
+    data.to_csv("../Data/Features/features_all_id_{}_evaluation_nonscaled.csv".format(config['id']))
 
     # Scale Features
     print("Normalizing : max")
     data[features_list] = (data[features_list] - data[features_list].mean()) / (data[features_list].max()+0.001)
-    data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(id))
+    data.to_csv("../Data/Features/features_all_id_{}_evaluation.csv".format(config['id']))
 
     # --------------- #
     # model indicator #
     # --------------- #
     # shuffle dataset
     data = data.sample(frac=1, random_state=1783)  # shuffle data
-
-    # if set in the config, take log of indicator
-    if config['log'][0]:
-        data[indicator] = np.log(data[indicator])
-
+    scores_dict = {} # placeholder to save the scores
     from modeller import Modeller
-    X, y = data[features_list].reset_index(), data[indicator]
+    X, y = data[features_list].reset_index(), data[config['indicator']]
     modeller = Modeller(X, rs_features=features_list, spatial_features=["gpsLatitude", "gpsLongitude"], scoring='r2', cv_loops=20)
 
     kNN_pipeline = modeller.make_model_pipeline('kNN')
     kNN_scores = modeller.compute_scores(kNN_pipeline, y)
-    kNN_R2_mean = kNN_scores.mean()
-    kNN_R2_std = kNN_scores.std()
-    print("kNN_R2_mean: ", kNN_R2_mean, "kNN_R2_std: ", kNN_R2_std)
+    scores_dict['kNN_R2_mean'] = round(kNN_scores.mean(), 2)
+    scores_dict['kNN_R2_std'] = round(kNN_scores.std(), 2)
+    print("kNN_R2_mean: ", scores_dict['kNN_R2_mean'], "kNN_R2_std: ", scores_dict['kNN_R2_std'])
 
     Ridge_pipeline = modeller.make_model_pipeline('Ridge')
     Ridge_scores = modeller.compute_scores(Ridge_pipeline, y)
-    Ridge_R2_mean = Ridge_scores.mean()
-    Ridge_R2_std = Ridge_scores.std()
-    print("Ridge_R2_mean: ", Ridge_R2_mean, "Ridge_R2_std: ", Ridge_R2_std)
+    scores_dict['ridge_R2_mean'] = round(Ridge_scores.mean(), 2)
+    scores_dict['ridge_R2_std'] = round(Ridge_scores.std(), 2)
+    print("Ridge_R2_mean: ", scores_dict['ridge_R2_mean'], "Ridge_R2_std: ", scores_dict['ridge_R2_std'])
 
     Ensemble_pipeline = modeller.make_ensemble_pipeline([kNN_pipeline, Ridge_pipeline])
     Ensemble_scores = modeller.compute_scores(Ensemble_pipeline, y)
-    Ensemble_R2_mean = Ensemble_scores.mean()
-    Ensemble_R2_std = Ensemble_scores.std()
-    print("Ensemble_R2_mean: ", Ensemble_R2_mean, "Ensemble_R2_std: ", Ensemble_R2_std)
+    scores_dict['ensemble_R2_mean'] = round(Ensemble_scores.mean(), 2)
+    scores_dict['ensemble_R2_std'] = round(Ensemble_scores.std(), 2)
+    print("Ensemble_R2_mean: ", scores_dict['ensemble_R2_mean'], "Ensemble_R2_std: ", scores_dict['ensemble_R2_std'])
 
-    # ------------------ #
-    # write scores to DB #
-    # ------------------ #
-
-    query = """
-    insert into results_new (run_date, config_id, r2, r2_sd, r2_knn, r2_sd_knn, r2_features, r2_sd_features, mape_rmsense)
-    values (current_date, {}, {}, {}, {}, {}, {}, {}, {}) """.format(
-        config['id'][0],
-        Ensemble_R2_mean, Ensemble_R2_std, kNN_R2_mean, kNN_R2_std, Ridge_R2_mean, Ridge_R2_std, 0)
-    engine.execute(query)
+    # save results
+    if id is None:
+        write_scores_to_file(scores_dict, config['id'])
+    else:
+        write_scores_to_db(scores_dict, config['id'], engine)
 
     # ------------------------- #
     # write predictions to file #
     # ------------------------- #
-
     print('INFO: writing predictions to disk ...')
 
     from sklearn.model_selection import cross_val_predict
     results = pd.DataFrame({
         'yhat': cross_val_predict(Ensemble_pipeline, X.values, y),
-        'y': data[indicator].values},
+        'y': data[config['indicator']].values},
         index=data.index)
-    results.to_csv('../Data/Results/config_{}.csv'.format(id))
+    results.to_csv('../Data/Results/config_{}.csv'.format(config['id']))
 
     # save model for production
     Ensemble_pipeline.fit(X.values, y)
@@ -281,7 +247,13 @@ if __name__ == "__main__":
 
     import tensorflow as tf
     for id in sys.argv[1:]:
-        run(id)
+        if id.isdigit():
+            # use database for configs
+            run(file=False, id=id)
+        else:
+            # use yml for configs
+            print(os.getcwd())
+            run(file=id)
 
     # rubbish collection
     tf.keras.backend.clear_session()

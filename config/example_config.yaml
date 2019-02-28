@@ -1,0 +1,31 @@
+id: 3075
+
+### DATASET ###
+# filename of the dataset, it MUST have gpsLongitude, gpsLatitude abd the indicator. Must be .csv
+dataset_filename: /app/Data/datasets/LSMS_Malawi_2016_ea.csv
+# column name of the indicator we want to model
+indicator: log_med_exp_total_pcd
+
+### Base layer: a .tif file that is the base-layer
+base_raster: ../Data/Geofiles/Rasters/Malawi_worldpop.tif
+scope: country # whether you are looking at a "country" or an "urban" area
+
+### Nightlights dates: take nightlights average from start date to end date
+nightlights_date:
+  start: '2016-01-01'
+  end: '2017-01-01'
+
+### Sentinel 2 dates for remote sensing indices
+NDs_date:
+  start: '2016-01-01'
+  end: '2017-01-01'
+
+### Satellite images
+satellite_config:
+  satellite_images: G  # Y -> both Google and Sentinel, G -> only Google, S -> only Sentinel
+  start_date:  # only if also sentinel
+  end_date:  # only if also sentinel
+  satellite_step: 0 # 0 or 1 if you want a buffer (x9 more images
+
+### ACLED
+iso3: 454 # country code
