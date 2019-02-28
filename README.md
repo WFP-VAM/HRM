@@ -33,25 +33,32 @@ Data
 └── Satellite   
     ├── Sentinel
     └── Google   
-Models
+Models/
+env.list
   ```
  The mandatory files are: 
+ 
 `Data/datasets/processed_survey.csv` this is your survey data! should contain at least 3 columns: "gpsLongitude","gpsLatitude" and one indicator. You can either work with individual survey data or aggregate the surveys to some geographic level. 
   
 `Data/Geofiles/Rasters/base_layer.tif` is a raster file that containing the area of interest and the population density. Survey points will be snapped to its grid and the pulled layers over-laid.Please use 100x100m resolution WorldPop's rasters, available at http://www.worldpop.org.uk/data/data_sources/. 
  
 `config/example_config` is the config file that you should fill in. Please use the template provided, fields list in there. 
 
-#### Credentials
-Because you will be pulling data from a number of sources, you will need to set up some credentials. 
-##### Earth Engine
-The most complex because it is using Google's OAuth2. Please follow [this link](https://developers.google.com/earth-engine/python_install_manual) to create your credentials file.
+`env.list` this should contain the key to access the [Google Maps Static API](https://developers.google.com/maps/documentation/maps-static/intro). 
+After you get yours, add it to the file if you will be using Docker or to your environment variables if you run with Python. The format should be `Google_key=<your key here>`. 
+
+#### Google Earth Engine API credentials
+Because you will be pulling Sentinel-2 and Nightlights data from Google Earth Engine, you will need to set up some credentials. Not so easy because of Google's OAuth2.
+Please follow [this link](https://developers.google.com/earth-engine/python_install_manual) to create your credentials file.
  
 ### Train Model
+To run the app that trains the model on your survey data you can either set up your python environment (install libraries listed in `environment.yml`) or use docker.
+To run the training with Python simply run the `/scripts/master.py`:
 ```
 python master.py args 
 ```
-where args is one or more `example_config.yaml`. Each `.yaml` should be space separated. Please run from the root directory of the application. For example to trigger for configs config_1.yaml, config_2.yaml and config_3.yaml do:
+where args is one or more `example_config.yaml`. Each `.yaml` should be space separated. Please run from the root directory of the application. 
+For example to trigger for configs config_1.yaml, config_2.yaml and config_3.yaml do:
 ```
 python master.py config_1.yaml config_2.yaml config_3.yaml > log.txt &
 ```
@@ -60,15 +67,16 @@ This will:
 * extract the features for each image. (if no features for that id)
 * pull and vectorize data from OSM, ACLED, Sentinel-2 and NOAA
 * train the model on the existing data.
-* write r2 Pearson scores to the ```Results/``` directory on a 5-fold cross validation loop.
-* save the full predictions on the left-out data.
+* write r2 Pearson scores to the `Results/` directory on a 5-fold cross validation loop.
+* save the full predictions on the left-out data, aslo in `Results/`.
 * save the trained model.
 
 #### With Docker
-Build with ``` docker build -t hrm . ``` then run with:
+If you want to use docker, build the image with ``` docker build -t hrm . ``` then run with:
 ```
-docker run -v ~/Desktop/HRM/HRM/Data:/app/Data -v ~/.config/earthengine:/root/.config/earthengine -t hrm ../config/example_config.yaml
+docker run -v ~/Desktop/HRM/HRM/Data:/app/Data -v ~/.config/earthengine:/root/.config/earthengine --env-file ./env.list hrm ../config/example_config.yaml
 ```
-First `-v` flag maps local directory `Data` to the same directory in the container. Second `-v` maps the earth engine credentials.
+First `-v` flag maps local directory `Data` to the same directory in the container. Second `-v` maps the earth engine credentials. 
+The `--env-file ./env.list` adds the `Google_key` environment variable to the container.
 ### Contacts
 For more info to collaborate, use or just to know more reach us at jeanbaptiste.pasquier@wfp.org and lorenzo.riches@wfp.org or submit an issue.

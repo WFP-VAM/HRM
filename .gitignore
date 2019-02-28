@@ -6,17 +6,12 @@ Code/deep-learning-models/
 Bibliography/
 Caffe_Model/
 Notebooks/.ipynb_checkpoints/
-
+env.list
 private_config.yml
-
 .local/
-
 .ipython/
 .jupyter/
 .cache/
-
 *.pyc
-
 Bayesian Exps/HRMBayes\.RData
-
 .idea

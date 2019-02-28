@@ -283,7 +283,6 @@ def s3_download(bucket, file, dest):
         aws_access_key_id=os.environ['aws_access_key_id'],
         aws_secret_access_key=os.environ['aws_secret_access_key'],
         region_name='eu-central-1', )
-
     s3 = session.resource('s3')
     s3.Bucket(bucket).download_file(file, dest)
     print("INFO: file downloaded to ", dest)

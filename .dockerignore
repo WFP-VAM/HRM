@@ -8,4 +8,4 @@ tests
 private_config.yml
 README.md
 *.tif
-eecredentials
+env.list
