@@ -9,7 +9,8 @@ The application takes as input geo-referenced survey data, then for every survey
   - pull information from [ACLED](https://www.acleddata.com/) on violent events.
   - use ridge regression to infer indicator's value from the extarcted features. 
   
- All of the _training_ and _evaluaiton_ is coordinated by the [scripts/master.py](https://github.com/WFP-VAM/HRM/blob/master/scripts/master.py).
+ All of the _training_ is coordinated by the [scripts/master.py](https://github.com/WFP-VAM/HRM/blob/master/scripts/master.py). 
+ Predictions for an area are made with [scripts/score_area.py](https://github.com/WFP-VAM/HRM/blob/master/scripts/score_area.py).
   
 The trained models can then be used for making predictions in areas where no data is available. Use the [scripts/score_area.py](https://github.com/WFP-VAM/HRM/blob/master/scripts/score_area.py) for that. Work is in progress in the `application` directory for taking the method to produciton. 
   
@@ -53,6 +54,7 @@ Please follow [this link](https://developers.google.com/earth-engine/python_inst
  
 ### Train Model
 To run the app that trains the model on your survey data you can either set up your python environment (install libraries listed in `environment.yml`) or use docker.
+#### With Python
 To run the training with Python simply run the `/scripts/master.py`:
 ```
 python master.py args 
