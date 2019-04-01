@@ -116,9 +116,11 @@ def multiply(input_rst1, input_rst2, output_rst):
             data2[data2 == src2.nodata] = 0
             final = data1 * data2
             profile = src1.profile
+            crs = src1.crs
 
     with rasterio.open(output_rst, 'w', **profile) as dst:
         dst.nodata = 0
+        dst.crs = crs
         dst.write(final)
 
 

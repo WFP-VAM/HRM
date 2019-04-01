@@ -74,7 +74,6 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
     elif config['satellite_config'][0].get('satellite_images') == 'N':
         print('INFO: no satellite images')
 
-
     # ----------------------------------- #
     # WorldPop Raster too granular (lots of images), aggregate #
     if aggregate_factor > 1:
@@ -257,10 +256,6 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
 
     X = data.reset_index(level=[2,3])
     ensemble_predictions = ensemble_pipeline.predict(X.values)
-
-    # if take log of indicator
-    if config['log'][0]:
-        ensemble_predictions = np.exp(ensemble_predictions)
 
     results = pd.DataFrame({'i': list_i, 'j': list_j, 'lat': coords_y, 'lon': coords_x, 'yhat': ensemble_predictions})
     results.to_csv('../Data/Results/config_{}.csv'.format(id))
