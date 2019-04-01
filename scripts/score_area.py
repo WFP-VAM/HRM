@@ -59,7 +59,7 @@ def main(id, aggregate_factor, min_pop, bbox, shapefile):
 
     config = pd.read_sql_query("select * from config_new where id = {}".format(id), engine)
     dataset = config.get("dataset_filename")[0]
-    raster = config["satellite_grid"][0]
+    raster = config["base_raster"][0]
     scope = config["scope"][0]
     nightlights_date_start, nightlights_date_end = config["nightlights_date"][0].get("start"), \
                                                    config["nightlights_date"][0].get("end")
