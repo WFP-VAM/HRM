@@ -10,6 +10,7 @@ dependencies:
   - requests=2.21.0
   - rtree=0.8.3
   - flask=1.0.2
+  - vs2015_runtime=14
   - gdal=2.3.2
   - h5py=2.8.0
   - numpy=1.15.4

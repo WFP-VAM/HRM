@@ -11,10 +11,15 @@ from PIL import Image
 import requests
 
 # vgg16 performs better in predicting nightlights but produces worse scoring features
-MODEL = 'google_cnn.h5'  # google_vgg16.h5 (much slower)
+MODEL = 'google_simple.h5'  # google_vgg16.h5 (much slower)
 # TODO: we can allow a parameter in the config for the model to use, as long as the layer is called 'features'
 LAYER = 'features'  # features
 IMG_SIZE = 256
+# Google images parameters.
+ZOOM_LEVEL = 18
+RAW_SIZE = 380
+map_size = "500x500"
+imagery_set = "satellite"
 
 
 class GoogleImages(DataSource):
@@ -29,11 +34,11 @@ class GoogleImages(DataSource):
             os.makedirs(self.directory)
 
         """ loads the model. """
-        print("INFO: downloading model. ")
-        with requests.get('https://s3.eu-central-1.amazonaws.com/hrm-models/{}'.format(MODEL), stream=True) as r:
-            with open('../Models/{}'.format(MODEL), 'wb') as f:
-                f.write(r.content)
-        #s3_download('hrm-models', MODEL, '../Models/{}'.format(MODEL))
+        if os.path.exists('../Models/{}'.format(MODEL)) is False:
+            print("INFO: downloading model. ")
+            with requests.get('https://hrm-models.s3.eu-central-1.amazonaws.com/{}'.format(MODEL), stream=True) as r:
+                with open('../Models/{}'.format(MODEL), 'wb') as f:
+                    f.write(r.content)
 
         print("INFO: loading model for Google Images ...")
         self.net = tf.keras.models.load_model('../Models/{}'.format(MODEL), compile=False)
@@ -56,11 +61,6 @@ class GoogleImages(DataSource):
             print('INFO: adding steps to coordinates set.')
             lon, lat = self.add_steps(lon, lat)
 
-        # Google images parameters.
-        zoom_level = 16
-        map_size = "400x500"
-        imagery_set = "satellite"
-
         @retry(Exception, tries=4)
         def _urlopen_with_retry(url):
             return urlopen(url).read()
@@ -72,7 +72,7 @@ class GoogleImages(DataSource):
             print("INFO: {} images downloaded out of {}".format(_cnt, _total), end='\r')
             _cnt += 1
 
-            file_name = str(i) + '_' + str(j) + '_' + str(zoom_level) + '.jpg'
+            file_name = str(i) + '_' + str(j) + '_' + str(ZOOM_LEVEL) + '.jpg'
 
             if os.path.exists(self.directory + file_name):
                 print("INFO: {} already downloaded".format(file_name), end='\r')
@@ -80,7 +80,7 @@ class GoogleImages(DataSource):
                 center_point = str(j) + "," + str(i)
 
                 url = """https://maps.googleapis.com/maps/api/staticmap?center={}&zoom={}&size={}&maptype={}&key={}""".\
-                    format(center_point, zoom_level, map_size, imagery_set, os.environ['Google_key'])
+                    format(center_point, ZOOM_LEVEL, map_size, imagery_set, os.environ['Google_key'])
 
                 buffer = BytesIO(_urlopen_with_retry(url))
 
@@ -112,16 +112,17 @@ class GoogleImages(DataSource):
         for i, j in zip(lon, lat):
             _cnt += 1
 
-            file_name = str(i) + '_' + str(j) + '_' + str(16) + '.jpg'
+            file_name = str(i) + '_' + str(j) + '_' + str(ZOOM_LEVEL) + '.jpg'
             img_path = os.path.join(self.directory, file_name)
 
             image = Image.open(img_path, 'r')
             image = image.crop((  # crop center
-                int(image.size[0] / 2 - IMG_SIZE / 2),
-                int(image.size[1] / 2 - IMG_SIZE / 2),
-                int(image.size[0] / 2 + IMG_SIZE / 2),
-                int(image.size[1] / 2 + IMG_SIZE / 2)
+                int(image.size[0] / 2 - RAW_SIZE / 2),
+                int(image.size[1] / 2 - RAW_SIZE / 2),
+                int(image.size[0] / 2 + RAW_SIZE / 2),
+                int(image.size[1] / 2 + RAW_SIZE / 2)
             ))
+            image = image.resize((IMG_SIZE, IMG_SIZE), Image.ANTIALIAS)
             image = np.array(image)/ 255.
             features.append(self.net.predict(np.array(image).reshape(1, IMG_SIZE, IMG_SIZE, 3)))
 

@@ -27,9 +27,15 @@ def run(file, id=None):
     else:
         config, engine = get_config_db(id)
 
+    for d in ['../Data/Features', '../Data/Geofiles/OSM', '../Data/Geofiles/nightlights', '../Data/Results']:
+        if not os.path.exists(d):
+            os.makedirs(d)
+
     # --------------------- #
     # Setting up playground #
     # --------------------- #
+    assert (os.path.exists(config['dataset_filename'])
+            ), "ups, dataset specified not found: "+config['dataset_filename']
     data = pd.read_csv(config['dataset_filename'])
     print(str(np.datetime64('now')), 'INFO: original dataset lenght: ', data.shape[0])
     data['gpsLongitude'] = np.round(data['gpsLongitude'], 5)
@@ -39,6 +45,8 @@ def run(file, id=None):
     data = data[['gpsLongitude', 'gpsLatitude', config['indicator']]].groupby(['gpsLongitude', 'gpsLatitude']).mean()
 
     # base layer
+    assert (os.path.exists(config['base_raster'])
+            ), "ups, raster specified not found: " + config['base_raster']
     GRID = BaseLayer(config['base_raster'], data.index.get_level_values('gpsLongitude'), data.index.get_level_values('gpsLatitude'))
     # TODO: we should enforce the most accurate i and j when training, i.e. aggregate = 1?
 
@@ -84,8 +92,8 @@ def run(file, id=None):
     if config['satellite_config']['satellite_images'] in ['Y','S']:
         features_path = "../Data/Features/features_Sentinel_id_{}_{}.csv".format(id, pipeline)
         data_path = "../Data/Satellite/"
-        start_date = config["satellite_config"][0]["start_date"]
-        end_date = config["satellite_config"][0]["end_date"]
+        start_date = config["satellite_config"]["start_date"]
+        end_date = config["satellite_config"]["end_date"]
 
         from sentinel_images import SentinelImages
 

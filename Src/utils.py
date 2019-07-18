@@ -3,6 +3,8 @@ import numpy as np
 from sqlalchemy import create_engine
 import yaml
 import json
+import os
+
 
 def tifgenerator(outfile, raster_path, df, value='yhat'):
     """
@@ -307,8 +309,19 @@ def get_config_db(id):
     """ Given an id it returns the configs from the DB. """
     print("INFO: pulling from DB configs for id =", id)
 
+    CONFIG_FILE = '../private_config.yml'
+
+    assert (os.path.exists(CONFIG_FILE)), """
+    you need a private_config.yml with DB credentials:
+    DB:
+      user: 
+      password: 
+      host: 
+      database: 
+    """
     with open('../private_config.yml', 'r') as cfgfile:
-        private_config = yaml.load(cfgfile)
+            private_config = yaml.load(cfgfile)
+
 
     engine = create_engine("""postgresql+psycopg2://{}:{}@{}/{}"""
                            .format(private_config['DB']['user'], private_config['DB']['password'],

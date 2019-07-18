@@ -41,7 +41,7 @@ env.list
  
 `Data/datasets/processed_survey.csv` this is your survey data! should contain at least 3 columns: "gpsLongitude","gpsLatitude" and one indicator. You can either work with individual survey data or aggregate the surveys to some geographic level. 
   
-`Data/Geofiles/Rasters/base_layer.tif` is a raster file that containing the area of interest and the population density. Survey points will be snapped to its grid and the pulled layers over-laid.Please use 100x100m resolution WorldPop's rasters, available at http://www.worldpop.org.uk/data/data_sources/. 
+`Data/Geofiles/Rasters/base_layer.tif` is a raster file that containing the area of interest and the population density. Survey points will be snapped to its grid and the pulled layers over-laid.Please use 100x100m resolution WorldPop's rasters, available [here](https://www.worldpop.org/geodata/listing?id=16). 
  
 `config/example_config` is the config file that you should fill in. Please use the template provided, fields list in there. 
 
