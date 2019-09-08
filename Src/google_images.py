@@ -4,21 +4,19 @@ import os
 from utils import retry, s3_download
 from urllib.request import urlopen
 from io import BytesIO
-from scipy.misc.pilutil import imread, imsave
 import tensorflow as tf
 import numpy as np
 from PIL import Image
 import requests
 
 # vgg16 performs better in predicting nightlights but produces worse scoring features
-MODEL = 'google_simple.h5'  # google_vgg16.h5 (much slower)
+MODEL = 'google_njean.h5' # 'google_simple.h5'
 # TODO: we can allow a parameter in the config for the model to use, as long as the layer is called 'features'
-LAYER = 'features'  # features
-IMG_SIZE = 256
+LAYER = 'conv7' #'dense'
+IMG_SIZE = 400
 # Google images parameters.
-ZOOM_LEVEL = 18
-RAW_SIZE = 380
-map_size = "500x500"
+ZOOM_LEVEL = 16
+map_size = "400x500"
 imagery_set = "satellite"
 
 
@@ -37,8 +35,11 @@ class GoogleImages(DataSource):
         if os.path.exists('../Models/{}'.format(MODEL)) is False:
             print("INFO: downloading model. ")
             with requests.get('https://hrm-models.s3.eu-central-1.amazonaws.com/{}'.format(MODEL), stream=True) as r:
-                with open('../Models/{}'.format(MODEL), 'wb') as f:
-                    f.write(r.content)
+                if r.status_code == 200:
+                    with open('../Models/{}'.format(MODEL), 'wb') as f:
+                        f.write(r.content)
+                else:
+                    raise Exception('error reading model form S3. Error code ', r.status_code)
 
         print("INFO: loading model for Google Images ...")
         self.net = tf.keras.models.load_model('../Models/{}'.format(MODEL), compile=False)
@@ -84,12 +85,10 @@ class GoogleImages(DataSource):
 
                 buffer = BytesIO(_urlopen_with_retry(url))
 
-                image = imread(buffer, mode='RGB')
-                if (image[:, :, 0] == 245).sum() >= 100000:  # Gray image in Bing
-                    print("No image in Bing API", file_name)
-                else:
-                    print('file path: ', os.path.join(self.directory, file_name))
-                    imsave(os.path.join(self.directory, file_name), image[50:450, :, :])
+                image = np.asarray(Image.open(buffer).convert('RGB'))#
+
+                print('file path: ', os.path.join(self.directory, file_name))
+                Image.fromarray(image[50:450, :, :]).save(os.path.join(self.directory, file_name))
 
     def featurize(self, lon, lat, step=0):
         """ Given lon lat lists, it extract the features from the image (if there) using the NN.
@@ -117,12 +116,11 @@ class GoogleImages(DataSource):
 
             image = Image.open(img_path, 'r')
             image = image.crop((  # crop center
-                int(image.size[0] / 2 - RAW_SIZE / 2),
-                int(image.size[1] / 2 - RAW_SIZE / 2),
-                int(image.size[0] / 2 + RAW_SIZE / 2),
-                int(image.size[1] / 2 + RAW_SIZE / 2)
+                int(image.size[0] / 2 - IMG_SIZE / 2),
+                int(image.size[1] / 2 - IMG_SIZE / 2),
+                int(image.size[0] / 2 + IMG_SIZE / 2),
+                int(image.size[1] / 2 + IMG_SIZE / 2)
             ))
-            image = image.resize((IMG_SIZE, IMG_SIZE), Image.ANTIALIAS)
             image = np.array(image)/ 255.
             features.append(self.net.predict(np.array(image).reshape(1, IMG_SIZE, IMG_SIZE, 3)))
 
